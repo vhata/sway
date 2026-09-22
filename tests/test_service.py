@@ -5,9 +5,9 @@ from dataclasses import asdict
 from pathlib import Path
 
 import pytest
+
 from sway.bots import BotState, choose
 from sway.engine import Command, GameConfig, InvalidCommand, state_to_json, view_for
-
 from sway.service import GameRecord, GameService
 from sway.storage import SaveFormatError, SQLiteStore, StorageConflict
 
