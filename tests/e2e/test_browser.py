@@ -308,3 +308,29 @@ def test_bot_attack_stops_for_human_reaction_and_survives_reload(
     service = GameService(store)
     assert len(service.load(identifier).state.players[0].hand) == 6
     expect(page.locator(".history")).to_contain_text("blocked the attack")
+
+
+def test_stale_tab_shows_current_game_without_repeating_move(
+    page: Page, server_url: str, server_data: Path
+) -> None:
+    page.goto(server_url)
+    page.locator('input[name="seed"]').fill("13")
+    page.get_by_role("button", name="Begin a game").click()
+    expect(page.locator("#decision-form")).to_be_visible(timeout=15000)
+    identifier = page.url.rsplit("/", 1)[1]
+    stale = page.context.new_page()
+    try:
+        stale.goto(page.url)
+        stale.locator('#decision-form input[value="play-treasures"]').check()
+        page.locator('#decision-form input[value="play-treasures"]').check()
+        old_revision = page.locator("#board").get_attribute("data-revision")
+        page.get_by_role("button", name="Confirm choice").click()
+        expect(page.locator("#board")).not_to_have_attribute("data-revision", old_revision or "")
+        service = GameService(SQLiteStore(server_data / "games.sqlite3"))
+        accepted = service.load(identifier)
+        stale.get_by_role("button", name="Confirm choice").click()
+        expect(stale.get_by_role("alert")).to_contain_text("The table has changed")
+        expect(stale.locator("#board")).to_have_attribute("data-revision", str(accepted.revision))
+        assert service.load(identifier) == accepted
+    finally:
+        stale.close()
