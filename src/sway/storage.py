@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -52,9 +52,7 @@ class StoredCommand:
 
 
 class Store(Protocol):
-    def create(
-        self, game_id: str, snapshot: str, metadata: str, theme_id: str
-    ) -> StoredGame: ...
+    def create(self, game_id: str, snapshot: str, metadata: str, theme_id: str) -> StoredGame: ...
 
     def load(self, game_id: str) -> StoredGame: ...
 
@@ -120,7 +118,7 @@ class SQLiteStore:
             )
 
     @contextmanager
-    def _connection(self) -> Iterator[sqlite3.Connection]:
+    def _connection(self) -> Generator[sqlite3.Connection, None, None]:
         conn = sqlite3.connect(self.path, timeout=5.0)
         try:
             conn.execute("PRAGMA foreign_keys = ON")
@@ -147,9 +145,7 @@ class SQLiteStore:
             raise GameNotFound(f"Game {game_id!r} was not found.")
         return cls._record(row)
 
-    def create(
-        self, game_id: str, snapshot: str, metadata: str, theme_id: str
-    ) -> StoredGame:
+    def create(self, game_id: str, snapshot: str, metadata: str, theme_id: str) -> StoredGame:
         _validate_json(snapshot, dict)
         _validate_json(metadata, dict)
         with self._connection() as conn:
