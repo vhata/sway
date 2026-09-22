@@ -275,8 +275,9 @@ def test_bot_attack_stops_for_human_reaction_and_survives_reload(
     state.supply["k14"] -= 1
     state.players[0].hand.append(protection)
     state.players[1].hand.append(attack)
+    assert state.pending is not None
     state.pending = Decision(
-        "attack-setup",
+        state.pending.id,
         1,
         "menu",
         "action",
