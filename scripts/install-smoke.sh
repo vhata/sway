@@ -31,4 +31,4 @@ uv pip sync --python "$SWAY_SMOKE_ROOT/venv/bin/python" --require-hashes "$SWAY_
 uv pip install --python "$SWAY_SMOKE_ROOT/venv/bin/python" --no-deps "$SWAY_WHEEL"
 cp "$SWAY_ROOT/scripts/check-installed.py" "$SWAY_SMOKE_ROOT/check-installed.py"
 cd "$SWAY_SMOKE_ROOT"
-env -u PYTHONPATH -u VIRTUAL_ENV uv run --no-project --no-sync   --python "$SWAY_SMOKE_ROOT/venv/bin/python" python -I check-installed.py
+env -u PYTHONPATH -u VIRTUAL_ENV uv run --no-project   --python "$SWAY_SMOKE_ROOT/venv/bin/python" python -I check-installed.py
