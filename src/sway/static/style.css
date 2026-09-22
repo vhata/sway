@@ -744,3 +744,15 @@ h2,
   padding: 0.3rem 0.5rem 0.3rem 1.65rem;
   color: var(--muted);
 }
+
+.order-item label {
+  flex: 1;
+  cursor: pointer;
+}
+.order-item input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+.order-item.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}

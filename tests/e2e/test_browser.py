@@ -16,44 +16,56 @@ from urllib.request import urlopen
 import pytest
 from playwright.sync_api import Page, Request, expect
 
+from sway.bots import BotState, choose
 from sway.engine import GameConfig, new_game, view_for
 from sway.engine.catalog import CATALOG
 from sway.engine.models import Decision, Option
 from sway.presentation.components import BoardContext, choice_form
 from sway.presentation.themes import load_themes
+from sway.service import GameService
+from sway.storage import SQLiteStore
 
 pytestmark = pytest.mark.e2e
 ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope="module")
-def server_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
+def server_data(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return tmp_path_factory.mktemp("browser-saves")
+
+
+@pytest.fixture(scope="module")
+def server_url(server_data: Path) -> Iterator[str]:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
     url = f"http://127.0.0.1:{port}"
-    environment = {**os.environ, "SWAY_DATA_DIR": str(tmp_path_factory.mktemp("browser-saves"))}
-    with subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "uvicorn",
-            "sway.web:app",
-            "--host",
-            "127.0.0.1",
-            "--port",
-            str(port),
-        ],
-        cwd=ROOT,
-        env=environment,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    ) as process:
+    environment = {**os.environ, "SWAY_DATA_DIR": str(server_data)}
+    output_path = server_data / "browser-server.log"
+    with (
+        output_path.open("w") as output,
+        subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "sway.web:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(port),
+            ],
+            cwd=ROOT,
+            env=environment,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+        ) as process,
+    ):
         try:
             for _ in range(100):
                 if process.poll() is not None:
-                    assert process.stdout is not None
-                    pytest.fail(process.stdout.read().decode())
+                    output.flush()
+                    pytest.fail(output_path.read_text())
                 try:
                     with urlopen(url, timeout=0.5) as response:
                         if response.status == 200:
@@ -171,3 +183,74 @@ def test_single_choice_widgets_support_keyboard_and_confirmation(page: Page, kin
     expect(page.get_by_role("button", name="Confirm choice")).to_be_enabled()
     page.get_by_role("button", name="Clear selection").click()
     expect(page.get_by_role("button", name="Confirm choice")).to_be_disabled()
+
+
+@pytest.mark.parametrize(("prompt", "minimum", "maximum"), [("militia", 2, 2), ("cellar", 0, 5)])
+def test_ordered_subset_selects_only_checked_cards(
+    page: Page, prompt: str, minimum: int, maximum: int
+) -> None:
+    state = new_game(GameConfig(), 5)
+    view = view_for(state, 0)
+    themes = load_themes(frozenset(CATALOG))
+    ctx = BoardContext("widget", "token", themes["neutral"], tuple(themes.values()))
+    options = tuple(
+        Option(f"card-{index}", card_id)
+        for index, card_id in enumerate(("k04", "k05", "k12", "k13", "k14"))
+    )
+    decision = Decision("subset", 0, "select", prompt, options, minimum, maximum, ordered=True)
+    page.set_content(str(choice_form(decision, view, ctx)))
+    page.add_script_tag(path=ROOT / "src/sway/static/app.js")
+    page.evaluate("document.dispatchEvent(new Event('DOMContentLoaded'))")
+    checked = page.locator('input[name="choices"]:checked')
+    expect(checked).to_have_count(0)
+    confirm = page.get_by_role("button", name="Confirm choice")
+    if minimum == 0:
+        expect(confirm).to_be_enabled()
+    else:
+        expect(confirm).to_be_disabled()
+    page.locator('input[value="card-0"]').check()
+    page.locator('input[value="card-1"]').check()
+    expect(confirm).to_be_enabled()
+    page.get_by_role("button", name="Move Sanctuary earlier").click()
+    selected = page.locator("#decision-form").evaluate(
+        "form => new FormData(form).getAll('choices')"
+    )
+    assert selected == ["card-1", "card-0"]
+    page.get_by_role("button", name="Clear selection").click()
+    expect(checked).to_have_count(0)
+
+
+def test_complete_game_reaches_scoring_and_saved_result(
+    page: Page, server_url: str, server_data: Path
+) -> None:
+    """A heuristic assists the human seat but every move goes through the real UI."""
+    page.goto(server_url)
+    page.locator('input[name="seed"]').fill("17")
+    page.get_by_role("button", name="Begin a game").click()
+    page.wait_for_url("**/games/*")
+    identifier = page.url.rsplit("/", 1)[1]
+    service = GameService(SQLiteStore(server_data / "games.sqlite3"))
+    memory = BotState("economy", 91)
+    for _ in range(400):
+        page.wait_for_selector("#decision-form, .finished", timeout=15000)
+        if page.locator(".finished").count():
+            break
+        view = service.view(identifier)
+        assert view.pending is not None
+        result = choose(view, view.pending, memory)
+        memory = result.state
+        for selected in result.command.selections:
+            control = page.locator(f'#decision-form input[name="choices"][value="{selected}"]')
+            if control.get_attribute("type") != "hidden":
+                control.check()
+        revision = page.locator("#board").get_attribute("data-revision")
+        page.get_by_role("button", name="Confirm choice").click()
+        expect(page.locator("#board")).not_to_have_attribute("data-revision", revision or "")
+    else:
+        pytest.fail("The browser game did not finish within 400 human decisions")
+    expect(page.locator(".finished")).to_contain_text("points")
+    expected_scores = service.view(identifier).scores
+    assert len(expected_scores) == 2
+    page.reload()
+    expect(page.locator(".finished")).to_contain_text("points")
+    assert service.view(identifier).scores == expected_scores

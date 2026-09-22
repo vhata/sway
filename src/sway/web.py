@@ -21,7 +21,7 @@ from sway.engine import Command, GameConfig, InvalidCommand
 from sway.engine.catalog import CATALOG, KINGDOM_IDS
 from sway.presentation.components import BoardContext, SavedGame, board, home, page
 from sway.presentation.themes import STATIC_ROOT, Theme, load_themes
-from sway.service import GameRecord, GameService
+from sway.service import GameRecord, GameService, GameSummary
 from sway.storage import GameNotFound, SQLiteStore, StorageConflict, StorageError
 
 COOKIE = "sway_csrf"
@@ -69,7 +69,7 @@ def _check_mutation(request: Request, data: FormData) -> None:
         raise PermissionError("Requests from another site are not accepted.")
 
 
-def _metadata(record: GameRecord) -> SavedGame:
+def _metadata(record: GameRecord | GameSummary) -> SavedGame:
     return SavedGame(
         record.game_id,
         record.revision,

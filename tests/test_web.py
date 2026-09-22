@@ -149,3 +149,18 @@ def test_decision_rejects_stale_revision_and_advances_only_once(
     stale = client.post(f"/games/{identifier}/decisions", data={**form, "revision": "-1"})
     assert stale.status_code == 409
     assert service.load(identifier).revision == revision
+
+
+def test_incompatible_save_does_not_block_healthy_tables(client: Client, tmp_path: Path) -> None:
+    token = csrf(client)
+    broken = create_game(client, token)
+    healthy = create_game(client, token, seed="99")
+    store = SQLiteStore(tmp_path / "games.sqlite3")
+    saved = store.load(broken)
+    store.commit(broken, saved.revision, "unsupported", '{"schema":999}', "{}", "[]")
+    assert client.get("/").status_code == 200
+    assert client.get(f"/games/{healthy}").status_code == 200
+    unavailable = client.get(f"/games/{broken}")
+    assert unavailable.status_code == 422
+    assert "preserved" in unavailable.text
+    assert store.load(broken).snapshot == '{"schema":999}'

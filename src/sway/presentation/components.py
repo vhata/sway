@@ -269,14 +269,22 @@ def option_label(option: Option, theme: Theme) -> str:
 def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.Element:
     path = f"/games/{ctx.game_id}/decisions"
     ordered = decision.ordered or decision.kind == "order"
+    full_order = ordered and decision.minimum == decision.maximum == len(decision.options)
     cards: list[h.Node] = []
     for index, option in enumerate(decision.options):
         choice_id = f"choice-{decision.id}-{index}"
         if ordered:
             cards.append(
                 h.li(class_="order-item", data_option=option.id)[
-                    h.input(type="hidden", name="choices", value=option.id),
-                    h.span[option_label(option, ctx.theme)],
+                    h.input(
+                        type="hidden" if full_order else "checkbox",
+                        name="choices",
+                        value=option.id,
+                        id=choice_id,
+                    ),
+                    h.label(for_=choice_id)[option_label(option, ctx.theme)]
+                    if not full_order
+                    else h.span[option_label(option, ctx.theme)],
                     h.button(
                         type="button",
                         data_move="up",
@@ -321,7 +329,7 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
         data_decision=decision.id,
         data_minimum=str(decision.minimum),
         data_maximum=str(decision.maximum),
-        data_ordered=str(ordered).lower(),
+        data_ordered=str(full_order).lower(),
     )[
         csrf_input(ctx.csrf),
         h.input(type="hidden", name="revision", value=str(view.revision)),
@@ -335,18 +343,20 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
             ],
             h.p(class_="selection-hint")[
                 "Use the arrows to choose the order."
-                if ordered
+                if full_order
                 else f"Choose {decision.minimum}"
                 + (f"–{decision.maximum}" if decision.minimum != decision.maximum else "")
                 + " option"
                 + ("s" if decision.maximum != 1 else "")
-                + "."
+                + ("; use the arrows to order your selected cards." if ordered else ".")
             ],
             h.ol(class_="ordered-choices")[cards] if ordered else h.div(class_="choices")[cards],
         ],
         h.div(class_="decision-actions")[
             h.button(type="submit", class_="primary", id="confirm-choice")["Confirm choice"],
-            h.button(type="reset", class_="secondary")["Clear selection"] if not ordered else None,
+            h.button(type="reset", class_="secondary")["Clear selection"]
+            if not full_order
+            else None,
             h.span(class_="selection-status", aria_live="polite"),
         ],
     ]

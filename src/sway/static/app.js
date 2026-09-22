@@ -28,7 +28,7 @@
       if (confirm) {
         confirm.disabled = selected.length < minimum || selected.length > maximum;
       }
-      for (const choice of form.querySelectorAll(".choice")) {
+      for (const choice of form.querySelectorAll(".choice, .order-item")) {
         choice.classList.toggle("selected", Boolean(choice.querySelector("input:checked")));
       }
       const status = form.querySelector(".selection-status");
@@ -64,6 +64,19 @@
     if ([409, 422].includes(event.detail.xhr.status)) {
       event.detail.shouldSwap = true;
       event.detail.isError = false;
+    }
+  });
+  document.addEventListener("htmx:responseError", (event) => {
+    const panel = document.querySelector(".decision-panel");
+    if (panel) {
+      const notice = document.createElement("p");
+      notice.className = "notice error";
+      notice.setAttribute("role", "alert");
+      notice.textContent =
+        event.detail.xhr.status === 403
+          ? "This form has expired. Reload the page before making another choice."
+          : "This move could not be saved. Reload your table to see the latest saved game.";
+      panel.prepend(notice);
     }
   });
   document.addEventListener("htmx:sendError", () => {
