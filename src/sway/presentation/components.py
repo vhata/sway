@@ -32,6 +32,7 @@ class BoardContext:
     theme: Theme
     themes: tuple[Theme, ...]
     error: str | None = None
+    pause_bots: bool = False
 
 
 def page(title: str, content: h.Node) -> h.Element:
@@ -66,7 +67,7 @@ def csrf_input(token: str) -> h.VoidElement:
 def home(
     games: Sequence[SavedGame], themes: tuple[Theme, ...], csrf: str, error: str | None = None
 ) -> h.Element:
-    neutral = next(theme for theme in themes if theme.id == "neutral")
+    neutral = next((theme for theme in themes if theme.id == "neutral"), themes[0])
     return page(
         "Your table awaits",
         h.main(id="main", class_="home", style=neutral.style)[
@@ -513,7 +514,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                 action=f"/games/{ctx.game_id}/advance",
                 method="post",
                 hx_post=f"/games/{ctx.game_id}/advance",
-                hx_trigger="load delay:250ms" if bot_active and not ctx.error else "submit",
+                hx_trigger="load delay:250ms" if bot_active and not ctx.pause_bots else "submit",
                 hx_target="#board",
                 hx_swap="outerHTML",
                 id="bot-progress",

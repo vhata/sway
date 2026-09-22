@@ -78,3 +78,19 @@ def test_theme_switch_rerenders_history_without_changing_rules() -> None:
     for event in view.events:
         event_text(event, view, themes["neutral"])
         event_text(event, view, themes["orbital"])
+
+
+def test_discovery_isolates_invalid_packs_and_requires_one_valid_pack(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    from sway.presentation import themes as theme_module
+
+    (tmp_path / "orbital.json").write_text((THEME_ROOT / "orbital.json").read_text())
+    (tmp_path / "broken.json").write_text('{"version":1}')
+    monkeypatch.setattr(theme_module, "THEME_ROOT", tmp_path)
+    loaded = load_themes(frozenset(CATALOG))
+    assert set(loaded) == {"orbital"}
+    assert "Skipping invalid theme broken.json" in caplog.text
+    (tmp_path / "orbital.json").unlink()
+    with pytest.raises(ValueError, match="At least one valid"):
+        load_themes(frozenset(CATALOG))

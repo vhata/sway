@@ -1,6 +1,6 @@
 # Sway
 
-A local deck-building game with original themes, a deterministic Python rules engine and configurable computer opponents. The accepted release target follows Dominion second edition base mechanics; no official art or copied card descriptions are bundled. See [terminology and rule references](docs/TERMINOLOGY.md).
+A local deck-building game with original themes, a deterministic Python rules engine and configurable computer opponents. The rules implement all 26 Kingdom cards and seven basic card types from Dominion second edition; no official art or copied card descriptions are bundled. See [terminology and rule references](docs/TERMINOLOGY.md).
 
 ## Development
 
@@ -12,7 +12,11 @@ scripts/install-browsers.sh
 scripts/dev.sh
 ```
 
-The server defaults to `http://127.0.0.1:8000`. `scripts/dev.sh` supports uvicorn arguments, for example `--port 8001` for another worktree. The foundation PR installs tooling; gameplay and the `sway.web:app` entrypoint arrive in the dependent implementation PRs. [SPEC.md](SPEC.md) describes the accepted release, not a claim that every feature has shipped.
+The server defaults to `http://127.0.0.1:8000`. `scripts/dev.sh` supports uvicorn arguments, for example `--port 8001` for another worktree. The browser setup lets you choose two to four players, a separate economy, engine or attack profile for each opponent, and a starter, random or manually selected supply. Select a seed to reproduce a game. Common Ground and Orbital Commons supply original names and visuals; switch themes during play without changing the rules state. Every accepted decision is saved, including interrupted reactions, and saved tables resume from the home screen.
+
+Development saves live in the current worktree's ignored `.runtime/` directory, so separate worktrees never share games by default. Set `SWAY_DATA_DIR` to choose another location. Running the installed `sway.web:app` directly defaults to `~/.local/share/sway`; it honors the same override. Keep the server local: this release has no remote-user authentication.
+
+[SPEC.md](SPEC.md) records the release requirements. PostgreSQL deployment, human multiplayer, expansions and more advanced opponents are deferred.
 
 `setup.sh` synchronizes `uv.lock`, installs checksum-verified Biome, and installs staged-format/lint and pre-push hooks. `install-browsers.sh --with-deps` also installs system dependencies on supported Linux hosts. All project Python commands run through `uv run --locked`.
 

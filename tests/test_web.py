@@ -164,3 +164,26 @@ def test_incompatible_save_does_not_block_healthy_tables(client: Client, tmp_pat
     assert unavailable.status_code == 422
     assert "preserved" in unavailable.text
     assert store.load(broken).snapshot == '{"schema":999}'
+
+
+def test_unavailable_saved_theme_falls_back_without_changing_save(
+    client: Client, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from sway.presentation import themes as theme_module
+
+    token = csrf(client)
+    identifier = create_game(client, token)
+    service = GameService(SQLiteStore(tmp_path / "games.sqlite3"))
+    original = service.load(identifier)
+    packs = tmp_path / "packs"
+    packs.mkdir()
+    (packs / "orbital.json").write_text((theme_module.THEME_ROOT / "orbital.json").read_text())
+    (packs / "neutral.json").write_text("invalid pack")
+    monkeypatch.setattr(theme_module, "THEME_ROOT", packs)
+    restarted = make_client(tmp_path)
+    response = restarted.get(f"/games/{identifier}")
+    assert response.status_code == 200
+    assert "showing Orbital Commons" in response.text
+    assert "Your game is unchanged" in response.text
+    assert restarted.get("/").status_code == 200
+    assert service.load(identifier) == original

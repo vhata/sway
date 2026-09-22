@@ -85,6 +85,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         os.environ.get("SWAY_DATA_DIR", str(Path.home() / ".local/share/sway"))
     )
     themes = load_themes(frozenset(CATALOG))
+    default_theme = themes.get("neutral", next(iter(themes.values())))
     service: GameService | None = None
     service_lock = Lock()
     application = FastAPI(title="Sway", docs_url=None, redoc_url=None, openapi_url=None)
@@ -110,11 +111,19 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         request: Request, game_id: str, error: str | None = None, status: int = 200
     ) -> HTMLResponse:
         current_service = get_service()
+        pause_bots = error is not None
         record = current_service.load(game_id)
-        theme = get_theme(record.theme_id)
+        theme = themes.get(record.theme_id, default_theme)
+        if record.theme_id not in themes:
+            fallback_notice = (
+                f"Your saved theme is unavailable; showing {theme.name}. Your game is unchanged."
+            )
+            error = f"{error} {fallback_notice}" if error else fallback_notice
         view = current_service.view(game_id)
         token = _csrf(request)
-        content = board(view, BoardContext(game_id, token, theme, tuple(themes.values()), error))
+        content = board(
+            view, BoardContext(game_id, token, theme, tuple(themes.values()), error, pause_bots)
+        )
         node = (
             content if request.headers.get("HX-Request") == "true" else page("Your table", content)
         )
@@ -188,7 +197,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             strategies = tuple(
                 _field(data, f"strategy{index}", "economy") for index in range(1, count)
             )
-            theme = get_theme(_field(data, "theme", "neutral"))
+            theme = get_theme(_field(data, "theme", default_theme.id))
             supply = _field(data, "supply", "starter")
             kingdom = GameConfig().kingdom
             if supply == "random":

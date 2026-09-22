@@ -1,5 +1,6 @@
 """Validated, data-only presentation packs. Rules never read these manifests."""
 
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -7,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 STATIC_ROOT = Path(__file__).resolve().parent.parent / "static"
 THEME_ROOT = STATIC_ROOT / "themes"
+logger = logging.getLogger(__name__)
 
 
 class CardPresentation(BaseModel):
@@ -72,12 +74,17 @@ def load_theme(path: Path, required_ids: frozenset[str]) -> Theme:
 
 
 def load_themes(required_ids: frozenset[str]) -> dict[str, Theme]:
+    """Isolate invalid installed packs without disabling healthy games or themes."""
     themes: dict[str, Theme] = {}
     for path in sorted(THEME_ROOT.glob("*.json")):
-        theme = load_theme(path, required_ids)
-        if theme.id in themes:
-            raise ValueError(f"Duplicate theme ID: {theme.id}")
+        try:
+            theme = load_theme(path, required_ids)
+            if theme.id in themes:
+                raise ValueError(f"Duplicate theme ID: {theme.id}")
+        except ValueError as exc:
+            logger.warning("Skipping invalid theme %s: %s", path.name, exc)
+            continue
         themes[theme.id] = theme
-    if "neutral" not in themes:
-        raise ValueError("The neutral theme is required")
+    if not themes:
+        raise ValueError("At least one valid theme is required")
     return themes

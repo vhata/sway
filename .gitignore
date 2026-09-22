@@ -22,3 +22,6 @@ test-results/
 .env
 .env.*
 !.env.example
+
+# Each development worktree keeps its own saved games.
+.runtime/
