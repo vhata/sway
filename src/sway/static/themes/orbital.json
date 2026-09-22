@@ -1,0 +1,223 @@
+{
+  "version": 1,
+  "id": "orbital",
+  "name": "Orbital Commons",
+  "tagline": "A new constellation of possibilities.",
+  "tokens": {
+    "background": "#101925",
+    "surface": "#1b2a3b",
+    "ink": "#edf3f4",
+    "muted": "#a2b5ca",
+    "accent": "#71d5c0",
+    "gold": "#e7b777"
+  },
+  "terms": {
+    "actions": "Actions",
+    "buys": "Buys",
+    "coins": "Energy",
+    "points": "Points",
+    "supply": "The constellation",
+    "hand": "Your hand",
+    "played": "In play"
+  },
+  "cards": {
+    "treasure1": {
+      "name": "Credit",
+      "description": "Worth 1 coin when played.",
+      "image": "themes/orbital/treasure.svg",
+      "image_alt": "An abstract treasure emblem"
+    },
+    "treasure2": {
+      "name": "Battery",
+      "description": "Worth 2 coins when played.",
+      "image": "themes/orbital/treasure.svg",
+      "image_alt": "An abstract treasure emblem"
+    },
+    "treasure3": {
+      "name": "Reactor",
+      "description": "Worth 3 coins when played.",
+      "image": "themes/orbital/treasure.svg",
+      "image_alt": "An abstract treasure emblem"
+    },
+    "victory1": {
+      "name": "Outpost",
+      "description": "Worth 1 point at the end of the game.",
+      "image": "themes/orbital/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "victory2": {
+      "name": "Habitat",
+      "description": "Worth 3 points at the end of the game.",
+      "image": "themes/orbital/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "victory3": {
+      "name": "Worldship",
+      "description": "Worth 6 points at the end of the game.",
+      "image": "themes/orbital/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "curse": {
+      "name": "Debris",
+      "description": "Worth minus 1 point at the end of the game.",
+      "image": "themes/orbital/curse.svg",
+      "image_alt": "An abstract curse emblem"
+    },
+    "k01": {
+      "name": "Fabricator",
+      "description": "Take a card costing up to 5 into your hand. Then put a card from your hand on top of your deck.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k02": {
+      "name": "Corsair",
+      "description": "Take an Reactor. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Credit if possible, and discards the rest.",
+      "image": "themes/orbital/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k03": {
+      "name": "Quartermaster",
+      "description": "Take a Battery onto your deck. Each opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
+      "image": "themes/orbital/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k04": {
+      "name": "Cargo Bay",
+      "description": "Gain 1 action. Discard as many cards as you choose, then draw that many cards.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k05": {
+      "name": "Recycler",
+      "description": "Scrap up to 4 cards from your hand.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k06": {
+      "name": "Conclave",
+      "description": "Draw 4 cards and gain 1 buy. Every other player draws 1 card.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k07": {
+      "name": "Solstice",
+      "description": "Gain 2 actions, 1 buy and 2 coins.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k08": {
+      "name": "Biosphere",
+      "description": "Worth 1 point for every complete group of 10 cards in your deck, counting all zones, at game end.",
+      "image": "themes/orbital/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "k09": {
+      "name": "Pathfinder",
+      "description": "Draw 1 card and gain 1 action. You may put a card from your discard pile onto your deck.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k10": {
+      "name": "Observatory",
+      "description": "Draw 2 cards and gain 1 action.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k11": {
+      "name": "Data Vault",
+      "description": "Draw until your hand contains 7 cards. You may set aside Action cards drawn this way; discard them after drawing finishes.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k12": {
+      "name": "Spaceport",
+      "description": "Draw 1 card; gain 1 action, 1 buy and 1 coin.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k13": {
+      "name": "Trader",
+      "description": "Draw 1 card and gain 1 action. The first Battery you play this turn provides 1 extra coin.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k14": {
+      "name": "Interceptor",
+      "description": "Gain 2 coins. Every opponent discards until they have 3 cards in hand.",
+      "image": "themes/orbital/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k15": {
+      "name": "Transmuter",
+      "description": "You may scrap a Treasure from your hand, then take a Treasure costing at most 3 more into your hand.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k16": {
+      "name": "Shield Array",
+      "description": "Draw 2 cards. When an opponent attacks, you may reveal this from your hand to avoid that attack.",
+      "image": "themes/orbital/reaction.svg",
+      "image_alt": "An abstract reaction emblem"
+    },
+    "k17": {
+      "name": "Salvager",
+      "description": "You may scrap a Credit from your hand to gain 3 coins.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k18": {
+      "name": "Scavenger",
+      "description": "Draw 1 card, gain 1 action and 1 coin. Discard 1 card for each empty supply pile.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k19": {
+      "name": "Retrofitter",
+      "description": "Scrap a card from your hand. Take a card costing at most 2 more into your discard pile.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k20": {
+      "name": "Sensor Grid",
+      "description": "Draw 1 card and gain 1 action. Inspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k21": {
+      "name": "Shipyard",
+      "description": "Draw 3 cards.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k22": {
+      "name": "Echo Chamber",
+      "description": "You may choose an Action from your hand and play it twice.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k23": {
+      "name": "Drone",
+      "description": "Gain 2 coins. Discard your top card; if it is an Action, you may play it.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k24": {
+      "name": "Waypoint",
+      "description": "Draw 1 card and gain 2 actions.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k25": {
+      "name": "Saboteur",
+      "description": "Draw 2 cards. Every opponent takes a Debris, if any remain.",
+      "image": "themes/orbital/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k26": {
+      "name": "Assembler",
+      "description": "Take a card costing up to 4 into your discard pile.",
+      "image": "themes/orbital/action.svg",
+      "image_alt": "An abstract action emblem"
+    }
+  }
+}
