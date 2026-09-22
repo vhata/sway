@@ -4,5 +4,6 @@ Historical codebase reviews are immutable snapshots; the latest review is the cu
 
 | Review (UTC, newest first) | Type | Reviewed commit | Open findings |
 | --- | --- | --- | --- |
+| [2026-09-22 09:34](2026-09-22-0934-full.md) | Full | `55c3052` | 4 |
 
-No whole-codebase review has been recorded yet. This is an empty ledger, not a claim that the codebase has no defects. [BACKLOG.md](BACKLOG.md) holds promoted review work.
+[BACKLOG.md](BACKLOG.md) holds promoted review work. Historical open counts describe each reviewed commit; the newest snapshot owns the current inventory.
