@@ -31,7 +31,8 @@ Development saves live in the current worktree's ignored `.runtime/` directory, 
 | `scripts/coverage.sh` | Unit/integration tests and 90% engine branch coverage gate |
 | `scripts/e2e.sh` | Chromium browser tests with failure traces |
 | `scripts/build.sh` | Locked-environment wheel and source distribution |
-| `scripts/check.sh` | Formatting, lint, types, coverage tests and build |
+| `scripts/install-smoke.sh` | Install the wheel into an isolated uv environment and probe packaged assets |
+| `scripts/check.sh` | Formatting, lint, types, coverage tests, build and installed-wheel smoke |
 
 CI runs `check.sh` and the browser suite. For dependencies, use `uv add` or `uv add --dev` and commit both `pyproject.toml` and `uv.lock`. Change `.uv-version` and the matching `tool.uv.required-version` together; Biome upgrades also update `.biome-version`, configuration schema and `scripts/biome.sha256`.
 

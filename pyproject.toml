@@ -45,7 +45,7 @@ select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501"]
 
 [tool.basedpyright]
-include = ["src", "tests"]
+include = ["src", "tests", "scripts"]
 exclude = [".venv", "build", "dist"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"

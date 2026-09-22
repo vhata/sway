@@ -22,6 +22,7 @@ test-results/
 .env
 .env.*
 !.env.example
+coverage.json
 
 # Each development worktree keeps its own saved games.
 .runtime/
