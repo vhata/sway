@@ -28,7 +28,16 @@ class Card:
 class GameConfig:
     player_count: int = 2
     kingdom: tuple[str, ...] = (
-        "k04", "k12", "k13", "k14", "k15", "k16", "k19", "k21", "k24", "k26"
+        "k04",
+        "k12",
+        "k13",
+        "k14",
+        "k15",
+        "k16",
+        "k19",
+        "k21",
+        "k24",
+        "k26",
     )
     player_names: tuple[str, ...] = ()
 
