@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict
 from typing import cast
 
-from sway.engine.catalog import CATALOG
+from sway.engine.catalog import CATALOG, KINGDOM_IDS
 from sway.engine.core import all_cards
 from sway.engine.models import (
     Card,
@@ -23,6 +24,46 @@ from sway.engine.models import (
 
 type Json = None | bool | int | float | str | list[Json] | dict[str, Json]
 SNAPSHOT_VERSION = 1
+
+_STACK_EFFECTS = frozenset(
+    {
+        "resolve",
+        "play",
+        "reaction",
+        "attack",
+        "gain",
+        "topdeck_hand",
+        "bandit_discard",
+        "library",
+        "sentry_trash",
+        "sentry_discard",
+        "sentry_order",
+    }
+)
+_DECISION_EFFECTS = frozenset(
+    {
+        "action",
+        "buy",
+        "reaction",
+        "cellar",
+        "discard_hand",
+        "chapel",
+        "mine",
+        "moneylender",
+        "remodel",
+        "gain",
+        "harbinger",
+        "topdeck_hand",
+        "bureaucrat",
+        "bandit_trash",
+        "library_choice",
+        "sentry_trash",
+        "sentry_discard",
+        "sentry_order",
+        "throne",
+        "vassal",
+    }
+)
 
 
 class InvalidSnapshot(ValueError):
@@ -183,6 +224,161 @@ def _decode(data: dict[str, Json]) -> GameState:
     )
 
 
+def _serial(identifier: str, prefix: str) -> int:
+    if re.fullmatch(prefix + r"[1-9][0-9]*", identifier) is None:
+        raise InvalidSnapshot("Invalid generated identifier")
+    return int(identifier[1:])
+
+
+def _validate_effect(state: GameState, effect: Effect, *, pending: bool = False) -> None:
+    allowed = _DECISION_EFFECTS if pending else _STACK_EFFECTS
+    if effect.kind not in allowed or not 0 <= effect.player < len(state.players):
+        raise InvalidSnapshot("Invalid effect kind or player")
+    if effect.amount < 0 or effect.selected or effect.target not in {-1, 1}:
+        raise InvalidSnapshot("Invalid effect parameters")
+    if effect.kind == "gain":
+        if effect.card_id not in {"", "hand"}:
+            raise InvalidSnapshot("Invalid gain destination")
+    elif effect.target != -1:
+        raise InvalidSnapshot("Invalid effect target")
+    if effect.kind in {"resolve", "play", "reaction", "attack"}:
+        if effect.card_id not in CATALOG or "action" not in CATALOG[effect.card_id].types:
+            raise InvalidSnapshot("Invalid action continuation")
+        if effect.kind in {"reaction", "attack"} and "attack" not in CATALOG[effect.card_id].types:
+            raise InvalidSnapshot("Invalid attack continuation")
+        card = Card(effect.instance_id, effect.card_id)
+        if card not in state.players[state.active_player].in_play:
+            raise InvalidSnapshot("Continuation references a card outside play")
+    if (
+        effect.kind
+        not in {
+            "reaction",
+            "attack",
+            "bandit_trash",
+            "bandit_discard",
+            "bureaucrat",
+            "discard_hand",
+        }
+        and effect.player != state.active_player
+    ):
+        raise InvalidSnapshot("Continuation is assigned to the wrong player")
+
+
+def _validate_options(state: GameState, pending: Decision, effect: Effect) -> None:
+    """Reject stale or forged references before a restored choice can be applied."""
+    player = state.players[pending.player]
+    kind = effect.kind
+    expected: tuple[Option, ...]
+    minimum, maximum = 1, 1
+    ordered = False
+    decision_kind: DecisionKind = "select"
+    prompts = {kind}
+    if kind in {"action", "buy"}:
+        decision_kind = "menu"
+        if pending.player != state.active_player or state.phase != kind:
+            raise InvalidSnapshot("Menu does not match the turn phase")
+        if kind == "action":
+            if state.actions <= 0:
+                raise InvalidSnapshot("Action menu has no actions remaining")
+            eligible = [card for card in player.hand if "action" in CATALOG[card.definition].types]
+            expected = tuple(Option(card.id, card.definition, card.id) for card in eligible) + (
+                Option("end-actions"),
+            )
+        else:
+            treasures = (
+                []
+                if state.buying_started
+                else [card for card in player.hand if "treasure" in CATALOG[card.definition].types]
+            )
+            expected = tuple(Option(card.id, card.definition, card.id) for card in treasures)
+            if treasures:
+                expected += (Option("play-treasures"),)
+            if state.buys:
+                expected += tuple(
+                    Option(key, key)
+                    for key, count in state.supply.items()
+                    if count > 0 and CATALOG[key].cost <= state.coins
+                )
+            expected += (Option("end-turn"),)
+    elif kind == "gain":
+        decision_kind = "supply"
+        prompts = {"gain_hand" if effect.card_id == "hand" else "gain"}
+        expected = tuple(
+            Option(key, key)
+            for key, count in state.supply.items()
+            if count > 0
+            and CATALOG[key].cost <= effect.amount
+            and (effect.target != 1 or "treasure" in CATALOG[key].types)
+        )
+    elif kind in {"reaction", "vassal", "library_choice"}:
+        decision_kind = "yes_no"
+        expected = (Option("yes"), Option("no"))
+        if kind == "reaction" and not any(card.definition == "k16" for card in player.hand):
+            raise InvalidSnapshot("Reaction card is missing")
+        if kind in {"vassal", "library_choice"}:
+            zone = player.discard if kind == "vassal" else player.looked
+            card = next((card for card in zone if card.id == effect.instance_id), None)
+            if card is None or "action" not in CATALOG[card.definition].types:
+                raise InvalidSnapshot("Optional action is missing")
+            if kind == "library_choice":
+                prompts = {"library"}
+                expected = (Option("yes", card.definition, card.id), Option("no"))
+    else:
+        zone = (
+            player.discard
+            if kind == "harbinger"
+            else player.revealed
+            if kind == "bandit_trash"
+            else player.looked
+            if kind.startswith("sentry_")
+            else player.hand
+        )
+        eligible = [
+            card
+            for card in zone
+            if (kind != "mine" or "treasure" in CATALOG[card.definition].types)
+            and (kind != "moneylender" or card.definition == "treasure1")
+            and (kind != "bureaucrat" or "victory" in CATALOG[card.definition].types)
+            and (kind != "throne" or "action" in CATALOG[card.definition].types)
+            and (
+                kind != "bandit_trash"
+                or ("treasure" in CATALOG[card.definition].types and card.definition != "treasure1")
+            )
+        ]
+        expected = tuple(Option(card.id, card.definition, card.id) for card in eligible)
+        if kind in {"cellar", "sentry_trash", "sentry_discard"}:
+            minimum, maximum = 0, len(expected)
+        elif kind == "chapel":
+            minimum, maximum = 0, min(4, len(expected))
+        elif kind in {"mine", "moneylender", "throne", "harbinger"}:
+            minimum = 0
+        elif kind == "discard_hand":
+            prompts = {"militia", "poacher"}
+            amount = (
+                len(player.hand) - 3
+                if pending.prompt == "militia"
+                else sum(count == 0 for count in state.supply.values())
+            )
+            minimum = maximum = min(amount, len(expected))
+        elif kind == "sentry_order":
+            minimum = maximum = len(expected)
+            decision_kind = "order"
+        elif kind == "bandit_trash":
+            prompts = {"bandit"}
+        elif kind == "topdeck_hand":
+            prompts = {"topdeck"}
+        ordered = kind in {"cellar", "discard_hand", "sentry_discard", "sentry_order"}
+    if (
+        not expected
+        or set(pending.options) != set(expected)
+        or (pending.minimum, pending.maximum) != (minimum, maximum)
+        or pending.kind != decision_kind
+        or pending.prompt not in prompts
+        or pending.ordered != ordered
+    ):
+        raise InvalidSnapshot("Decision options or constraints disagree with the continuation")
+
+
 def _validate(state: GameState) -> None:
     count = len(state.players)
     if (
@@ -191,8 +387,18 @@ def _validate(state: GameState) -> None:
         or not 0 <= state.active_player < count
     ):
         raise InvalidSnapshot("Invalid players")
+    kingdom = state.config.kingdom
+    if (
+        len(kingdom) != 10
+        or len(set(kingdom)) != 10
+        or not set(kingdom) <= set(KINGDOM_IDS)
+        or (state.config.player_names and len(state.config.player_names) != count)
+    ):
+        raise InvalidSnapshot("Invalid game configuration")
     if any(key not in CATALOG or value < 0 for key, value in state.supply.items()):
         raise InvalidSnapshot("Invalid supply")
+    if set(state.supply) != set(kingdom) | (set(CATALOG) - set(KINGDOM_IDS)):
+        raise InvalidSnapshot("Supply does not match the configured game")
     if (
         "victory3" not in state.supply
         or min(state.actions, state.buys, state.coins, state.revision) < 0
@@ -201,8 +407,16 @@ def _validate(state: GameState) -> None:
     cards = state.trash + [card for player in state.players for card in all_cards(player)]
     if len({card.id for card in cards}) != len(cards):
         raise InvalidSnapshot("A card occurs in more than one zone")
+    if state.next_instance_id <= max((_serial(card.id, "c") for card in cards), default=0):
+        raise InvalidSnapshot("The next card identifier would reuse an existing card")
+    if state.next_decision_id < 1 or state.turn < 1 or not 0 <= state.rng_state < 2**64:
+        raise InvalidSnapshot("Invalid sequence or random state")
+    if any(player.turns < 0 for player in state.players):
+        raise InvalidSnapshot("Invalid completed turn count")
     if (state.pending is None) != (state.pending_effect is None):
         raise InvalidSnapshot("Decision and continuation disagree")
+    if state.phase == "finished" and (state.pending is not None or state.effects):
+        raise InvalidSnapshot("Finished game has unresolved decisions")
     if state.pending is not None:
         pending = state.pending
         if not 0 <= pending.player < count or not 0 <= pending.minimum <= pending.maximum <= len(
@@ -211,8 +425,30 @@ def _validate(state: GameState) -> None:
             raise InvalidSnapshot("Invalid decision bounds")
         if len({option.id for option in pending.options}) != len(pending.options):
             raise InvalidSnapshot("Duplicate decision option")
-    if state.phase == "finished" and (state.pending is not None or state.effects):
-        raise InvalidSnapshot("Finished game has unresolved decisions")
+        if state.next_decision_id <= _serial(pending.id, "d"):
+            raise InvalidSnapshot("The next decision identifier would be reused")
+        continuation = state.pending_effect
+        assert continuation is not None
+        if continuation.player != pending.player:
+            raise InvalidSnapshot("Decision and continuation owners disagree")
+        _validate_effect(state, continuation, pending=True)
+        _validate_options(state, pending, continuation)
+    for effect in state.effects:
+        _validate_effect(state, effect)
+    if any(
+        not 0 <= event.player < count
+        or (event.audience is not None and not 0 <= event.audience < count)
+        for event in state.events
+    ):
+        raise InvalidSnapshot("Invalid event audience or player")
+    if state.phase != "finished" and state.pending is None:
+        raise InvalidSnapshot("Unfinished game has no pending decision")
+    if state.phase == "finished" and (
+        len(state.scores) != count
+        or not state.winners
+        or any(not 0 <= winner < count for winner in state.winners)
+    ):
+        raise InvalidSnapshot("Invalid game results")
 
 
 def state_from_json(snapshot: str) -> GameState:

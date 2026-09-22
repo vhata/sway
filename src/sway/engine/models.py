@@ -139,6 +139,7 @@ class OpponentView:
     in_play: tuple[Card, ...]
     revealed: tuple[Card, ...]
     turns: int
+    set_aside: tuple[Card, ...] = ()
 
 
 @dataclass(frozen=True)

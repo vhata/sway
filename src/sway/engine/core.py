@@ -241,6 +241,7 @@ def view_for(state: GameState, player: int) -> PlayerView:
                 tuple(owner.in_play),
                 tuple(owner.revealed),
                 owner.turns,
+                tuple(owner.set_aside),
             )
             for index, owner in enumerate(state.players)
         ),
@@ -708,7 +709,7 @@ def _answer(state: GameState, effect: Effect, selected: tuple[str, ...]) -> None
                     actor,
                     tuple(cards),
                     len(cards),
-                    actor if kind == "topdeck_hand" else None,
+                    None if kind == "bureaucrat" else actor,
                 )
             )
     elif kind == "bandit_trash":
@@ -720,6 +721,7 @@ def _answer(state: GameState, effect: Effect, selected: tuple[str, ...]) -> None
             state.events.append(Event("draw", actor, (card,), 1, actor))
         else:
             player.set_aside.append(card)
+            state.events.append(Event("set_aside", actor, (card,)))
         _schedule(state, Effect("library", actor))
     elif kind == "sentry_trash":
         _trash(state, actor, _remove(player.looked, selected))

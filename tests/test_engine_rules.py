@@ -45,12 +45,17 @@ def scenario(
     opponent: tuple[str, ...] = (),
     opponents: int = 1,
 ) -> GameState:
+    kingdom: list[str] = []
+    for card_id in (*hand, *deck, *discard, *opponent, "k08", "k25", *GameConfig().kingdom):
+        if card_id.startswith("k") and card_id not in kingdom:
+            kingdom.append(card_id)
+    kingdom = kingdom[:10]
     state = GameState(
-        GameConfig(player_count=opponents + 1),
+        GameConfig(player_count=opponents + 1, kingdom=tuple(kingdom)),
         10,
         10,
         [Player(f"P{i}") for i in range(opponents + 1)],
-        {key: 10 for key in CATALOG},
+        {key: 10 for key in CATALOG if key in kingdom or not key.startswith("k")},
     )
     state.players[0].hand = cards(state, *hand)
     state.players[0].deck = list(reversed(cards(state, *deck)))
@@ -200,6 +205,16 @@ def test_harbinger_draw_then_optional_discard_recovery() -> None:
     assert definitions(skipped.players[0].discard) == ["treasure3"]
 
 
+def test_harbinger_recovery_does_not_reveal_an_interior_discard() -> None:
+    state = play(scenario("k09", deck=("treasure1",), discard=("treasure3", "victory1")), "k09")
+    recovered = state.players[0].discard[0]
+    state = select_definitions(state, "treasure3")
+    assert recovered not in [card for event in view_for(state, 1).events for card in event.cards]
+    own_event = next(event for event in view_for(state, 0).events if event.kind == "topdeck")
+    assert own_event.cards == (recovered,) and own_event.audience == 0
+    assert view_for(state, 1).players[0].discard[-1].definition == "victory1"
+
+
 def test_artisan_gains_to_hand_then_topdecks_even_without_gain() -> None:
     state = play(scenario("k01", "victory1"), "k01")
     assert state.pending is not None and state.pending.prompt == "gain_hand"
@@ -221,7 +236,7 @@ def test_workshop_gain_limit_and_empty_supply() -> None:
     state = play(scenario("k26"), "k26")
     assert state.pending is not None
     assert {option.id for option in state.pending.options} == {
-        key for key, value in CATALOG.items() if value.cost <= 4
+        key for key in state.supply if CATALOG[key].cost <= 4
     }
     state = choose(state, "k08")
     assert definitions(state.players[0].discard) == ["k08"]
@@ -310,6 +325,22 @@ def test_library_can_keep_actions_stop_when_empty_or_draw_nothing_at_seven() -> 
     assert len(already.players[0].hand) == 7 and len(already.players[0].deck) == 1
     empty = choose(play(scenario("k11", deck=("k21",)), "k11"), "no")
     assert definitions(empty.players[0].discard) == ["k21"]
+
+
+def test_library_skipped_actions_are_public_while_inspected_cards_stay_private() -> None:
+    state = play(scenario("k11", deck=("k24", "k21", "treasure1")), "k11")
+    skipped = state.players[0].looked[0]
+    state = choose(state, "no")
+    opponent = view_for(state, 1)
+    assert opponent.players[0].set_aside == (skipped,)
+    assert not opponent.looked
+    assert any(event.kind == "set_aside" and event.cards == (skipped,) for event in opponent.events)
+    assert all(card.definition != "k21" for event in opponent.events for card in event.cards)
+    restored = state_from_json(state_to_json(state))
+    assert view_for(restored, 1).players[0].set_aside == (skipped,)
+    finished = choose(restored, "yes")
+    assert not view_for(finished, 1).players[0].set_aside
+    assert skipped in finished.players[0].discard
 
 
 def test_sentry_trash_discard_and_private_order_top_first() -> None:
@@ -610,3 +641,34 @@ def test_save_resume_preserves_attack_and_nested_effect_continuations(attack: st
     state = choose(restored, "yes")
     assert state.pending is not None and state.pending.prompt == "reaction"
     assert choose(state_from_json(state_to_json(state)), "yes") == choose(state, "yes")
+
+
+@pytest.mark.parametrize("card_id", [key for key in CATALOG if "action" in CATALOG[key].types])
+def test_every_card_decision_resumes_with_legal_current_options(card_id: str) -> None:
+    state = scenario(
+        card_id,
+        "treasure1",
+        "treasure2",
+        "curse",
+        "victory1",
+        "k21",
+        deck=("k24", "k13", "treasure3", "k20", "treasure1"),
+        discard=("k25", "k09"),
+        opponent=("k16", "victory1", "treasure1", "treasure2", "curse"),
+    )
+    state.players[1].deck = cards(state, "treasure2", "treasure3")
+    state = play(state, card_id)
+    for _ in range(40):
+        restored = state_from_json(state_to_json(state))
+        assert restored == state
+        pending = state.pending
+        assert pending is not None
+        if pending.prompt == "buy":
+            break
+        selections = tuple(option.id for option in pending.options[: max(1, pending.minimum)])
+        if pending.prompt == "reaction":
+            selections = ("no",)
+        assert choose(restored, *selections) == choose(state, *selections)
+        state = choose(restored, *selections)
+    else:
+        pytest.fail(f"The bounded {card_id} fixture did not finish resolving")
