@@ -65,3 +65,21 @@ def test_api_rejects_missing_profiles_and_nonpositive_budget() -> None:
         simulate_game(GameConfig(), 1, ("economy",))
     with pytest.raises(ValueError, match="positive"):
         simulate_game(GameConfig(), 1, ("economy", "attack"), 0)
+
+
+def test_random_kingdom_matches_browser_seed(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["--seed", "42", "--kingdom", "random", "--max-decisions", "1"]) == 1
+    payload = cast(dict[str, object], json.loads(capsys.readouterr().out))
+    games = cast(list[dict[str, object]], payload["games"])
+    assert games[0]["kingdom"] == [
+        "k21",
+        "k04",
+        "k01",
+        "k09",
+        "k08",
+        "k22",
+        "k05",
+        "k25",
+        "k18",
+        "k03",
+    ]

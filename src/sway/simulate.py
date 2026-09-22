@@ -91,7 +91,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     for offset in range(games):
         game_seed = seed + offset
         if kingdom_arg == "random":
-            kingdom = tuple(sorted(Random(game_seed ^ 0x94D049BB133111EB).sample(KINGDOM_IDS, 10)))
+            kingdom = tuple(Random(game_seed).sample(KINGDOM_IDS, 10))
         elif kingdom_arg == "preset":
             kingdom = GameConfig().kingdom
         else:
