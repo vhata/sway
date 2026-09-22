@@ -10,7 +10,7 @@ Pre-commit uses pre-commit's staged-file handling, including temporary unstaged-
 
 `scripts/check.sh` runs formatting, lint, type checking, unit/integration tests with the 90% engine branch gate, and package builds. CI adds `scripts/e2e.sh` using Chromium; local browser changes require that suite as well. Required CI check name: `Required quality checks`. A repository administrator must select that check in branch protection; workflow configuration alone does not enforce merge restrictions.
 
-Do not claim tests passed when no tests were collected or a suite was skipped. Foundation scaffolding alone has no fake passing application tests. Dependent implementation PRs supply real acceptance coverage. Report network, sandbox or missing-browser boundaries separately from application failures. Never silently disable a failing gate or lower coverage to finish a PR.
+Do not claim tests passed when no tests were collected or a suite was skipped. Foundation scaffolding has no fabricated application tests. Test scripts explicitly report a foundation-only skip only while both the engine directory and all Python test files are absent. Once either exists, missing suites and empty collection fail normally; dependent implementation PRs supply real acceptance coverage. Report network, sandbox or missing-browser boundaries separately from application failures. Never silently disable a failing gate or lower coverage to finish a PR.
 
 ## Meaningful tests
 
