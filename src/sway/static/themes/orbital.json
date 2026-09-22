@@ -9,7 +9,8 @@
     "ink": "#edf3f4",
     "muted": "#a2b5ca",
     "accent": "#71d5c0",
-    "gold": "#e7b777"
+    "gold": "#e7b777",
+    "heading_font": "ui-sans-serif, system-ui, sans-serif"
   },
   "terms": {
     "actions": "Actions",
@@ -23,19 +24,19 @@
   "cards": {
     "treasure1": {
       "name": "Credit",
-      "description": "Worth 1 coin when played.",
+      "description": "Worth 1 energy when played.",
       "image": "themes/orbital/treasure.svg",
       "image_alt": "An abstract treasure emblem"
     },
     "treasure2": {
       "name": "Battery",
-      "description": "Worth 2 coins when played.",
+      "description": "Worth 2 energy when played.",
       "image": "themes/orbital/treasure.svg",
       "image_alt": "An abstract treasure emblem"
     },
     "treasure3": {
       "name": "Reactor",
-      "description": "Worth 3 coins when played.",
+      "description": "Worth 3 energy when played.",
       "image": "themes/orbital/treasure.svg",
       "image_alt": "An abstract treasure emblem"
     },
@@ -101,7 +102,7 @@
     },
     "k07": {
       "name": "Solstice",
-      "description": "Gain 2 actions, 1 buy and 2 coins.",
+      "description": "Gain 2 actions, 1 buy and 2 energy.",
       "image": "themes/orbital/action.svg",
       "image_alt": "An abstract action emblem"
     },
@@ -131,19 +132,19 @@
     },
     "k12": {
       "name": "Spaceport",
-      "description": "Draw 1 card; gain 1 action, 1 buy and 1 coin.",
+      "description": "Draw 1 card; gain 1 action, 1 buy and 1 energy.",
       "image": "themes/orbital/action.svg",
       "image_alt": "An abstract action emblem"
     },
     "k13": {
       "name": "Trader",
-      "description": "Draw 1 card and gain 1 action. The first Battery you play this turn provides 1 extra coin.",
+      "description": "Draw 1 card and gain 1 action. The first Battery you play this turn provides 1 extra energy.",
       "image": "themes/orbital/action.svg",
       "image_alt": "An abstract action emblem"
     },
     "k14": {
       "name": "Interceptor",
-      "description": "Gain 2 coins. Every opponent discards until they have 3 cards in hand.",
+      "description": "Gain 2 energy. Every opponent discards until they have 3 cards in hand.",
       "image": "themes/orbital/attack.svg",
       "image_alt": "An abstract attack emblem"
     },
@@ -161,13 +162,13 @@
     },
     "k17": {
       "name": "Salvager",
-      "description": "You may scrap a Credit from your hand to gain 3 coins.",
+      "description": "You may scrap a Credit from your hand to gain 3 energy.",
       "image": "themes/orbital/action.svg",
       "image_alt": "An abstract action emblem"
     },
     "k18": {
       "name": "Scavenger",
-      "description": "Draw 1 card, gain 1 action and 1 coin. Discard 1 card for each empty supply pile.",
+      "description": "Draw 1 card, gain 1 action and 1 energy. Discard 1 card for each empty supply pile.",
       "image": "themes/orbital/action.svg",
       "image_alt": "An abstract action emblem"
     },
@@ -197,7 +198,7 @@
     },
     "k23": {
       "name": "Drone",
-      "description": "Gain 2 coins. Discard your top card; if it is an Action, you may play it.",
+      "description": "Gain 2 energy. Discard your top card; if it is an Action, you may play it.",
       "image": "themes/orbital/action.svg",
       "image_alt": "An abstract action emblem"
     },

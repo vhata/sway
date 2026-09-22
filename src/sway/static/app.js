@@ -1,5 +1,6 @@
 /* Local selection state stays in the browser until a decision is confirmed. */
 (() => {
+  let focusedBeforeSwap = null;
   function setup(root) {
     const players = root.querySelector("#players");
     const supply = root.querySelector("#supply-mode");
@@ -39,7 +40,8 @@
       const mover = event.target.closest("[data-move]");
       if (!mover) return;
       const item = mover.closest(".order-item");
-      const sibling = mover.dataset.move === "up" ? item.previousElementSibling : item.nextElementSibling;
+      const sibling =
+        mover.dataset.move === "up" ? item.previousElementSibling : item.nextElementSibling;
       if (!sibling) return;
       if (mover.dataset.move === "up") item.parentNode.insertBefore(item, sibling);
       else item.parentNode.insertBefore(sibling, item);
@@ -49,8 +51,16 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => setup(document));
-  document.addEventListener("htmx:afterSwap", () => setup(document));
+  document.addEventListener("htmx:afterSwap", () => {
+    setup(document);
+    const previous = focusedBeforeSwap ? document.getElementById(focusedBeforeSwap) : null;
+    const target =
+      previous && !previous.disabled ? previous : document.getElementById("decision-heading");
+    target?.focus({ preventScroll: true });
+    focusedBeforeSwap = null;
+  });
   document.addEventListener("htmx:beforeSwap", (event) => {
+    focusedBeforeSwap = document.activeElement?.id;
     if ([409, 422].includes(event.detail.xhr.status)) {
       event.detail.shouldSwap = true;
       event.detail.isError = false;
@@ -62,7 +72,8 @@
       const notice = document.createElement("p");
       notice.className = "notice error";
       notice.setAttribute("role", "alert");
-      notice.textContent = "The connection was interrupted. Reload to see your saved game, then try again.";
+      notice.textContent =
+        "The connection was interrupted. Reload to see your saved game, then try again.";
       panel.prepend(notice);
     }
   });

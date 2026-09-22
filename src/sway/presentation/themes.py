@@ -1,6 +1,7 @@
 """Validated, data-only presentation packs. Rules never read these manifests."""
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -26,6 +27,7 @@ class ThemeTokens(BaseModel):
     muted: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
     accent: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
     gold: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
+    heading_font: Literal["Georgia, serif", "ui-sans-serif, system-ui, sans-serif"]
 
 
 class Theme(BaseModel):
@@ -45,7 +47,7 @@ class Theme(BaseModel):
     @property
     def style(self) -> str:
         return ";".join(
-            f"--{key}:{value}" for key, value in self.tokens.model_dump().items()
+            f"--{key.replace('_', '-')}:{value}" for key, value in self.tokens.model_dump().items()
         )
 
 
@@ -55,7 +57,7 @@ def load_theme(path: Path, required_ids: frozenset[str]) -> Theme:
         theme = Theme.model_validate_json(path.read_text(encoding="utf-8"))
     except (OSError, ValidationError) as exc:
         raise ValueError(f"Cannot load theme {path.name}: {exc}") from exc
-    if set(theme.cards) != required_ids:
+    if frozenset(theme.cards) != required_ids:
         raise ValueError("Theme card coverage does not match the game's card catalog")
     required_terms = {"actions", "buys", "coins", "points", "supply", "hand", "played"}
     if not required_terms <= theme.terms.keys():

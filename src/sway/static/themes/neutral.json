@@ -9,7 +9,8 @@
     "ink": "#233c37",
     "muted": "#61716a",
     "accent": "#245c4f",
-    "gold": "#be9047"
+    "gold": "#be9047",
+    "heading_font": "Georgia, serif"
   },
   "terms": {
     "actions": "Actions",
