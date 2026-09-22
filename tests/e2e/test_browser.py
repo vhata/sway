@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import os
 import socket
 import subprocess
 import sys
 import time
 from collections.abc import Iterator
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -17,9 +18,9 @@ import pytest
 from playwright.sync_api import Page, Request, expect
 
 from sway.bots import BotState, choose
-from sway.engine import GameConfig, new_game, view_for
+from sway.engine import GameConfig, new_game, state_to_json, view_for
 from sway.engine.catalog import CATALOG
-from sway.engine.models import Decision, Option
+from sway.engine.models import Card, Decision, Effect, Option
 from sway.presentation.components import BoardContext, choice_form
 from sway.presentation.themes import load_themes
 from sway.service import GameService
@@ -104,10 +105,14 @@ def test_new_game_local_selection_theme_and_reload(page: Page, server_url: str) 
     expect(page.locator("#board")).not_to_have_attribute("data-revision", revision or "")
     expect(page.locator("#decision-form")).to_be_visible(timeout=15000)
     settled_revision = page.locator("#board").get_attribute("data-revision")
+    pending_option = page.locator('#decision-form input[name="choices"]').first
+    pending_option.check()
+    preserved_choice = pending_option.get_attribute("value")
     page.get_by_role("combobox", name="Theme", exact=True).select_option("orbital")
     page.get_by_role("button", name="Apply theme").click()
     expect(page.locator("#board")).to_have_attribute("data-theme", "orbital")
     expect(page.locator("#board")).to_have_attribute("data-revision", settled_revision or "")
+    expect(page.locator(f'#decision-form input[value="{preserved_choice}"]')).to_be_checked()
     page.reload()
     expect(page.locator("#board")).to_have_attribute("data-theme", "orbital")
     expect(page.locator("#board")).to_have_attribute("data-revision", settled_revision or "")
@@ -254,3 +259,52 @@ def test_complete_game_reaches_scoring_and_saved_result(
     page.reload()
     expect(page.locator(".finished")).to_contain_text("points")
     assert service.view(identifier).scores == expected_scores
+
+
+def test_bot_attack_stops_for_human_reaction_and_survives_reload(
+    page: Page, server_url: str, server_data: Path
+) -> None:
+    """Resume a legal attack setup; the opponent must wait for the human's reply."""
+    state = new_game(GameConfig(player_names=("You", "Attacker")), 21)
+    state.active_player = 1
+    state.phase = "action"
+    protection = Card(f"c{state.next_instance_id}", "k16")
+    attack = Card(f"c{state.next_instance_id + 1}", "k14")
+    state.next_instance_id += 2
+    state.supply["k16"] -= 1
+    state.supply["k14"] -= 1
+    state.players[0].hand.append(protection)
+    state.players[1].hand.append(attack)
+    state.pending = Decision(
+        "attack-setup",
+        1,
+        "menu",
+        "action",
+        (Option(attack.id, attack.definition, attack.id), Option("end-actions")),
+        1,
+        1,
+    )
+    state.pending_effect = Effect("action", 1)
+    identifier = "browser-reaction"
+    store = SQLiteStore(server_data / "games.sqlite3")
+    store.create(
+        identifier,
+        json.dumps(
+            {"schema": 1, "engine": state_to_json(state), "bots": [asdict(BotState("attack", 91))]}
+        ),
+        json.dumps({"players": ["You", "Attacker"]}),
+        "neutral",
+    )
+    page.goto(f"{server_url}/games/{identifier}")
+    expect(page.locator("#decision-heading")).to_have_text("Protect yourself from this attack?")
+    decision = page.locator("#decision-form").get_attribute("data-decision")
+    revision = page.locator("#board").get_attribute("data-revision")
+    page.reload()
+    expect(page.locator("#decision-form")).to_have_attribute("data-decision", decision or "")
+    expect(page.locator("#board")).to_have_attribute("data-revision", revision or "")
+    page.locator('#decision-form input[value="yes"]').check()
+    page.get_by_role("button", name="Confirm choice").click()
+    expect(page.locator("#decision-form")).not_to_have_attribute("data-decision", decision or "")
+    service = GameService(store)
+    assert len(service.load(identifier).state.players[0].hand) == 6
+    expect(page.locator(".history")).to_contain_text("blocked the attack")

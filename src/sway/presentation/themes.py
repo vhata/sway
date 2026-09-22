@@ -36,7 +36,7 @@ class Theme(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     version: int = Field(ge=1, le=1)
-    id: str = Field(pattern=r"^[a-z][a-z0-9-]+$")
+    id: str = Field(pattern=r"^[a-z][a-z0-9-]+$", max_length=64)
     name: str
     tagline: str
     tokens: ThemeTokens

@@ -1,6 +1,7 @@
 /* Local selection state stays in the browser until a decision is confirmed. */
 (() => {
   let focusedBeforeSwap = null;
+  let selectionBeforeSwap = null;
   function setup(root) {
     const players = root.querySelector("#players");
     const supply = root.querySelector("#supply-mode");
@@ -52,6 +53,22 @@
 
   document.addEventListener("DOMContentLoaded", () => setup(document));
   document.addEventListener("htmx:afterSwap", () => {
+    const form = document.querySelector("#decision-form");
+    if (form && selectionBeforeSwap?.id === form.dataset.decision) {
+      const controls = new Map(
+        [...form.querySelectorAll('input[name="choices"]')].map((input) => [input.value, input]),
+      );
+      const rows = new Map(
+        [...form.querySelectorAll(".order-item")].map((row) => [row.dataset.option, row]),
+      );
+      for (const previous of selectionBeforeSwap.choices) {
+        const control = controls.get(previous.value);
+        if (control && control.type !== "hidden") control.checked = previous.checked;
+        const row = rows.get(previous.value);
+        if (row) row.parentElement.appendChild(row);
+      }
+    }
+    selectionBeforeSwap = null;
     setup(document);
     const previous = focusedBeforeSwap ? document.getElementById(focusedBeforeSwap) : null;
     const target =
@@ -61,6 +78,16 @@
   });
   document.addEventListener("htmx:beforeSwap", (event) => {
     focusedBeforeSwap = document.activeElement?.id;
+    const form = document.querySelector("#decision-form");
+    selectionBeforeSwap = form
+      ? {
+          id: form.dataset.decision,
+          choices: [...form.querySelectorAll('input[name="choices"]')].map((input) => ({
+            value: input.value,
+            checked: input.checked,
+          })),
+        }
+      : null;
     if ([409, 422].includes(event.detail.xhr.status)) {
       event.detail.shouldSwap = true;
       event.detail.isError = false;

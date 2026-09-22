@@ -44,7 +44,7 @@ def page(title: str, content: h.Node) -> h.Element:
             h.meta(name="htmx-config", content='{"allowEval":false,"allowScriptTags":false}'),
             h.title[f"{title} · Sway"],
             h.link(rel="stylesheet", href="/static/style.css"),
-            h.script(src="/static/vendor/htmx-2.0.8.min.js", defer=True),
+            h.script(src="/static/vendor/htmx-2.0.10.min.js", defer=True),
             h.script(src="/static/app.js", defer=True),
         ],
         h.body[
@@ -381,6 +381,7 @@ def event_text(event: Event, view: PlayerView, theme: Theme) -> str:
         "discarded": "discarded",
         "discard_top": "discarded (top card)",
         "block": "blocked the attack with",
+        "set_aside": "set aside",
         "reveal": "revealed",
         "revealed": "revealed",
         "draw": "drew",
@@ -482,6 +483,8 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                         card_row(player.discard, theme),
                         h.h3["Revealed"],
                         card_row(player.revealed, theme),
+                        h.h3["Set aside"],
+                        card_row(player.set_aside, theme),
                     ],
                 ]
                 for index, player in enumerate(view.players)

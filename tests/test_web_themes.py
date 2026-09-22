@@ -94,3 +94,19 @@ def test_discovery_isolates_invalid_packs_and_requires_one_valid_pack(
     (tmp_path / "orbital.json").unlink()
     with pytest.raises(ValueError, match="At least one valid"):
         load_themes(frozenset(CATALOG))
+
+
+def test_public_set_aside_cards_are_rendered_with_theme_names() -> None:
+    from sway.engine.models import Card, Event
+
+    state = new_game(GameConfig(), 13)
+    view = view_for(state, 0)
+    set_aside = Card("public-card", "k01")
+    opponent = replace(view.players[1], set_aside=(set_aside,))
+    view = replace(view, players=(view.players[0], opponent))
+    themes = load_themes(frozenset(CATALOG))
+    theme = themes["orbital"]
+    html = str(board(view, BoardContext("game", "token", theme, tuple(themes.values()))))
+    assert "Set aside" in html
+    assert "Fabricator" in html
+    assert "Fabricator" in event_text(Event("set_aside", 1, (set_aside,)), view, theme)
