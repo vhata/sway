@@ -40,6 +40,7 @@ CI runs `check.sh` and the browser suite. For dependencies, use `uv add` or `uv 
 
 - [AGENTS.md](AGENTS.md): focused PRs, isolated worktrees and agent responsibilities.
 - [SPEC.md](SPEC.md): release scope, delivery sequence and acceptance criteria.
+- [ACCEPTANCE.md](ACCEPTANCE.md): executed release checks and requirement evidence.
 - [ARCHITECTURE.md](ARCHITECTURE.md): rules, rendering, privacy and persistence boundaries.
 - [TODO.md](TODO.md): ordinary deferred work.
 - [Review index](review/README.md) and [review backlog](review/BACKLOG.md): historical evidence and review-derived work.
