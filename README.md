@@ -18,6 +18,8 @@ Development saves live in the current worktree's ignored `.runtime/` directory, 
 
 To compare cards with the [original terminology reference](docs/TERMINOLOGY.md), start the server with `SWAY_DEV_TERMINOLOGY=1 scripts/dev.sh`. This optional developer mode adds visible `Original: …` subtext beneath themed card names, including setup and decision choices. It works with either theme and does not change saved games or gameplay. The flag is read at server startup and is disabled unless its value is exactly `1`; omit it and restart to return to normal rendering. Installed servers support the same environment variable.
 
+Developer mode also links to `/developer/cards`, a read-only catalogue of all 33 cards with a theme selector. It uses the same card faces as the game and opens separately from an active table, so inspecting designs does not discard an unfinished selection. The catalogue is unavailable when developer mode is off.
+
 [SPEC.md](SPEC.md) records the release requirements. PostgreSQL deployment, human multiplayer, expansions and more advanced opponents are deferred.
 
 `setup.sh` synchronizes `uv.lock`, installs checksum-verified Biome, and installs staged-format/lint and pre-push hooks. `install-browsers.sh --with-deps` also installs system dependencies on supported Linux hosts. All project Python commands run through `uv run --locked`.
