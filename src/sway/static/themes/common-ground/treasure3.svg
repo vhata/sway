@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Endowment</title>
+  <desc id="desc">An open endowment chest overflowing with coins, jewels and a ribboned deed.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M45 78V48Q119 11 194 48V78Z" fill="#b48054" />
+    <path d="M58 67V51Q121 23 180 51V67Z" fill="#527f74" />
+    <path d="M40 78H198L186 137H52Z" fill="#dca45f" />
+    <path d="M65 78L71 137M170 78L163 137" stroke="#8a7249" stroke-width="9" />
+    <path d="M104 87H134V109H104Z" fill="#f3d287" />
+    <circle cx="119" cy="98" r="4" fill="#776147" />
+    <circle cx="71" cy="78" r="12" fill="#efd58b" />
+    <circle cx="95" cy="74" r="13" fill="#f8df9f" />
+    <path d="M151 62L168 77L153 94L136 77Z" fill="#70ab9e" />
+    <path d="M171 96L205 104L194 151L160 142Z" fill="#fff0c8" />
+    <path d="M169 126L199 134" stroke="#b76e5b" stroke-width="8" />
+  </g>
+</svg>

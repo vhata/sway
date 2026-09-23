@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Assembly</title>
+  <desc id="desc">Six chairs gathered around a round meeting table with shared papers.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M73 32H95V67H73ZM145 32H167V67H145Z" fill="#cf8669" />
+    <path d="M32 72H56V111H32ZM184 72H208V111H184Z" fill="#5c9687" />
+    <path d="M73 116H95V145H73ZM145 116H167V145H145Z" fill="#d5a358" />
+    <ellipse cx="120" cy="89" rx="82" ry="45" fill="#718f7b" />
+    <ellipse cx="120" cy="82" rx="77" ry="42" fill="#efd5a4" />
+    <path d="M77 69L104 62L118 82L92 89Z" fill="#fff8e4" />
+    <path d="M123 91L151 82L164 101L137 111Z" fill="#fff8e4" />
+    <path d="M88 70L100 67M138 94L151 90" stroke="#97aaa0" stroke-width="3" />
+    <circle cx="131" cy="68" r="11" fill="#6a9b8e" />
+    <circle cx="131" cy="68" r="6" fill="#bde0cf" />
+  </g>
+</svg>

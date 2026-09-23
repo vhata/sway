@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Shipyard</title>
+  <desc id="desc">An unfinished starship suspended between red construction gantries and welding lights.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M26 145V24H57V145M184 145V24H214V145M26 29H214" fill="#a77186" stroke="#a77186" stroke-width="8" />
+    <path d="M37 43L49 62L37 81L49 99L37 120M195 43L207 62L195 81L207 99L195 120" stroke="#e0b096" fill="none" stroke-width="3" />
+    <path d="M77 32V72M165 32V72" stroke="#9ab9c5" stroke-width="3" />
+    <path d="M53 98L95 59H159L187 94L160 119H92Z" fill="#a2bdc5" />
+    <path d="M98 59L114 119M127 59L137 119M154 61L160 117" stroke="#597c93" stroke-width="8" />
+    <path d="M65 96L92 73L101 110ZM166 77L183 95L163 110Z" fill="#6dc4c0" />
+    <path d="M120 99L131 89M125 108L139 111M116 108L111 122" stroke="#f3d195" stroke-width="3" />
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Exchange</title>
+  <desc id="desc">Three bright market awnings sheltering fruit and pottery stalls.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M22 75H84V139H22Z" fill="#d8b883" />
+    <path d="M79 63H156V139H79Z" fill="#eddbb2" />
+    <path d="M157 78H216V139H157Z" fill="#a3b39a" />
+    <path d="M14 76L28 45H77L91 76Z" fill="#dc7f67" />
+    <path d="M73 65L91 28H145L164 65Z" fill="#70a192" />
+    <path d="M151 79L164 49H208L224 79Z" fill="#d6a85a" />
+    <path d="M35 48L29 74M61 47L65 74M107 31L103 64M132 31L137 64M179 51L173 78M194 50L204 78" stroke="#fff0cf" stroke-width="7" />
+    <path d="M22 107H84M79 103H156M157 110H216" stroke="#806b53" stroke-width="7" />
+    <circle cx="39" cy="100" r="8" fill="#d68c55" />
+    <circle cx="59" cy="98" r="9" fill="#719863" />
+    <path d="M96 100L94 87H107L105 100ZM123 100L119 77H136L132 100Z" fill="#7fa8b0" />
+    <path d="M166 105L173 91L181 104L190 88L204 104" fill="#e5bb64" />
+  </g>
+</svg>

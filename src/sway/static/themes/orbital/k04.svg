@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Cargo Bay</title>
+  <desc id="desc">An open spacecraft cargo bay with colorful containers beneath a lifting crane.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M22 139V39L46 20H199L218 41V139Z" fill="#365875" />
+    <path d="M40 134V39H200V134Z" fill="#213e58" />
+    <path d="M30 142H216L195 158H48Z" fill="#658799" />
+    <path d="M47 32H193M52 38V129M191 38V130" stroke="#7d9faf" stroke-width="6" />
+    <rect x="63" y="99" width="48" height="32" rx="4" fill="#bd8ea6" />
+    <rect x="117" y="96" width="58" height="35" rx="4" fill="#dba878" />
+    <rect x="76" y="61" width="47" height="33" rx="4" fill="#6bb5ab" />
+    <path d="M76 109H95M130 106H159M88 72H112" stroke="#e2dbbf" stroke-width="5" />
+    <path d="M159 39V61Q159 80 144 72" fill="none" stroke="#e5b771" stroke-width="5" />
+    <path d="M47 145H67M83 145H103M120 145H139M155 145H175" stroke="#e3c18a" stroke-width="3" />
+  </g>
+</svg>

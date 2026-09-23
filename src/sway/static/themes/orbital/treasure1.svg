@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Credit</title>
+  <desc id="desc">A single slim credit chip with copper contacts and a luminous cyan inset.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M48 49L156 30L199 112L89 137Z" fill="#728fab" />
+    <path d="M58 53L153 39L187 108L94 129Z" fill="#b0c7ce" />
+    <path d="M91 65L135 57L152 92L110 102Z" fill="#64b8b1" />
+    <path d="M108 77L126 74L133 86L115 89Z" fill="#a9efda" />
+    <path d="M66 66L82 62M72 80L88 76M80 96L96 92M91 113L104 109M146 49L153 63M155 69L162 82M165 91L172 103" stroke="#c38c72" stroke-width="6" />
+  </g>
+</svg>

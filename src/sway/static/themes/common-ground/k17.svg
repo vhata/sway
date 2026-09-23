@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Financier</title>
+  <desc id="desc">An abacus, brass coins and an open accounts book on a desk.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M23 136H219V149H23Z" fill="#bd936a" />
+    <rect x="34" y="34" width="101" height="93" rx="6" fill="#f1dfb6" />
+    <path d="M44 51H124M44 72H124M44 94H124M44 115H124" stroke="#95835d" stroke-width="3" />
+    <path d="M55 45V57M70 45V57M89 66V78M103 66V78M59 88V100M74 88V100M91 88V100M108 109V121" stroke="#6d9b88" stroke-width="10" />
+    <path d="M139 109Q156 99 173 111Q188 99 204 109V139Q187 133 173 143Q155 135 139 139Z" fill="#fff1ce" />
+    <path d="M173 112V143" stroke="#a08c65" />
+    <ellipse cx="177" cy="82" rx="20" ry="8" fill="#dba856" />
+    <path d="M157 73V83Q177 96 197 83V73" fill="#e4b866" />
+    <ellipse cx="177" cy="73" rx="20" ry="8" fill="#efcf84" />
+  </g>
+</svg>

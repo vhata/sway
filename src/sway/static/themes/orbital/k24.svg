@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Waypoint</title>
+  <desc id="desc">A tall navigation beacon with three directional panels and a glowing route through space.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M117 141V27" stroke="#a8c2cc" stroke-width="8" />
+    <path d="M116 39H181L201 53L181 68H116Z" fill="#7dcac0" />
+    <path d="M117 78H64L45 91L64 104H117Z" fill="#dba978" />
+    <path d="M117 113H158L173 124L158 135H117Z" fill="#a093bf" />
+    <circle cx="117" cy="25" r="10" fill="#9de5d3" />
+    <circle cx="117" cy="25" r="18" fill="none" stroke="#6ca7b4" stroke-width="2" />
+    <path d="M18 142Q56 124 87 143T176 145L222 117" fill="none" stroke="#658da9" stroke-width="3" stroke-dasharray="6 7" />
+    <circle cx="21" cy="142" r="5" fill="#e6c38d" />
+    <circle cx="218" cy="120" r="5" fill="#e6c38d" />
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Sanctuary</title>
+  <desc id="desc">A candle glowing beneath a stone arch in a peaceful flower garden.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M49 137V77Q49 9 120 9Q191 9 191 77V137H164V79Q164 36 120 36Q76 36 76 79V137Z" fill="#c8b99a" />
+    <path d="M84 134V80Q84 43 120 43Q156 43 156 80V134Z" fill="#406b63" />
+    <path d="M113 117H139L147 131H104Z" fill="#dcac64" />
+    <rect x="119" y="83" width="13" height="35" rx="2" fill="#fff0c6" />
+    <path d="M125 83Q111 75 125 61Q141 75 125 83Z" fill="#f0bb59" stroke="none" />
+    <path d="M21 145Q24 111 44 99M28 128L11 117M33 119L49 109M202 147Q207 119 221 112" stroke="#65876a" fill="none" stroke-width="4" />
+    <circle cx="44" cy="100" r="8" fill="#d8837d" />
+    <circle cx="222" cy="109" r="7" fill="#dda462" />
+  </g>
+</svg>

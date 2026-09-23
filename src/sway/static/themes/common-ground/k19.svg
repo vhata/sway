@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Renovator</title>
+  <desc id="desc">A half-restored cottage with scaffolding, a ladder and fresh terracotta roof tiles.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M48 135V71L114 29L174 72V135Z" fill="#e4c99b" />
+    <path d="M39 72L111 20L183 72H165L112 35L57 72Z" fill="#cc775f" />
+    <rect x="75" y="80" width="26" height="31" fill="#79a0a1" />
+    <rect x="120" y="88" width="27" height="47" fill="#699383" />
+    <path d="M164 49V144M203 58V144M161 77H208M159 114H211M166 77L201 113" stroke="#9f805c" stroke-width="5" />
+    <path d="M35 142L65 69M48 147L78 73M43 127L56 132M49 110L63 115M58 91L70 97" stroke="#657f73" stroke-width="4" />
+    <rect x="176" y="119" width="27" height="25" rx="3" fill="#6f9fa7" />
+    <path d="M177 120Q191 105 202 120" fill="none" stroke="#536b67" />
+  </g>
+</svg>

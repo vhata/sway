@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Fabricator</title>
+  <desc id="desc">A robotic fabrication gantry printing a coral module in a pool of cyan light.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M35 137V28H205V137M47 135V42H193V135" fill="#527a98" />
+    <path d="M30 137H210V151H30Z" fill="#7c9fb0" />
+    <path d="M47 128H194L180 139H59Z" fill="#304f6e" />
+    <rect x="62" y="31" width="103" height="16" rx="4" fill="#a9c8cc" />
+    <path d="M102 45H129V67L115 80L102 67Z" fill="#e9b569" />
+    <path d="M111 80V104M120 80V104" stroke="#85efdd" stroke-width="3" />
+    <path d="M82 123V110L118 92L156 110V127Z" fill="#dc8590" />
+    <path d="M83 111L118 127L155 110M118 126V140M95 104L131 121" fill="none" stroke="#ffd0a2" />
+    <circle cx="177" cy="37" r="4" fill="#76e1c5" />
+  </g>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Worldship</title>
+  <desc id="desc">An immense worldship carrying domed cities between long blue solar outriggers.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M25 112L69 72H186L218 102L179 130H61Z" fill="#95b7c2" />
+    <path d="M63 127L69 98H187L181 129Z" fill="#658eaa" />
+    <path d="M70 76V61Q93 25 115 61V76ZM122 75V47Q151 9 180 47V75Z" fill="#89c9c0" />
+    <path d="M83 75V59H98V75M137 73V46H151V73M158 73V52H168V73" fill="#d7d5bb" />
+    <path d="M51 80L34 50L57 36L80 64ZM151 142L173 114L209 130L188 155Z" fill="#918fb8" />
+    <path d="M43 53L63 42M50 64L70 54M162 132L195 145M170 122L204 136" stroke="#c5b2cc" stroke-width="2" />
+    <path d="M81 111H94M109 111H122M137 111H150M164 111H176" stroke="#f1c991" stroke-width="6" />
+    <path d="M24 112L12 117L26 124" fill="#e4ad7f" stroke="none" />
+  </g>
+</svg>

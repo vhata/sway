@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Solstice</title>
+  <desc id="desc">A brilliant sun and eclipsing planet aligned inside a gold orbital observance ring.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="119" cy="82" r="41" fill="#f0b566" />
+    <circle cx="135" cy="70" r="38" fill="#2c4b65" />
+    <ellipse cx="121" cy="83" rx="93" ry="39" fill="none" stroke="#dca579" stroke-width="6" transform="rotate(-24 121 83)" />
+    <path d="M83 45L74 32M71 68L53 63M75 99L57 105M92 119L84 136M120 127L122 146" stroke="#f4d59b" stroke-width="4" />
+    <path d="M22 108L42 94L54 111L33 123ZM181 39L203 29L217 46L195 58Z" fill="#7dc4bc" />
+    <path d="M37 97L44 114M197 33L205 51" stroke="#c6efd6" />
+  </g>
+</svg>

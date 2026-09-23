@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Crossroads</title>
+  <desc id="desc">A forked country path meeting at a three-way wooden signpost.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 102Q62 78 119 101T240 99V160H0Z" fill="#9db28a" stroke="none" />
+    <path d="M87 160L114 115L60 97L65 87L129 104L191 86L199 96L145 117L157 160Z" fill="#e5cda0" stroke="none" />
+    <path d="M122 133V29" stroke="#876b4b" stroke-width="9" />
+    <path d="M121 38H188L202 49L188 60H121Z" fill="#d8a763" />
+    <path d="M122 67H53L38 78L53 89H122Z" fill="#739689" />
+    <path d="M122 98H168L180 107L168 117H122Z" fill="#cf876c" />
+    <path d="M21 94V69M209 87V58" stroke="#65806a" stroke-width="4" />
+    <circle cx="21" cy="63" r="15" fill="#6d9673" />
+    <circle cx="209" cy="55" r="19" fill="#709276" />
+  </g>
+</svg>

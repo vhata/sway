@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Biosphere</title>
+  <desc id="desc">A transparent biosphere dome sheltering trees and water on a red moon.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 127Q76 104 142 122T240 124V160H0Z" fill="#976b73" stroke="none" />
+    <path d="M43 127V97A77 77 0 0 1 197 97V127Z" fill="#74a9b5" opacity=".65" />
+    <ellipse cx="120" cy="126" rx="80" ry="19" fill="#70aa9a" />
+    <path d="M115 114Q74 130 132 140L159 133Q115 127 138 118Z" fill="#a3d8d2" stroke="none" />
+    <path d="M43 125H197M120 21V117M66 46Q120 79 174 46M45 82H195" stroke="#b4d5d2" stroke-width="2" fill="none" />
+    <path d="M82 121V93M153 116V77" stroke="#455f66" stroke-width="5" />
+    <path d="M58 98L82 61L106 98Z" fill="#5cbd9f" />
+    <path d="M132 87L153 49L177 87Z" fill="#8bd2a5" />
+    <path d="M37 132L26 143M206 134L218 145" stroke="#dfb082" stroke-width="4" />
+  </g>
+</svg>

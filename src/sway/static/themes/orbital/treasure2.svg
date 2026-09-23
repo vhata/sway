@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Battery</title>
+  <desc id="desc">A tall illuminated energy battery secured inside a copper and blue cradle.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M60 135L76 123H164L181 136V148H60Z" fill="#587c98" />
+    <path d="M80 40H162V122Q121 148 80 122Z" fill="#90b5c1" />
+    <ellipse cx="121" cy="40" rx="41" ry="17" fill="#c1d1d1" />
+    <path d="M94 52H147V116Q121 132 94 116Z" fill="#70d0b8" />
+    <path d="M101 72H140M101 90H140M101 109H140" stroke="#cdf0d1" stroke-width="5" />
+    <path d="M100 28V17H143V29" fill="#d7ac7a" />
+    <path d="M76 48V123M167 46V123" stroke="#d6a87b" stroke-width="7" />
+  </g>
+</svg>

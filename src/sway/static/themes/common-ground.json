@@ -25,200 +25,200 @@
     "treasure1": {
       "name": "Token",
       "description": "Worth 1 coin when played.",
-      "image": "themes/common-ground/treasure.svg",
-      "image_alt": "An abstract treasure emblem"
+      "image": "themes/common-ground/treasure1.svg",
+      "image_alt": "A single stamped brass token resting on a folded coral cloth."
     },
     "treasure2": {
       "name": "Reserve",
       "description": "Worth 2 coins when played.",
-      "image": "themes/common-ground/treasure.svg",
-      "image_alt": "An abstract treasure emblem"
+      "image": "themes/common-ground/treasure2.svg",
+      "image_alt": "A metal strongbox holding several neatly stacked brass coins."
     },
     "treasure3": {
       "name": "Endowment",
       "description": "Worth 3 coins when played.",
-      "image": "themes/common-ground/treasure.svg",
-      "image_alt": "An abstract treasure emblem"
+      "image": "themes/common-ground/treasure3.svg",
+      "image_alt": "An open endowment chest overflowing with coins, jewels and a ribboned deed."
     },
     "victory1": {
       "name": "Plot",
       "description": "Worth 1 point at the end of the game.",
-      "image": "themes/common-ground/victory.svg",
-      "image_alt": "An abstract victory emblem"
+      "image": "themes/common-ground/victory1.svg",
+      "image_alt": "A small planted garden plot with a gate, young tree and tidy vegetable rows."
     },
     "victory2": {
       "name": "Quarter",
       "description": "Worth 3 points at the end of the game.",
-      "image": "themes/common-ground/victory.svg",
-      "image_alt": "An abstract victory emblem"
+      "image": "themes/common-ground/victory2.svg",
+      "image_alt": "A cozy neighborhood square with three colorful houses and a fountain."
     },
     "victory3": {
       "name": "City",
       "description": "Worth 6 points at the end of the game.",
-      "image": "themes/common-ground/victory.svg",
-      "image_alt": "An abstract victory emblem"
+      "image": "themes/common-ground/victory3.svg",
+      "image_alt": "A sunlit city skyline of towers, terracotta roofs and an arched bridge."
     },
     "curse": {
       "name": "Burden",
       "description": "Worth minus 1 point at the end of the game.",
       "image": "themes/common-ground/curse.svg",
-      "image_alt": "An abstract curse emblem"
+      "image_alt": "A heavy cracked stone tied with rope, crushing a small fallen leaf."
     },
     "k01": {
       "name": "Craftsperson",
       "description": "Take a card costing up to 5 into your hand. Then put a card from your hand on top of your deck.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k01.svg",
+      "image_alt": "A carpenter’s plane, wooden shavings and a teal vase on a workbench."
     },
     "k02": {
       "name": "Raider",
       "description": "Take an Endowment. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Token if possible, and discards the rest.",
-      "image": "themes/common-ground/attack.svg",
-      "image_alt": "An abstract attack emblem"
+      "image": "themes/common-ground/k02.svg",
+      "image_alt": "A red-sailed raiding boat carrying a brass chest across blue water."
     },
     "k03": {
       "name": "Administrator",
       "description": "Take a Reserve onto your deck. Each opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
-      "image": "themes/common-ground/attack.svg",
-      "image_alt": "An abstract attack emblem"
+      "image": "themes/common-ground/k03.svg",
+      "image_alt": "A wax-sealed document beside a brass stamp and a neat stack of folders."
     },
     "k04": {
       "name": "Storeroom",
       "description": "Gain 1 action. Discard as many cards as you choose, then draw that many cards.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k04.svg",
+      "image_alt": "A pantry shelf of jars, folded sacks and a wooden produce crate."
     },
     "k05": {
       "name": "Sanctuary",
       "description": "Scrap up to 4 cards from your hand.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k05.svg",
+      "image_alt": "A candle glowing beneath a stone arch in a peaceful flower garden."
     },
     "k06": {
       "name": "Assembly",
       "description": "Draw 4 cards and gain 1 buy. Every other player draws 1 card.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k06.svg",
+      "image_alt": "Six chairs gathered around a round meeting table with shared papers."
     },
     "k07": {
       "name": "Celebration",
       "description": "Gain 2 actions, 1 buy and 2 coins.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k07.svg",
+      "image_alt": "Colorful festival bunting above a drum, lanterns and ribbons."
     },
     "k08": {
       "name": "Greenbelt",
       "description": "Worth 1 point for every complete group of 10 cards in your deck, counting all zones, at game end.",
-      "image": "themes/common-ground/victory.svg",
-      "image_alt": "An abstract victory emblem"
+      "image": "themes/common-ground/k08.svg",
+      "image_alt": "A winding path and small footbridge through a flowering green park."
     },
     "k09": {
       "name": "Courier",
       "description": "Draw 1 card and gain 1 action. You may put a card from your discard pile onto your deck.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k09.svg",
+      "image_alt": "A coral courier bicycle with a basket of envelopes beside a signpost."
     },
     "k10": {
       "name": "Research House",
       "description": "Draw 2 cards and gain 1 action.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k10.svg",
+      "image_alt": "A sunlit glass research house with a blue flask and growing seedlings."
     },
     "k11": {
       "name": "Archive",
       "description": "Draw until your hand contains 7 cards. You may set aside Action cards drawn this way; discard them after drawing finishes.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k11.svg",
+      "image_alt": "Tall wooden archive shelves, a rolling ladder and an open book."
     },
     "k12": {
       "name": "Exchange",
       "description": "Draw 1 card; gain 1 action, 1 buy and 1 coin.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k12.svg",
+      "image_alt": "Three bright market awnings sheltering fruit and pottery stalls."
     },
     "k13": {
       "name": "Broker",
       "description": "Draw 1 card and gain 1 action. The first Reserve you play this turn provides 1 extra coin.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k13.svg",
+      "image_alt": "A brass trading scale balancing coins and a cloth pouch beside a ledger."
     },
     "k14": {
       "name": "Patrol",
       "description": "Gain 2 coins. Every opponent discards until they have 3 cards in hand.",
-      "image": "themes/common-ground/attack.svg",
-      "image_alt": "An abstract attack emblem"
+      "image": "themes/common-ground/k14.svg",
+      "image_alt": "A watch lantern and striped patrol shield resting beside a gate."
     },
     "k15": {
       "name": "Refinery",
       "description": "You may scrap a Treasure from your hand, then take a Treasure costing at most 3 more into your hand.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k15.svg",
+      "image_alt": "Copper refining vessels and curled pipes above glowing furnace coals."
     },
     "k16": {
       "name": "Breakwater",
       "description": "Draw 2 cards. When an opponent attacks, you may reveal this from your hand to avoid that attack.",
-      "image": "themes/common-ground/reaction.svg",
-      "image_alt": "An abstract reaction emblem"
+      "image": "themes/common-ground/k16.svg",
+      "image_alt": "A stone breakwater and red lighthouse protecting calm water from waves."
     },
     "k17": {
       "name": "Financier",
       "description": "You may scrap a Token from your hand to gain 3 coins.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k17.svg",
+      "image_alt": "An abacus, brass coins and an open accounts book on a desk."
     },
     "k18": {
       "name": "Forager",
       "description": "Draw 1 card, gain 1 action and 1 coin. Discard 1 card for each empty supply pile.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k18.svg",
+      "image_alt": "A woven basket of mushrooms, berries and leafy forest finds."
     },
     "k19": {
       "name": "Renovator",
       "description": "Scrap a card from your hand. Take a card costing at most 2 more into your discard pile.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k19.svg",
+      "image_alt": "A half-restored cottage with scaffolding, a ladder and fresh terracotta roof tiles."
     },
     "k20": {
       "name": "Lookout",
       "description": "Draw 1 card and gain 1 action. Inspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k20.svg",
+      "image_alt": "A tall coastal lookout tower with a telescope facing the horizon."
     },
     "k21": {
       "name": "Forge",
       "description": "Draw 3 cards.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k21.svg",
+      "image_alt": "A glowing forge furnace, iron anvil and hammer with flying sparks."
     },
     "k22": {
       "name": "Chamber",
       "description": "You may choose an Action from your hand and play it twice.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k22.svg",
+      "image_alt": "Two matching high-backed seats facing one another beneath a patterned canopy."
     },
     "k23": {
       "name": "Deputy",
       "description": "Gain 2 coins. Discard your top card; if it is an Action, you may play it.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k23.svg",
+      "image_alt": "A deputy’s brass badge, folded map and walking staff beside a satchel."
     },
     "k24": {
       "name": "Crossroads",
       "description": "Draw 1 card and gain 2 actions.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k24.svg",
+      "image_alt": "A forked country path meeting at a three-way wooden signpost."
     },
     "k25": {
       "name": "Hexer",
       "description": "Draw 2 cards. Every opponent takes a Burden, if any remain.",
-      "image": "themes/common-ground/attack.svg",
-      "image_alt": "An abstract attack emblem"
+      "image": "themes/common-ground/k25.svg",
+      "image_alt": "A violet potion swirling above a copper cauldron, with herbs and a crescent charm."
     },
     "k26": {
       "name": "Atelier",
       "description": "Take a card costing up to 4 into your discard pile.",
-      "image": "themes/common-ground/action.svg",
-      "image_alt": "An abstract action emblem"
+      "image": "themes/common-ground/k26.svg",
+      "image_alt": "An artist’s easel, ceramic pitcher and a fan of paintbrushes in a bright studio."
     }
   }
 }

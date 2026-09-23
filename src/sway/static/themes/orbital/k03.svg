@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Quartermaster</title>
+  <desc id="desc">A quartermaster’s luminous inventory tablet beside three secured supply pods.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M36 38L112 24L129 118L53 133Z" fill="#638b9e" />
+    <path d="M47 47L103 37L113 103L60 115Z" fill="#25475f" />
+    <path d="M58 59L64 63L74 51M62 78L68 82L78 70M67 97L73 101L83 89" fill="none" stroke="#85dac0" stroke-width="3" />
+    <path d="M83 55L97 52M87 73L101 70M90 93L105 90" stroke="#8badc3" stroke-width="3" />
+    <path d="M137 76L162 64L186 76V107L162 122L137 108Z" fill="#dca678" />
+    <path d="M161 66V122M139 78L162 89L184 77" stroke="#f7d49a" />
+    <path d="M178 101L197 91L215 101V129L197 140L178 129Z" fill="#73adab" />
+    <path d="M151 39L166 32L182 39V60L167 69L151 61Z" fill="#b294b6" />
+  </g>
+</svg>

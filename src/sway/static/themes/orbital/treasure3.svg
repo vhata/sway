@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Reactor</title>
+  <desc id="desc">A suspended fusion reactor core surrounded by three bright containment hoops.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M61 147L80 106M181 146L163 105" stroke="#84aab9" stroke-width="9" />
+    <circle cx="121" cy="79" r="42" fill="#e7b170" />
+    <circle cx="121" cy="79" r="25" fill="#f4dab0" />
+    <ellipse cx="121" cy="79" rx="87" ry="28" fill="none" stroke="#78c1c2" stroke-width="8" />
+    <ellipse cx="121" cy="79" rx="79" ry="30" fill="none" stroke="#9b98c4" stroke-width="7" transform="rotate(60 121 79)" />
+    <ellipse cx="121" cy="79" rx="79" ry="30" fill="none" stroke="#b9d8d5" stroke-width="6" transform="rotate(-60 121 79)" />
+    <circle cx="121" cy="79" r="13" fill="#fff0c7" stroke="none" />
+  </g>
+</svg>

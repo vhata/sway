@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Atelier</title>
+  <desc id="desc">An artist’s easel, ceramic pitcher and a fan of paintbrushes in a bright studio.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M48 147L81 29L121 146M60 119H115" fill="none" stroke="#b28b5d" stroke-width="6" />
+    <rect x="45" y="39" width="83" height="66" rx="3" fill="#fff0d2" />
+    <path d="M52 97L69 73L89 85L114 60L121 97Z" fill="#77a18d" />
+    <circle cx="73" cy="60" r="12" fill="#e6b760" />
+    <path d="M144 123V85H179L188 117Q177 140 149 137Z" fill="#cf8c70" />
+    <path d="M180 91Q215 83 205 114L187 121" fill="none" stroke="#cf8c70" stroke-width="9" />
+    <path d="M160 89L147 41M172 88L183 35M176 88L204 52" stroke="#8d8061" stroke-width="5" />
+    <path d="M141 40L143 24L153 37ZM178 35L185 19L190 39ZM199 51L210 36L211 57Z" fill="#6e9d98" />
+  </g>
+</svg>

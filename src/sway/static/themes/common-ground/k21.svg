@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Forge</title>
+  <desc id="desc">A glowing forge furnace, iron anvil and hammer with flying sparks.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M34 131V64Q34 28 72 28Q110 28 110 64V131Z" fill="#957762" />
+    <path d="M49 119V77Q49 48 74 48Q96 48 96 77V119Z" fill="#504b45" />
+    <path d="M57 111L64 82L73 96L83 70L91 112Z" fill="#eea748" />
+    <path d="M66 113L74 94L82 114Z" fill="#ffe2a0" stroke="none" />
+    <path d="M116 95H206L188 112H173V129H143V112L124 111Z" fill="#627d83" />
+    <path d="M137 130H181V144H137Z" fill="#a57d55" />
+    <path d="M152 77L171 43" stroke="#a77e52" stroke-width="8" />
+    <path d="M159 38L170 26L195 41L187 56Z" fill="#7b9396" />
+    <path d="M120 51L128 38M133 72L145 70M108 33L107 23" stroke="#efb852" stroke-width="3" />
+  </g>
+</svg>

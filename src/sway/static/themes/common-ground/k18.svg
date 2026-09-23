@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Forager</title>
+  <desc id="desc">A woven basket of mushrooms, berries and leafy forest finds.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M20 135Q45 115 65 129Q109 114 144 131T223 129V160H20Z" fill="#a4b58a" stroke="none" />
+    <path d="M65 91Q57 35 116 35Q175 35 168 91" fill="none" stroke="#b98c57" stroke-width="8" />
+    <path d="M55 87H178L166 142H71Z" fill="#d6ad73" />
+    <path d="M60 105H174M65 123H170M85 90L91 141M108 90L111 142M136 90L132 142M158 90L150 142" stroke="#9e784e" stroke-width="3" />
+    <path d="M88 85V65M136 84V58" stroke="#f5e3bb" stroke-width="9" />
+    <path d="M67 65Q87 34 108 65ZM113 58Q136 22 159 58Z" fill="#ce7d66" />
+    <circle cx="135" cy="43" r="3" fill="#fff1d0" />
+    <circle cx="84" cy="55" r="3" fill="#fff1d0" />
+    <path d="M160 83Q168 44 192 51Q189 73 160 83Z" fill="#678f6d" />
+    <circle cx="116" cy="81" r="8" fill="#8c7a9c" />
+    <circle cx="131" cy="80" r="7" fill="#9c7392" />
+  </g>
+</svg>

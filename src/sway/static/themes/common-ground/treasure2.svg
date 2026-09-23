@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Reserve</title>
+  <desc id="desc">A metal strongbox holding several neatly stacked brass coins.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M47 73L64 39H179L195 73V136H47Z" fill="#738d8e" />
+    <path d="M47 75H195V136H47Z" fill="#9ab0a5" />
+    <path d="M62 41L70 61H172L179 41Z" fill="#48666b" />
+    <path d="M111 78H134V116H111Z" fill="#d9b86f" />
+    <circle cx="122" cy="91" r="5" fill="#677971" />
+    <path d="M78 106V127M166 106V127" stroke="#617f7c" stroke-width="4" />
+    <ellipse cx="68" cy="133" rx="23" ry="8" fill="#bb9552" />
+    <ellipse cx="68" cy="123" rx="23" ry="8" fill="#e1bc73" />
+    <ellipse cx="68" cy="113" rx="23" ry="8" fill="#f1cf88" />
+    <ellipse cx="177" cy="139" rx="23" ry="8" fill="#d5ac65" />
+    <ellipse cx="177" cy="130" rx="23" ry="8" fill="#f0ce88" />
+  </g>
+</svg>

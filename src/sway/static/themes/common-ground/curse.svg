@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="currentColor" color="#245c4f"><circle cx="48" cy="48" r="45" fill="#be9047" opacity=".13"/><path d="m48 18 30 30-30 30-30-30Z"/><path d="m37 37 22 22m0-22L37 59" stroke="white" stroke-width="5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Burden</title>
+  <desc id="desc">A heavy cracked stone tied with rope, crushing a small fallen leaf.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M38 138L45 87L72 53L137 39L187 77L204 138Z" fill="#93869c" />
+    <path d="M71 56L99 91L72 138M135 43L122 77L149 93L127 117L150 138" stroke="#625e76" stroke-width="5" fill="none" />
+    <path d="M54 76Q119 104 184 76M49 89Q118 116 195 92" fill="none" stroke="#d4ba8a" stroke-width="7" />
+    <path d="M112 99Q96 64 118 66Q139 67 123 102Q144 71 157 88Q165 109 124 108" fill="none" stroke="#d4ba8a" stroke-width="5" />
+    <path d="M25 144Q40 114 63 139Q49 157 25 144Z" fill="#bd9862" />
+    <path d="M31 145L59 138" stroke="#927749" />
+  </g>
+</svg>

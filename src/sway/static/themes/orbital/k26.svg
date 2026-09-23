@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Assembler</title>
+  <desc id="desc">Two articulated assembly arms fitting a blue component on a moving production belt.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="28" y="118" width="186" height="28" rx="13" fill="#4b6684" />
+    <path d="M42 130H201" stroke="#9db8c2" stroke-width="7" stroke-dasharray="11 9" />
+    <path d="M37 109V64L66 41L91 61" fill="none" stroke="#e1b079" stroke-width="12" />
+    <circle cx="66" cy="41" r="11" fill="#b2cbd0" />
+    <path d="M202 109V66L177 35L150 55" fill="none" stroke="#8dc5bf" stroke-width="12" />
+    <circle cx="177" cy="35" r="11" fill="#c3b2d1" />
+    <path d="M85 57L93 72L109 69M153 52L140 64L144 80" fill="none" stroke="#a3bdcc" stroke-width="6" />
+    <path d="M100 97L119 84L144 97V119H100Z" fill="#719fc3" />
+    <path d="M111 91V70L126 62L142 72V93L125 102Z" fill="#c09ab8" />
+    <path d="M117 77L134 82" stroke="#e9c895" stroke-width="4" />
+  </g>
+</svg>

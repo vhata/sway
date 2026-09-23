@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Hexer</title>
+  <desc id="desc">A violet potion swirling above a copper cauldron, with herbs and a crescent charm.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M78 84H166L158 133Q122 155 86 134Z" fill="#776e91" />
+    <ellipse cx="122" cy="84" rx="47" ry="13" fill="#bdd4b1" />
+    <path d="M77 101Q48 93 63 123L85 127M164 101Q191 93 180 123L159 127" fill="none" stroke="#7e766d" stroke-width="5" />
+    <path d="M104 81Q91 64 115 55Q143 44 126 25Q171 49 135 63Q112 71 139 83" fill="#ae99b5" stroke="none" />
+    <circle cx="95" cy="52" r="5" fill="#b6c48c" />
+    <circle cx="145" cy="31" r="5" fill="#c296b6" />
+    <path d="M36 113L54 70M42 93L27 81M46 88L63 79M194 111L209 77M199 96L184 84" fill="none" stroke="#789569" stroke-width="4" />
+    <path d="M64 27Q44 41 61 58Q30 54 40 31Q49 22 64 27Z" fill="#e3ba64" />
+  </g>
+</svg>

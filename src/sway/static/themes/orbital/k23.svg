@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Drone</title>
+  <desc id="desc">A small inspection drone with four blue rotors, a camera eye and a delivery claw.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M77 52L109 74M160 49L133 74M67 109L106 91M177 108L137 90" stroke="#88b6bf" stroke-width="10" />
+    <ellipse cx="66" cy="45" rx="34" ry="15" fill="#425d79" />
+    <ellipse cx="172" cy="43" rx="34" ry="15" fill="#425d79" />
+    <ellipse cx="58" cy="119" rx="34" ry="15" fill="#425d79" />
+    <ellipse cx="185" cy="117" rx="34" ry="15" fill="#425d79" />
+    <path d="M41 45H91M147 43H197M34 119H83M161 117H210" stroke="#88d1cb" stroke-width="4" />
+    <path d="M95 69L120 53L147 68V99L122 116L95 100Z" fill="#e2b78a" />
+    <circle cx="121" cy="83" r="14" fill="#466d86" />
+    <circle cx="121" cy="83" r="7" fill="#92e3d3" />
+    <path d="M112 112V132L122 142L133 131V113" fill="none" stroke="#a7bfcd" stroke-width="5" />
+  </g>
+</svg>

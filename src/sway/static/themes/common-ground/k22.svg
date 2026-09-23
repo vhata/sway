@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Chamber</title>
+  <desc id="desc">Two matching high-backed seats facing one another beneath a patterned canopy.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M37 135V31H203V135" fill="none" stroke="#7c8d7d" stroke-width="7" />
+    <path d="M40 33Q79 64 120 33Q161 65 201 33V17H40Z" fill="#b88586" />
+    <path d="M59 129V65Q73 48 88 65V107H108V129ZM181 129V65Q166 48 151 65V107H131V129Z" fill="#d5a961" />
+    <path d="M66 101V67Q74 60 81 68V101ZM174 101V67Q166 60 158 68V101Z" fill="#689488" />
+    <path d="M54 130H112M126 130H186M64 130V146M99 130V146M141 130V146M177 130V146" stroke="#86724f" stroke-width="5" />
+    <path d="M117 72L122 62L128 72L122 82Z" fill="#e2bd70" />
+  </g>
+</svg>

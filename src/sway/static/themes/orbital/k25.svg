@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Saboteur</title>
+  <desc id="desc">A breached control panel with cut glowing wires, a red warning light and a small wrench.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M45 38L175 24L201 123L67 142Z" fill="#697c9b" />
+    <path d="M62 52L160 40L179 113L80 129Z" fill="#283e58" />
+    <path d="M80 63L109 58L118 83L105 89M155 64L137 69L133 94M99 112L125 106L122 92" fill="none" stroke="#81c3b6" stroke-width="5" />
+    <path d="M108 87L119 78M126 92L137 84" stroke="#e9b379" stroke-width="4" />
+    <circle cx="161" cy="109" r="8" fill="#df8b93" />
+    <path d="M183 127L209 70L215 62L215 47L204 42L205 57L197 63L193 49L187 63L195 77L171 128Z" fill="#a8c0cc" />
+    <path d="M105 74L99 65M126 74L132 64M118 106L115 116" stroke="#f0c48b" stroke-width="3" />
+  </g>
+</svg>

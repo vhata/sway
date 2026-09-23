@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Trader</title>
+  <desc id="desc">A floating trade kiosk displaying a glowing cargo cube between two docking hands.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M66 119L78 54H165L178 119Z" fill="#596d96" />
+    <path d="M75 53L122 25L170 53Z" fill="#c08ca9" />
+    <path d="M85 62H159V109H85Z" fill="#2b4e68" />
+    <path d="M122 58L145 71V93L122 106L99 93V71Z" fill="#85d1b7" />
+    <path d="M100 72L122 84L144 72M122 84V105" fill="none" stroke="#d6ebc9" stroke-width="2" />
+    <path d="M20 97L45 96L61 111L92 113L91 127L52 127L35 113H20Z" fill="#d7ac7c" />
+    <path d="M221 93L195 93L181 108L153 109V125H191L205 109H221Z" fill="#89a9c5" />
+    <path d="M68 135H181" stroke="#7397ae" stroke-width="6" />
+  </g>
+</svg>

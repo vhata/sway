@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Spaceport</title>
+  <desc id="desc">A spaceport landing pad and control tower welcoming a small descending shuttle.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M15 135L94 91H171L225 136L143 158H65Z" fill="#617990" />
+    <ellipse cx="121" cy="130" rx="50" ry="18" fill="#25475e" />
+    <ellipse cx="121" cy="130" rx="42" ry="13" fill="none" stroke="#e8bd80" stroke-width="3" />
+    <path d="M29 117V56H60V117Z" fill="#7ba0ae" />
+    <path d="M21 56V32H70V56Z" fill="#a9c6ce" />
+    <path d="M28 38H63V49H28Z" fill="#568fa6" />
+    <path d="M102 89L118 39L135 89L154 102H84Z" fill="#ddd2b6" />
+    <path d="M109 62L118 46L126 63L123 78H111Z" fill="#78bbc1" />
+    <path d="M107 105L116 121L127 105" fill="#e8ad77" stroke="none" />
+    <path d="M175 58L195 58M185 48V69M190 93L207 93" stroke="#91d9c1" stroke-width="3" />
+  </g>
+</svg>

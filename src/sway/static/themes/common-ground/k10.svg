@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Research House</title>
+  <desc id="desc">A sunlit glass research house with a blue flask and growing seedlings.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M47 130V66L118 22L189 66V130Z" fill="#abd0c5" />
+    <path d="M47 66H189M118 23V130M81 45V130M154 45V130M48 96H188" stroke="#648f84" stroke-width="4" />
+    <path d="M28 127H213V141H28Z" fill="#d0ab76" />
+    <path d="M77 95H92V110L108 132H61L77 110Z" fill="#70abc2" />
+    <path d="M72 91H98" stroke="#526d77" stroke-width="4" />
+    <path d="M145 121V83M145 105Q126 90 124 101Q127 118 145 112M145 99Q169 78 172 93Q164 106 145 105" fill="#5c956c" />
+    <path d="M129 122H163L156 141H136Z" fill="#cc8767" />
+  </g>
+</svg>

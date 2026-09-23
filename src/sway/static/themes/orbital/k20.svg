@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Sensor Grid</title>
+  <desc id="desc">A triangular sensor network connecting three dishes around a sweeping radar screen.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M52 116L120 35L193 114Z" fill="#284c66" stroke="#7cb6bd" stroke-width="3" />
+    <circle cx="121" cy="91" r="36" fill="#365f76" />
+    <circle cx="121" cy="91" r="24" fill="none" stroke="#69b8b5" />
+    <circle cx="121" cy="91" r="12" fill="none" stroke="#69b8b5" />
+    <path d="M121 91L128 57Q150 64 155 83Z" fill="#88d7ba" opacity=".65" />
+    <path d="M33 107Q52 137 71 107ZM173 107Q193 138 213 107ZM103 29Q120 54 137 29Z" fill="#c0b5d0" />
+    <path d="M52 128V145M193 130V145M121 48V63" stroke="#a6bfca" stroke-width="5" />
+    <circle cx="140" cy="98" r="4" fill="#e6b380" />
+    <circle cx="108" cy="80" r="3" fill="#d9e9d9" />
+  </g>
+</svg>

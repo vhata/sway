@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Shield Array</title>
+  <desc id="desc">Three defense emitters holding a translucent shield over a small station.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M31 128A90 90 0 0 1 211 128Z" fill="#67babd" opacity=".32" stroke="#99dfd4" stroke-width="3" />
+    <path d="M31 128Q119 89 211 128M121 37V126M53 68Q118 114 187 68" fill="none" stroke="#81c7ca" stroke-width="2" />
+    <path d="M87 131V101H153V132Z" fill="#9eb5bf" />
+    <path d="M97 113H143" stroke="#ddaf7d" stroke-width="8" />
+    <path d="M47 145V110M193 145V110M121 145V97" stroke="#95b9c5" stroke-width="6" />
+    <path d="M27 100Q47 127 67 100ZM173 100Q193 127 213 100ZM103 87Q121 113 139 87Z" fill="#e0c18d" />
+    <path d="M20 45L40 59M206 33L195 53" stroke="#d89995" stroke-width="4" />
+    <path d="M24 62L32 54M188 41L204 45" stroke="#d89995" stroke-width="3" />
+  </g>
+</svg>

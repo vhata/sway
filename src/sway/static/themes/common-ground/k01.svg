@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Craftsperson</title>
+  <desc id="desc">A carpenter’s plane, wooden shavings and a teal vase on a workbench.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M28 119H212M45 119V148M195 119V148" fill="none" stroke="#6e5744" stroke-width="7" />
+    <rect x="29" y="108" width="181" height="13" rx="4" fill="#dba66d" />
+    <path d="M57 91L123 79L141 96L75 108Z" fill="#d8755d" />
+    <path d="M88 78L99 60L113 64L111 91" fill="#415f64" />
+    <path d="M159 54H180L175 71Q194 92 182 106H156Q145 91 164 71Z" fill="#5c9c86" />
+    <path d="M48 102C20 83 48 72 58 85C71 106 98 103 106 114" fill="none" stroke="#eac385" stroke-width="5" />
+    <path d="M39 55L69 27L88 47L59 75Z" fill="#f8ebd1" />
+    <path d="M51 52L65 39M58 59L72 46" stroke="#879c94" />
+  </g>
+</svg>

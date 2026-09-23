@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Pathfinder</title>
+  <desc id="desc">A six-wheeled exploration rover following a route between amber mountains.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 115L44 53L92 104L171 32L240 118V160H0Z" fill="#745b77" stroke="none" />
+    <path d="M146 70L171 32L197 67L180 58L167 67L159 57Z" fill="#c9c7c9" stroke="none" />
+    <path d="M40 132H163L175 105L135 86H61L39 104Z" fill="#d9a777" />
+    <path d="M73 93H132L152 111H62Z" fill="#70b9bd" />
+    <path d="M102 91V116" stroke="#36556c" stroke-width="4" />
+    <circle cx="54" cy="130" r="14" fill="#375771" />
+    <circle cx="99" cy="132" r="14" fill="#375771" />
+    <circle cx="149" cy="130" r="14" fill="#375771" />
+    <circle cx="54" cy="130" r="6" fill="#aec5c7" />
+    <circle cx="99" cy="132" r="6" fill="#aec5c7" />
+    <circle cx="149" cy="130" r="6" fill="#aec5c7" />
+    <path d="M115 85V63L131 48" stroke="#a4c3ce" stroke-width="4" />
+    <circle cx="135" cy="44" r="7" fill="#80d7bd" />
+  </g>
+</svg>

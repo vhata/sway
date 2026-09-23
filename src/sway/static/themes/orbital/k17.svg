@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Salvager</title>
+  <desc id="desc">A yellow salvage claw extracting a bright chip from a broken satellite.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M31 130L55 109L93 118L113 145H33Z" fill="#7c728c" />
+    <path d="M85 135L132 101L160 51L192 43" fill="none" stroke="#d9b07a" stroke-width="14" />
+    <circle cx="132" cy="101" r="12" fill="#99b6be" />
+    <circle cx="160" cy="51" r="11" fill="#99b6be" />
+    <path d="M184 42L202 55L206 78L194 88M190 45L175 62L175 80L186 87" fill="none" stroke="#e4c389" stroke-width="7" />
+    <path d="M180 86L200 81L205 102L184 107Z" fill="#70d1b7" />
+    <path d="M36 90L50 67L83 82L70 106Z" fill="#91a7c2" />
+    <path d="M51 68L69 48L90 60L73 83M39 91L21 105L43 121L60 104" fill="#d29387" />
+    <path d="M28 138L49 129L73 140" stroke="#aaa2b1" stroke-width="3" fill="none" />
+  </g>
+</svg>
