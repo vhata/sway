@@ -93,10 +93,13 @@ def server_url(server_data: Path) -> Iterator[str]:
 
 
 @pytest.fixture(scope="module")
-def developer_server_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
-    with running_server(
-        tmp_path_factory.mktemp("developer-browser-saves"), developer_terminology=True
-    ) as url:
+def developer_server_data(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return tmp_path_factory.mktemp("developer-browser-saves")
+
+
+@pytest.fixture(scope="module")
+def developer_server_url(developer_server_data: Path) -> Iterator[str]:
+    with running_server(developer_server_data, developer_terminology=True) as url:
         yield url
 
 
@@ -187,10 +190,16 @@ def test_manual_setup_requires_ten_and_hides_extra_opponents(page: Page, server_
     expect(page.get_by_role("alert")).to_contain_text("exactly 10")
 
 
+@pytest.mark.parametrize("developer_terminology", [False, True])
 def test_invalid_manual_setup_can_be_corrected_without_reentering_settings(
-    page: Page, server_url: str, server_data: Path
+    page: Page,
+    server_url: str,
+    server_data: Path,
+    developer_server_url: str,
+    developer_server_data: Path,
+    developer_terminology: bool,
 ) -> None:
-    page.goto(server_url)
+    page.goto(developer_server_url if developer_terminology else server_url)
     page.locator("#players").select_option("4")
     page.locator('input[name="seed"]').fill("125")
     page.locator('select[name="theme"]').select_option("orbital")
@@ -208,13 +217,30 @@ def test_invalid_manual_setup_can_be_corrected_without_reentering_settings(
     expect(page.locator('select[name="theme"]')).to_have_value("orbital")
     expect(page.locator("#supply-mode")).to_have_value("manual")
     expect(page.locator('input[name="kingdom"]:checked')).to_have_count(11)
+    if developer_terminology:
+        expect(
+            page.locator("#manual-supply").get_by_text("Original: Cellar", exact=True)
+        ).to_be_visible()
+    else:
+        expect(page.locator(".original-name")).to_have_count(0)
     for index, strategy in enumerate(strategies, 1):
         expect(page.locator(f'select[name="strategy{index}"]')).to_have_value(strategy)
     page.locator('input[name="kingdom"][value="k26"]').uncheck()
     page.get_by_role("button", name="Begin a game").click()
     page.wait_for_url("**/games/*")
+    expect(page.locator("#board")).to_have_attribute("data-theme", "orbital")
+    if developer_terminology:
+        supply_card = page.locator(".supply-grid .card-face").filter(has_text="Original: Cellar")
+        expect(supply_card.locator("strong")).to_have_text("Cargo Bay")
+        expect(supply_card.locator(".original-name")).to_be_visible()
+        page.reload()
+        expect(supply_card.locator(".original-name")).to_be_visible()
+        expect(page.locator("#board")).to_have_attribute("data-theme", "orbital")
+    else:
+        expect(page.locator(".original-name")).to_have_count(0)
     identifier = page.url.rsplit("/", 1)[1]
-    record = GameService(SQLiteStore(server_data / "games.sqlite3")).load(identifier)
+    data = developer_server_data if developer_terminology else server_data
+    record = GameService(SQLiteStore(data / "games.sqlite3")).load(identifier)
     assert record.state.seed == 125
     assert record.state.config.player_count == 4
     assert record.state.config.kingdom == kingdom
