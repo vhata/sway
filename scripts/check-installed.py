@@ -65,7 +65,7 @@ async def main() -> None:
     required = (
         "app.js",
         "style.css",
-        "themes/neutral.json",
+        "themes/common-ground.json",
         "themes/orbital.json",
         "vendor/HTMX-LICENSE",
     )
@@ -80,7 +80,7 @@ async def main() -> None:
         Callable[[frozenset[str]], dict[str, object]],
         import_module("sway.presentation.themes").load_themes,
     )
-    if not {"neutral", "orbital"} <= load_themes(frozenset(catalog)).keys():
+    if not {"common-ground", "orbital"} <= load_themes(frozenset(catalog)).keys():
         raise RuntimeError("Both bundled themes must load with complete card and image coverage.")
     create_app = cast(Callable[[Path], FastAPI], import_module("sway.web").create_app)
     application = create_app(Path.cwd() / "data")
