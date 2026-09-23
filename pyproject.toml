@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sway-game"
+version = "0.1.0"
+description = "A local deck-building game with original themes and deterministic rules."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "htpy>=25.0",
+  "python-multipart>=0.0.20,<1",
+  "uvicorn>=0.34,<1",
+]
+
+[dependency-groups]
+dev = [
+  "basedpyright>=1.28,<2",
+  "build>=1.2,<2",
+  "hatchling>=1.27,<2",
+  "httpx>=0.28,<1",
+  "hypothesis>=6.130,<7",
+  "pre-commit>=4.2,<5",
+  "pytest>=8.3,<10",
+  "pytest-cov>=6,<8",
+  "pytest-playwright>=0.7,<1",
+  "ruff>=0.11,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sway"]
+
+[tool.uv]
+required-version = "==0.12.17"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+exclude = [".venv", "build", "dist"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["e2e: browser tests requiring Chromium", "slow: longer seeded simulations"]
+
+[tool.coverage.run]
+branch = true
+source = ["sway.engine"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
