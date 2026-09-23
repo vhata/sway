@@ -50,10 +50,6 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
 
 ### Unprioritized
 
-- [UI] `developer-original-terminology-hints` — **Show original Dominion terminology in an optional developer mode.** Help developers reference the original game while keeping cards rendered normally with the active theme and renamed terminology.
-  - Starting point: Add an opt-in developer flag, disabled by default, that supplements the normal card with its original term as hover/focus text or secondary subtext. Use stable card IDs and the mapping in `docs/TERMINOLOGY.md`; the hint must not replace the themed name, alter the normal card rendering or affect gameplay.
-  - Source: user request for PR #6, 2026-09-23
-
 - [BACKEND] `postgresql-shared-game-storage` — **Add PostgreSQL before multiple servers share games.** A server database supports shared writes and production operating requirements while preserving the engine's storage boundary.
   - Starting point: Implement the storage protocol, run shared and cross-process concurrency tests, and execute the verified transfer/backup/cutover/rollback requirements in ARCHITECTURE.md. Preserve game IDs, revisions, snapshots and history; add infrastructure only when deployment calls for it.
   - Source: accepted Sway persistence plan, 2026-09-22
