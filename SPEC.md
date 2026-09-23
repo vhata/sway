@@ -34,15 +34,15 @@ The coordinating agent integrates independent branches after shared interfaces a
 
 ## Release acceptance
 
-- [ ] Every base definition has independently specified tests, including reactions, repeated/nested actions, partial effects, empty piles, shuffling, cleanup, scoring and ties.
-- [ ] State invariants cover card conservation, exclusive zone membership, legal resource accounting and invalid-command rejection.
-- [ ] Uninterrupted, resumed and replayed seeded games reach equivalent state; gameplay and bot randomness survive snapshots.
-- [ ] No forbidden information appears in player views, HTML, fragments, public history or bot inputs.
-- [ ] Storage proves atomic snapshots/history, stale-update rejection, duplicate submission handling, rollback and process restart recovery.
-- [ ] Every decision widget works in Chromium, including ordering, local selection, stale tabs, duplicate submits and human reactions during bot turns.
-- [ ] Both themes cover the full set; theme changes during pending decisions and reload preserve mechanical state.
-- [ ] Every bot profile finishes representative games across two, three and four players. Bounded simulations report unfinished runs without changing rules.
-- [ ] Shared quality scripts, package build and browser suite pass; engine branch coverage is at least 90% with meaningful assertions.
-- [ ] Full and follow-up incremental reviews leave no release-blocking correctness or information-disclosure finding unresolved.
+- [x] Every base definition has independently specified tests, including reactions, repeated/nested actions, partial effects, empty piles, shuffling, cleanup, scoring and ties.
+- [x] State invariants cover card conservation, exclusive zone membership, legal resource accounting and invalid-command rejection.
+- [x] Uninterrupted, resumed and replayed seeded games reach equivalent state; gameplay and bot randomness survive snapshots.
+- [x] No forbidden information appears in player views, HTML, fragments, public history or bot inputs.
+- [x] Storage proves atomic snapshots/history, stale-update rejection, duplicate submission handling, rollback and process restart recovery.
+- [x] Every decision widget works in Chromium, including ordering, local selection, stale tabs, duplicate submits and human reactions during bot turns.
+- [x] Both themes cover the full set; theme changes during pending decisions and reload preserve mechanical state.
+- [x] Every bot profile finishes representative games across two, three and four players. Bounded simulations report unfinished runs without changing rules.
+- [x] Shared quality scripts, package build and browser suite pass; engine branch coverage is at least 90% with meaningful assertions.
+- [x] Full and follow-up incremental reviews leave no release-blocking correctness or information-disclosure finding unresolved.
 
-Record checked criteria with actual commands, commits and outcomes in release evidence. Never check a box solely because code exists.
+All criteria were verified against the reviewed code; see [release evidence](ACCEPTANCE.md) for commands, commits, outcomes and limits.
