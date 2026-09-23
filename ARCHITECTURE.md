@@ -30,7 +30,7 @@ The initial adapter uses standard-library `sqlite3`. Keep transactions short: lo
 
 Keep runtime data outside tracked files, isolate worktree data, and bind the development server to localhost. Reject cross-origin mutations. The local release does not promise remote identity/authentication.
 
-[The multiplayer proposal](docs/MULTIPLAYER.md) defines invite-only identity, private seats, reconnects and updates for a future implementation; it does not enable hosted access.
+[The multiplayer proposal](docs/MULTIPLAYER.md) defines invite-only identity, private seats, reconnects and updates for a future implementation; it does not enable hosted access. [Development decisions](docs/DECISIONS.md) record the chosen defaults and their tradeoffs for review.
 
 ## PostgreSQL transition
 
