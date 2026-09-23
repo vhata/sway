@@ -6,3 +6,4 @@ scripts/lint.sh
 scripts/typecheck.sh
 scripts/coverage.sh "$@"
 scripts/build.sh
+scripts/install-smoke.sh
