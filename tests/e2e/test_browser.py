@@ -179,6 +179,60 @@ def test_developer_names_are_visible_after_theme_and_decision_updates(
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
+@pytest.mark.parametrize("width", [320, 390])
+@pytest.mark.parametrize("theme", ["common-ground", "orbital"])
+def test_card_catalogue_titles_art_and_effects_fit_small_screens(
+    page: Page, developer_server_url: str, theme: str, width: int
+) -> None:
+    page.set_viewport_size({"width": width, "height": 844})
+    page.goto(f"{developer_server_url}/developer/cards?theme={theme}")
+    cards = page.locator("[data-card-id] .card-face")
+    expect(cards).to_have_count(33)
+    for card in cards.all():
+        illustration = card.locator("img")
+        illustration.scroll_into_view_if_needed()
+        expect(illustration).to_have_js_property("complete", True)
+        assert illustration.evaluate("image => image.naturalWidth > 0")
+    fits = """cards => cards.every(card => {
+            const title = card.querySelector('.card-top strong');
+            const cost = card.querySelector('.cost').getBoundingClientRect();
+            const bounds = card.getBoundingClientRect();
+            const text = document.createRange();
+            text.selectNodeContents(title);
+            const titleFits = [...text.getClientRects()].every(rect =>
+                rect.left >= bounds.left && rect.right < cost.left);
+            const description = card.querySelector('.card-description');
+            const readable = parseFloat(getComputedStyle(description).fontSize) >= 12;
+            return titleFits && readable && card.scrollWidth <= card.clientWidth;
+        })"""
+    assert cards.evaluate_all(fits)
+    expect(page.locator('[data-card-id="k08"] .card-value')).to_have_count(0)
+    expect(page.locator('[data-card-id="victory3"] .card-value')).to_contain_text("6")
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    themes = load_themes(frozenset(CATALOG))
+    pack = themes[theme]
+    view = view_for(new_game(GameConfig(), 13), 0)
+    decision = Decision(
+        "long-names",
+        0,
+        "select",
+        "gain",
+        tuple(Option(card_id, card_id) for card_id in ("k01", "k03", "k10")),
+        1,
+        1,
+    )
+    for enabled in (False, True):
+        ctx = BoardContext(
+            "widget", "token", pack, tuple(themes.values()), developer_terminology=enabled
+        )
+        page.set_content(
+            f'<main class="board" style="{pack.style}">{choice_form(decision, view, ctx)}</main>'
+        )
+        page.add_style_tag(path=ROOT / "src/sway/static/style.css")
+        assert page.locator(".card-face").evaluate_all(fits)
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
 def test_manual_setup_requires_ten_and_hides_extra_opponents(page: Page, server_url: str) -> None:
     page.goto(server_url)
     expect(page.locator('[data-opponent="2"]')).to_be_hidden()

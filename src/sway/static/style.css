@@ -140,6 +140,25 @@ button:hover:not(:disabled),
   max-width: 1250px;
   margin: auto;
   padding: 4rem 4%;
+  color: var(--ink);
+  background: var(--background);
+}
+.theme-picker {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  max-width: 450px;
+  margin-bottom: 1.5rem;
+}
+.theme-picker label {
+  flex: 1;
+}
+.theme-picker button {
+  background: var(--accent);
+  color: var(--surface);
+}
+.home > .panel + .panel {
+  margin-top: 1.5rem;
 }
 .welcome {
   margin-bottom: 3rem;
@@ -536,8 +555,10 @@ legend {
     700 0.96rem / 1.2 Georgia,
     serif;
 }
+.card-top > strong,
 .card-title {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 .original-name {
   display: block;
@@ -599,7 +620,7 @@ legend {
   padding: 0.14rem 0.32rem;
   color: var(--ink);
   background: color-mix(in srgb, var(--accent) 9%, var(--surface));
-  font-size: 0.57rem;
+  font-size: 0.65rem;
   line-height: 1.35;
   font-weight: 750;
   text-transform: uppercase;
@@ -662,10 +683,28 @@ legend {
 .card-curse {
   border-top-color: #937ca7;
 }
+.compact img {
+  max-height: 84px;
+  object-fit: contain;
+  margin: 0.45rem 0;
+}
+.compact .card-types,
+.compact .card-value {
+  margin-bottom: 0.4rem;
+}
+.compact .card-value strong {
+  font-size: 1.35rem;
+}
+.compact .card-description p {
+  margin-bottom: 0.45rem;
+}
 .supply-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(175px, 100%), 1fr));
   gap: 0.7rem;
+}
+.supply-grid > [data-card-id] > .card-face {
+  height: 100%;
 }
 .history {
   padding: 1.2rem;
@@ -772,10 +811,43 @@ legend {
     grid-template-columns: 1fr;
   }
   .choice {
-    width: calc(50% - 0.4rem);
+    width: 100%;
   }
   .text-choice {
     width: auto;
+  }
+  .choice:not(.text-choice) .card-face {
+    display: grid;
+    grid-template-columns: minmax(70px, 27%) minmax(0, 1fr);
+    column-gap: 0.7rem;
+  }
+  .choice .card-top {
+    grid-column: 1 / -1;
+  }
+  .choice:not(.text-choice) .card-face img {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    max-height: none;
+    margin-top: 0.5rem;
+  }
+  .choice .card-types,
+  .choice .card-value,
+  .choice .card-description {
+    grid-column: 2;
+  }
+  .choice .card-types {
+    grid-row: 2;
+    justify-self: end;
+    margin-top: 0.5rem;
+  }
+  .choice .card-value {
+    grid-row: 2;
+    justify-self: start;
+    align-self: start;
+    margin-top: 0.5rem;
+  }
+  .choice .card-description {
+    grid-row: 3;
   }
   .card-row > .card-face {
     width: calc(50% - 0.3rem);
@@ -785,6 +857,11 @@ legend {
   }
   .board {
     padding-top: 1.5rem;
+  }
+}
+@media (max-width: 360px) {
+  .supply-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
