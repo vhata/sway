@@ -4,12 +4,12 @@ Sway is a local deck-building game with deterministic Python rules and interchan
 
 ## Workflow
 
-- Put every change, including process documents, on a focused branch and pull request. The user merges unless explicitly delegated. Preserve linear history; rebase dependent branches after prerequisites land.
-- Use sub-agents for bounded implementation and independent review. Give each implementation agent a separate branch, worktree and PR. The coordinating agent owns shared interfaces and integration. Land or explicitly stack shared contracts before dependent work.
+- Use focused branches and PRs for substantive code and documentation changes that need review. Small documentation corrections may go directly to `main` after proportionate checks; recovery of already reviewed changes may do so with explicit user authorization. The user merges implementation PRs unless explicitly delegated. Preserve linear history; rebase dependent branches after prerequisites land.
+- Use sub-agents for bounded implementation and independent review. Give each implementation agent a separate branch and worktree, with a PR when the review policy requires one. The coordinating agent owns shared interfaces and integration. Land or explicitly stack shared contracts before dependent work.
 - Check branches, worktrees and open PRs for existing claims before starting. Serialize queue bookkeeping and assign one owner to dependency changes. Preserve unrelated user changes.
 - Use Python 3.12 through uv and the worktree's own `.venv`; use `uv run --locked`, not the user's shared interpreter or another worktree's environment. Commit dependency changes and `uv.lock` together.
 - Use the executable `scripts/` entrypoints listed in README. Complete relevant checks and independent review before presenting implementation PRs. Describe actual outcomes, evidence and remaining limitations.
-- Open a draft PR after the first meaningful commit. Explain the need and resulting behaviour, then validation. Do not merge or tag a release without explicit authorization.
+- When a PR is required, open a draft after the first meaningful commit. Explain the need and resulting behaviour, then validation. Do not merge implementation PRs or tag a release without explicit authorization.
 - Keep the current task focused. Capture separately shippable discoveries in the appropriate queue. User-authorized work does not need repeated permission.
 - Keep rules in one authoritative home. Update documentation when behaviour changes; distinguish accepted plans from implemented features.
 
