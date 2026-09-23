@@ -1,4 +1,8 @@
-"""Application orchestration: validated decisions, independent bots, atomic saves."""
+"""Game orchestration with explicit human controllers and independent bot state.
+
+The caller supplies a trusted human seat. HTTP clients must not select that seat;
+authentication and membership belong to a future application boundary.
+"""
 
 from __future__ import annotations
 
@@ -46,6 +50,12 @@ class GameRecord:
     strategies: tuple[str, ...]
     state: GameState
     bots: tuple[BotState, ...]
+    human_seats: frozenset[int]
+
+    @property
+    def bot_seats(self) -> tuple[int, ...]:
+        """The seat for each entry in bots, in ascending player order."""
+        return _bot_seats(len(self.state.players), self.human_seats)
 
 
 def _object(value: object) -> dict[str, object]:
@@ -66,9 +76,35 @@ def _text(value: object) -> str:
     return value
 
 
-def _snapshot(state: GameState, bots: tuple[BotState, ...]) -> str:
+def _human_seats(value: object, player_count: int) -> frozenset[int]:
+    if not isinstance(value, frozenset) or not value:
+        raise ValueError("Choose at least one human seat as a frozenset of player indices.")
+    seats = cast(frozenset[object], value)
+    if any(
+        not isinstance(seat, int) or isinstance(seat, bool) or not 0 <= seat < player_count
+        for seat in seats
+    ):
+        raise ValueError("Human seats must be integer player indices within the game.")
+    return cast(frozenset[int], value)
+
+
+def _bot_seats(player_count: int, human_seats: frozenset[int]) -> tuple[int, ...]:
+    return tuple(player for player in range(player_count) if player not in human_seats)
+
+
+def _snapshot(state: GameState, bots: tuple[BotState, ...], human_seats: frozenset[int]) -> str:
     return json.dumps(
-        {"schema": 1, "engine": state_to_json(state), "bots": [asdict(bot) for bot in bots]},
+        {
+            "schema": 2,
+            "engine": state_to_json(state),
+            "human_seats": sorted(human_seats),
+            "bots": {
+                str(player): asdict(bot)
+                for player, bot in zip(
+                    _bot_seats(len(state.players), human_seats), bots, strict=True
+                )
+            },
+        },
         sort_keys=True,
         separators=(",", ":"),
     )
@@ -77,14 +113,32 @@ def _snapshot(state: GameState, bots: tuple[BotState, ...]) -> str:
 def _record(saved: StoredGame) -> GameRecord:
     try:
         payload = _object(cast(object, json.loads(saved.snapshot)))
-        if payload.get("schema") != 1:
+        schema = _integer(payload.get("schema"))
+        if schema not in {1, 2}:
             raise SaveFormatError("Unsupported game save version; the original save is preserved.")
         state = state_from_json(_text(payload.get("engine")))
-        raw_bots = payload.get("bots")
-        if not isinstance(raw_bots, list):
-            raise SaveFormatError("Missing opponent profiles.")
+        if schema == 1:
+            # Original local saves always used human seat 0 and positional bots.
+            human_seats = frozenset({0})
+            raw_bots = payload.get("bots")
+            if not isinstance(raw_bots, list):
+                raise SaveFormatError("Missing opponent profiles.")
+            bot_values = cast(list[object], raw_bots)
+        else:
+            raw_humans = payload.get("human_seats")
+            if not isinstance(raw_humans, list):
+                raise SaveFormatError("Missing human seat assignments.")
+            indices = tuple(_integer(value) for value in cast(list[object], raw_humans))
+            if len(set(indices)) != len(indices):
+                raise SaveFormatError("A human seat is assigned more than once.")
+            human_seats = _human_seats(frozenset(indices), len(state.players))
+            by_seat = _object(payload.get("bots"))
+            bot_seats = _bot_seats(len(state.players), human_seats)
+            if set(by_seat) != {str(player) for player in bot_seats}:
+                raise SaveFormatError("Bot assignments do not match the game's remaining seats.")
+            bot_values = [by_seat[str(player)] for player in bot_seats]
         bots: list[BotState] = []
-        for raw in cast(list[object], raw_bots):
+        for raw in bot_values:
             item = _object(raw)
             bot = BotState(
                 profile=_text(item.get("profile")),
@@ -95,7 +149,7 @@ def _record(saved: StoredGame) -> GameRecord:
             if bot.profile not in STRATEGIES or bot.version != 1 or bot.decisions < 0:
                 raise SaveFormatError("Unsupported opponent strategy version.")
             bots.append(bot)
-        if state.revision != saved.revision or len(bots) != len(state.players) - 1:
+        if state.revision != saved.revision or len(bots) != len(state.players) - len(human_seats):
             raise SaveFormatError("The game save has inconsistent state or opponents.")
         return GameRecord(
             game_id=saved.game_id,
@@ -107,6 +161,7 @@ def _record(saved: StoredGame) -> GameRecord:
             strategies=tuple(bot.profile for bot in bots),
             state=state,
             bots=tuple(bots),
+            human_seats=human_seats,
         )
     except (ValueError, TypeError, KeyError, IndexError) as exc:
         raise SaveFormatError(
@@ -129,23 +184,31 @@ class GameService:
         seed: int,
         strategies: tuple[str, ...],
         theme_id: str = "common-ground",
+        *,
+        human_seats: frozenset[int] = frozenset({0}),
     ) -> GameRecord:
         self._check_theme(theme_id)
-        if len(strategies) != config.player_count - 1:
+        human_seats = _human_seats(human_seats, config.player_count)
+        bot_seats = _bot_seats(config.player_count, human_seats)
+        if len(strategies) != len(bot_seats):
             raise ValueError("Choose one strategy for each opponent.")
         if any(profile not in STRATEGIES for profile in strategies):
             raise ValueError("Unknown opponent strategy.")
         state = new_game(config, seed)
         bots = tuple(
-            BotState(profile, seed ^ ((index + 1) * 0x9E3779B97F4A7C15))
-            for index, profile in enumerate(strategies)
+            BotState(profile, seed ^ (player * 0x9E3779B97F4A7C15))
+            for player, profile in zip(bot_seats, strategies, strict=True)
         )
         return _record(
             self.store.create(
                 uuid4().hex,
-                _snapshot(state, bots),
+                _snapshot(state, bots, human_seats),
                 json.dumps(
-                    {"players": [player.name for player in state.players], "strategies": strategies}
+                    {
+                        "players": [player.name for player in state.players],
+                        "strategies": strategies,
+                        "human_seats": sorted(human_seats),
+                    }
                 ),
                 theme_id,
             )
@@ -184,9 +247,18 @@ class GameService:
         return summaries
 
     def view(self, game_id: str, player: int = 0) -> PlayerView:
-        if player != 0:
-            raise ValueError("Only the human seat is available through the browser service.")
-        return view_for(self.load(game_id).state, player)
+        record = self.load(game_id)
+        self._check_human_player(record, player)
+        return view_for(record.state, player)
+
+    @staticmethod
+    def _check_human_player(record: GameRecord, player: object) -> None:
+        if (
+            not isinstance(player, int)
+            or isinstance(player, bool)
+            or player not in record.human_seats
+        ):
+            raise ValueError("Choose a configured human seat.")
 
     def _apply(
         self, record: GameRecord, command: Command, bots: tuple[BotState, ...]
@@ -198,18 +270,19 @@ class GameService:
             record.game_id,
             command.expected_revision,
             command.decision_id,
-            _snapshot(result.state, bots),
+            _snapshot(result.state, bots, record.human_seats),
             json.dumps(asdict(command), sort_keys=True),
             json.dumps([asdict(event) for event in result.events], sort_keys=True),
             "finished" if result.state.phase == "finished" else "active",
         )
         return _record(saved)
 
-    def submit(self, game_id: str, command: Command) -> GameRecord:
+    def submit(self, game_id: str, command: Command, *, player: int = 0) -> GameRecord:
         record = self.load(game_id)
+        self._check_human_player(record, player)
         if record.revision != command.expected_revision:
             raise StorageConflict("The game advanced. Reload before making your choice.")
-        if record.state.pending is None or record.state.pending.player != 0:
+        if record.state.pending is None or record.state.pending.player != player:
             raise InvalidCommand("It is not your decision.")
         return self._apply(record, command, record.bots)
 
@@ -221,9 +294,13 @@ class GameService:
             raise StorageConflict("The game advanced. Reload before continuing.")
         for _ in range(max_steps):
             decision = record.state.pending
-            if decision is None or decision.player == 0 or record.state.phase == "finished":
+            if (
+                decision is None
+                or decision.player in record.human_seats
+                or record.state.phase == "finished"
+            ):
                 break
-            index = decision.player - 1
+            index = record.bot_seats.index(decision.player)
             choice = choose(view_for(record.state, decision.player), decision, record.bots[index])
             bots = list(record.bots)
             bots[index] = choice.state

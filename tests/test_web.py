@@ -286,3 +286,41 @@ def test_original_name_mapping_matches_catalog_and_developer_reference() -> None
     }
     assert set(OFFICIAL_NAMES) == set(CATALOG)
     assert documented == OFFICIAL_NAMES
+
+
+@pytest.mark.parametrize("humans", [frozenset({1}), frozenset({0, 1})])
+def test_local_browser_rejects_other_human_arrangements_without_mutation(
+    client: Client, tmp_path: Path, humans: frozenset[int]
+) -> None:
+    from sway.engine import GameConfig
+
+    token = csrf(client)
+    service = GameService(SQLiteStore(tmp_path / "games.sqlite3"))
+    record = service.create(
+        GameConfig(), 4, ("economy",) if len(humans) == 1 else (), human_seats=humans
+    )
+    before = service.store.load(record.game_id)
+    assert record.state.pending is not None
+    form = {
+        "csrf": token,
+        "revision": "0",
+        "decision": record.state.pending.id,
+        "choices": record.state.pending.options[0].id,
+        "theme": "orbital",
+        "player": "1",
+    }
+    assert client.get("/").status_code == 200
+    for headers in ({}, {"HX-Request": "true"}):
+        responses = [client.get(f"/games/{record.game_id}", headers=headers)]
+        responses.extend(
+            client.post(f"/games/{record.game_id}/{route}", data=form, headers=headers)
+            for route in ("decisions", "advance", "theme")
+        )
+        for response in responses:
+            assert response.status_code == 422
+            assert "player arrangement" in response.text
+            assert "preserved" in response.text
+            assert 'id="bot-progress"' not in response.text
+            assert 'id="decision-form"' not in response.text
+        assert service.store.load(record.game_id) == before
+        assert service.store.history(record.game_id) == []
