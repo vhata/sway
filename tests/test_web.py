@@ -28,7 +28,7 @@ def create_game(client: Client, token: str, **fields: str) -> str:
             "players": "2",
             "seed": "13",
             "strategy1": "economy",
-            "theme": "neutral",
+            "theme": "common-ground",
             "supply": "starter",
             **fields,
         },
@@ -111,7 +111,7 @@ def test_invalid_theme_preserves_active_pack(client: Client, tmp_path: Path) -> 
     )
     assert response.status_code == 422
     service = GameService(SQLiteStore(tmp_path / "games.sqlite3"))
-    assert service.load(identifier).theme_id == "neutral"
+    assert service.load(identifier).theme_id == "common-ground"
 
 
 def test_decision_rejects_stale_revision_and_advances_only_once(
@@ -178,7 +178,7 @@ def test_unavailable_saved_theme_falls_back_without_changing_save(
     packs = tmp_path / "packs"
     packs.mkdir()
     (packs / "orbital.json").write_text((theme_module.THEME_ROOT / "orbital.json").read_text())
-    (packs / "neutral.json").write_text("invalid pack")
+    (packs / "common-ground.json").write_text("invalid pack")
     monkeypatch.setattr(theme_module, "THEME_ROOT", packs)
     restarted = make_client(tmp_path)
     response = restarted.get(f"/games/{identifier}")

@@ -67,10 +67,10 @@ def csrf_input(token: str) -> h.VoidElement:
 def home(
     games: Sequence[SavedGame], themes: tuple[Theme, ...], csrf: str, error: str | None = None
 ) -> h.Element:
-    neutral = next((theme for theme in themes if theme.id == "neutral"), themes[0])
+    common_ground = next((theme for theme in themes if theme.id == "common-ground"), themes[0])
     return page(
         "Your table awaits",
-        h.main(id="main", class_="home", style=neutral.style)[
+        h.main(id="main", class_="home", style=common_ground.style)[
             h.section(class_="welcome")[
                 h.p(class_="eyebrow")["A game of growing possibilities"],
                 h.h1["Start small.", h.br, h.em["Build your advantage."]],
@@ -143,7 +143,7 @@ def home(
                                 [
                                     h.label[
                                         h.input(type="checkbox", name="kingdom", value=card_id),
-                                        neutral.cards[card_id].name,
+                                        common_ground.cards[card_id].name,
                                         h.small[f" · {CATALOG[card_id].cost}"],
                                     ]
                                     for card_id in KINGDOM_IDS

@@ -85,6 +85,7 @@ def test_new_game_local_selection_theme_and_reload(page: Page, server_url: str) 
     page.goto(server_url)
     page.get_by_role("button", name="Begin a game").click()
     expect(page.locator("#decision-form")).to_be_visible(timeout=15000)
+    expect(page.locator("#board")).to_have_attribute("data-theme", "common-ground")
     location = page.url
     revision = page.locator("#board").get_attribute("data-revision")
     requests: list[str] = []
@@ -136,7 +137,7 @@ def test_multiselect_limits_and_ordering_are_local(page: Page) -> None:
     state = new_game(GameConfig(), 5)
     view = view_for(state, 0)
     themes = load_themes(frozenset(CATALOG))
-    ctx = BoardContext("widget", "token", themes["neutral"], tuple(themes.values()))
+    ctx = BoardContext("widget", "token", themes["common-ground"], tuple(themes.values()))
     choices = tuple(
         Option(f"option-{index}", card_id) for index, card_id in enumerate(("k04", "k05", "k12"))
     )
@@ -171,7 +172,7 @@ def test_single_choice_widgets_support_keyboard_and_confirmation(page: Page, kin
     state = new_game(GameConfig(), 5)
     view = view_for(state, 0)
     themes = load_themes(frozenset(CATALOG))
-    ctx = BoardContext("widget", "token", themes["neutral"], tuple(themes.values()))
+    ctx = BoardContext("widget", "token", themes["common-ground"], tuple(themes.values()))
     options = (
         (Option("yes"), Option("no"))
         if kind == "yes_no"
@@ -197,7 +198,7 @@ def test_ordered_subset_selects_only_checked_cards(
     state = new_game(GameConfig(), 5)
     view = view_for(state, 0)
     themes = load_themes(frozenset(CATALOG))
-    ctx = BoardContext("widget", "token", themes["neutral"], tuple(themes.values()))
+    ctx = BoardContext("widget", "token", themes["common-ground"], tuple(themes.values()))
     options = tuple(
         Option(f"card-{index}", card_id)
         for index, card_id in enumerate(("k04", "k05", "k12", "k13", "k14"))
@@ -294,7 +295,7 @@ def test_bot_attack_stops_for_human_reaction_and_survives_reload(
             {"schema": 1, "engine": state_to_json(state), "bots": [asdict(BotState("attack", 91))]}
         ),
         json.dumps({"players": ["You", "Attacker"]}),
-        "neutral",
+        "common-ground",
     )
     page.goto(f"{server_url}/games/{identifier}")
     expect(page.locator("#decision-heading")).to_have_text("Protect yourself from this attack?")

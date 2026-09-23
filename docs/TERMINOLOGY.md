@@ -4,6 +4,15 @@ This developer reference maps presentation-neutral identifiers to the mechanics 
 
 Mechanics reference: [publisher second edition rules](https://www.riograndegames.com/wp-content/uploads/2016/09/Dominion2nd.pdf). This project is independent and is not endorsed by the publisher. Original artwork and rulebook/card prose are not redistributed. This approach reduces intellectual-property exposure without asserting legal clearance.
 
+## Theme packs
+
+| Display name | Theme ID | Manifest | Asset directory |
+|---|---|---|---|
+| Common Ground | `common-ground` | `src/sway/static/themes/common-ground.json` | `src/sway/static/themes/common-ground/` |
+| Orbital Commons | `orbital` | `src/sway/static/themes/orbital.json` | `src/sway/static/themes/orbital/` |
+
+## Card names
+
 | Stable ID | Official reference | Common Ground | Orbital Commons |
 |---|---|---|---|
 | `k01` | Artisan | Craftsperson | Fabricator |

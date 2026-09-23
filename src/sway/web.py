@@ -85,7 +85,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         os.environ.get("SWAY_DATA_DIR", str(Path.home() / ".local/share/sway"))
     )
     themes = load_themes(frozenset(CATALOG))
-    default_theme = themes.get("neutral", next(iter(themes.values())))
+    default_theme = themes.get("common-ground", next(iter(themes.values())))
     service: GameService | None = None
     service_lock = Lock()
     application = FastAPI(title="Sway", docs_url=None, redoc_url=None, openapi_url=None)
