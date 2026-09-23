@@ -66,25 +66,25 @@
     },
     "k01": {
       "name": "Craftsperson",
-      "description": "Take a card costing up to 5 into your hand. Then put a card from your hand on top of your deck.",
+      "description": "Take a card costing up to 5 into your hand.\nThen put a card from your hand on top of your deck.",
       "image": "themes/common-ground/k01.svg",
       "image_alt": "A carpenter’s plane, wooden shavings and a teal vase on a workbench."
     },
     "k02": {
       "name": "Raider",
-      "description": "Take an Endowment. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Token if possible, and discards the rest.",
+      "description": "Take an Endowment.\nEach opponent reveals their top 2 cards, scraps a revealed Treasure other than Token if possible, and discards the rest.",
       "image": "themes/common-ground/k02.svg",
       "image_alt": "A red-sailed raiding boat carrying a brass chest across blue water."
     },
     "k03": {
       "name": "Administrator",
-      "description": "Take a Reserve onto your deck. Each opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
+      "description": "Take a Reserve onto your deck.\nEach opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
       "image": "themes/common-ground/k03.svg",
       "image_alt": "A wax-sealed document beside a brass stamp and a neat stack of folders."
     },
     "k04": {
       "name": "Storeroom",
-      "description": "Gain 1 action. Discard as many cards as you choose, then draw that many cards.",
+      "description": "Gain 1 action.\nDiscard as many cards as you choose, then draw that many cards.",
       "image": "themes/common-ground/k04.svg",
       "image_alt": "A pantry shelf of jars, folded sacks and a wooden produce crate."
     },
@@ -96,7 +96,7 @@
     },
     "k06": {
       "name": "Assembly",
-      "description": "Draw 4 cards and gain 1 buy. Every other player draws 1 card.",
+      "description": "Draw 4 cards and gain 1 buy.\nEvery other player draws 1 card.",
       "image": "themes/common-ground/k06.svg",
       "image_alt": "Six chairs gathered around a round meeting table with shared papers."
     },
@@ -114,7 +114,7 @@
     },
     "k09": {
       "name": "Courier",
-      "description": "Draw 1 card and gain 1 action. You may put a card from your discard pile onto your deck.",
+      "description": "Draw 1 card and gain 1 action.\nYou may put a card from your discard pile onto your deck.",
       "image": "themes/common-ground/k09.svg",
       "image_alt": "A coral courier bicycle with a basket of envelopes beside a signpost."
     },
@@ -126,7 +126,7 @@
     },
     "k11": {
       "name": "Archive",
-      "description": "Draw until your hand contains 7 cards. You may set aside Action cards drawn this way; discard them after drawing finishes.",
+      "description": "Draw until your hand contains 7 cards.\nYou may set aside Action cards drawn this way; discard them after drawing finishes.",
       "image": "themes/common-ground/k11.svg",
       "image_alt": "Tall wooden archive shelves, a rolling ladder and an open book."
     },
@@ -138,13 +138,13 @@
     },
     "k13": {
       "name": "Broker",
-      "description": "Draw 1 card and gain 1 action. The first Reserve you play this turn provides 1 extra coin.",
+      "description": "Draw 1 card and gain 1 action.\nThe first Reserve you play this turn provides 1 extra coin.",
       "image": "themes/common-ground/k13.svg",
       "image_alt": "A brass trading scale balancing coins and a cloth pouch beside a ledger."
     },
     "k14": {
       "name": "Patrol",
-      "description": "Gain 2 coins. Every opponent discards until they have 3 cards in hand.",
+      "description": "Gain 2 coins.\nEvery opponent discards until they have 3 cards in hand.",
       "image": "themes/common-ground/k14.svg",
       "image_alt": "A watch lantern and striped patrol shield resting beside a gate."
     },
@@ -156,7 +156,7 @@
     },
     "k16": {
       "name": "Breakwater",
-      "description": "Draw 2 cards. When an opponent attacks, you may reveal this from your hand to avoid that attack.",
+      "description": "Draw 2 cards.\nWhen an opponent attacks, you may reveal this from your hand to avoid that attack.",
       "image": "themes/common-ground/k16.svg",
       "image_alt": "A stone breakwater and red lighthouse protecting calm water from waves."
     },
@@ -168,19 +168,19 @@
     },
     "k18": {
       "name": "Forager",
-      "description": "Draw 1 card, gain 1 action and 1 coin. Discard 1 card for each empty supply pile.",
+      "description": "Draw 1 card, gain 1 action and 1 coin.\nDiscard 1 card for each empty supply pile.",
       "image": "themes/common-ground/k18.svg",
       "image_alt": "A woven basket of mushrooms, berries and leafy forest finds."
     },
     "k19": {
       "name": "Renovator",
-      "description": "Scrap a card from your hand. Take a card costing at most 2 more into your discard pile.",
+      "description": "Scrap a card from your hand.\nTake a card costing at most 2 more into your discard pile.",
       "image": "themes/common-ground/k19.svg",
       "image_alt": "A half-restored cottage with scaffolding, a ladder and fresh terracotta roof tiles."
     },
     "k20": {
       "name": "Lookout",
-      "description": "Draw 1 card and gain 1 action. Inspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
+      "description": "Draw 1 card and gain 1 action.\nInspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
       "image": "themes/common-ground/k20.svg",
       "image_alt": "A tall coastal lookout tower with a telescope facing the horizon."
     },
@@ -198,7 +198,7 @@
     },
     "k23": {
       "name": "Deputy",
-      "description": "Gain 2 coins. Discard your top card; if it is an Action, you may play it.",
+      "description": "Gain 2 coins.\nDiscard your top card; if it is an Action, you may play it.",
       "image": "themes/common-ground/k23.svg",
       "image_alt": "A deputy’s brass badge, folded map and walking staff beside a satchel."
     },
@@ -210,7 +210,7 @@
     },
     "k25": {
       "name": "Hexer",
-      "description": "Draw 2 cards. Every opponent takes a Burden, if any remain.",
+      "description": "Draw 2 cards.\nEvery opponent takes a Burden, if any remain.",
       "image": "themes/common-ground/k25.svg",
       "image_alt": "A violet potion swirling above a copper cauldron, with herbs and a crescent charm."
     },

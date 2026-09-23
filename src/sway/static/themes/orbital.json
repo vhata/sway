@@ -66,25 +66,25 @@
     },
     "k01": {
       "name": "Fabricator",
-      "description": "Take a card costing up to 5 into your hand. Then put a card from your hand on top of your deck.",
+      "description": "Take a card costing up to 5 into your hand.\nThen put a card from your hand on top of your deck.",
       "image": "themes/orbital/k01.svg",
       "image_alt": "A robotic fabrication gantry printing a coral module in a pool of cyan light."
     },
     "k02": {
       "name": "Corsair",
-      "description": "Take a Reactor. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Credit if possible, and discards the rest.",
+      "description": "Take a Reactor.\nEach opponent reveals their top 2 cards, scraps a revealed Treasure other than Credit if possible, and discards the rest.",
       "image": "themes/orbital/k02.svg",
       "image_alt": "A violet corsair ship with swept fins and a glowing stolen cargo pod."
     },
     "k03": {
       "name": "Quartermaster",
-      "description": "Take a Battery onto your deck. Each opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
+      "description": "Take a Battery onto your deck.\nEach opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
       "image": "themes/orbital/k03.svg",
       "image_alt": "A quartermaster’s luminous inventory tablet beside three secured supply pods."
     },
     "k04": {
       "name": "Cargo Bay",
-      "description": "Gain 1 action. Discard as many cards as you choose, then draw that many cards.",
+      "description": "Gain 1 action.\nDiscard as many cards as you choose, then draw that many cards.",
       "image": "themes/orbital/k04.svg",
       "image_alt": "An open spacecraft cargo bay with colorful containers beneath a lifting crane."
     },
@@ -96,7 +96,7 @@
     },
     "k06": {
       "name": "Conclave",
-      "description": "Draw 4 cards and gain 1 buy. Every other player draws 1 card.",
+      "description": "Draw 4 cards and gain 1 buy.\nEvery other player draws 1 card.",
       "image": "themes/orbital/k06.svg",
       "image_alt": "A circular council platform with six glowing seats around a holographic planet."
     },
@@ -114,7 +114,7 @@
     },
     "k09": {
       "name": "Pathfinder",
-      "description": "Draw 1 card and gain 1 action. You may put a card from your discard pile onto your deck.",
+      "description": "Draw 1 card and gain 1 action.\nYou may put a card from your discard pile onto your deck.",
       "image": "themes/orbital/k09.svg",
       "image_alt": "A six-wheeled exploration rover following a route between amber mountains."
     },
@@ -126,7 +126,7 @@
     },
     "k11": {
       "name": "Data Vault",
-      "description": "Draw until your hand contains 7 cards. You may set aside Action cards drawn this way; discard them after drawing finishes.",
+      "description": "Draw until your hand contains 7 cards.\nYou may set aside Action cards drawn this way; discard them after drawing finishes.",
       "image": "themes/orbital/k11.svg",
       "image_alt": "A secure cylindrical data vault with luminous memory wafers and a hexagonal lock."
     },
@@ -138,13 +138,13 @@
     },
     "k13": {
       "name": "Trader",
-      "description": "Draw 1 card and gain 1 action. The first Battery you play this turn provides 1 extra energy.",
+      "description": "Draw 1 card and gain 1 action.\nThe first Battery you play this turn provides 1 extra energy.",
       "image": "themes/orbital/k13.svg",
       "image_alt": "A floating trade kiosk displaying a glowing cargo cube between two docking hands."
     },
     "k14": {
       "name": "Interceptor",
-      "description": "Gain 2 energy. Every opponent discards until they have 3 cards in hand.",
+      "description": "Gain 2 energy.\nEvery opponent discards until they have 3 cards in hand.",
       "image": "themes/orbital/k14.svg",
       "image_alt": "A sharp-winged interceptor accelerating with twin coral engine trails."
     },
@@ -156,7 +156,7 @@
     },
     "k16": {
       "name": "Shield Array",
-      "description": "Draw 2 cards. When an opponent attacks, you may reveal this from your hand to avoid that attack.",
+      "description": "Draw 2 cards.\nWhen an opponent attacks, you may reveal this from your hand to avoid that attack.",
       "image": "themes/orbital/k16.svg",
       "image_alt": "Three defense emitters holding a translucent shield over a small station."
     },
@@ -168,19 +168,19 @@
     },
     "k18": {
       "name": "Scavenger",
-      "description": "Draw 1 card, gain 1 action and 1 energy. Discard 1 card for each empty supply pile.",
+      "description": "Draw 1 card, gain 1 action and 1 energy.\nDiscard 1 card for each empty supply pile.",
       "image": "themes/orbital/k18.svg",
       "image_alt": "A compact scavenging tug towing a net of scrap through an asteroid field."
     },
     "k19": {
       "name": "Retrofitter",
-      "description": "Scrap a card from your hand. Take a card costing at most 2 more into your discard pile.",
+      "description": "Scrap a card from your hand.\nTake a card costing at most 2 more into your discard pile.",
       "image": "themes/orbital/k19.svg",
       "image_alt": "An open spacecraft engine housing receiving a bright replacement module from a service arm."
     },
     "k20": {
       "name": "Sensor Grid",
-      "description": "Draw 1 card and gain 1 action. Inspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
+      "description": "Draw 1 card and gain 1 action.\nInspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
       "image": "themes/orbital/k20.svg",
       "image_alt": "A triangular sensor network connecting three dishes around a sweeping radar screen."
     },
@@ -198,7 +198,7 @@
     },
     "k23": {
       "name": "Drone",
-      "description": "Gain 2 energy. Discard your top card; if it is an Action, you may play it.",
+      "description": "Gain 2 energy.\nDiscard your top card; if it is an Action, you may play it.",
       "image": "themes/orbital/k23.svg",
       "image_alt": "A small inspection drone with four blue rotors, a camera eye and a delivery claw."
     },
@@ -210,7 +210,7 @@
     },
     "k25": {
       "name": "Saboteur",
-      "description": "Draw 2 cards. Every opponent takes Debris, if any remain.",
+      "description": "Draw 2 cards.\nEvery opponent takes Debris, if any remain.",
       "image": "themes/orbital/k25.svg",
       "image_alt": "A breached control panel with cut glowing wires, a red warning light and a small wrench."
     },
