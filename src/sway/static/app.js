@@ -2,6 +2,14 @@
 (() => {
   let focusedBeforeSwap = null;
   let selectionBeforeSwap = null;
+  let decisionBeforeSwap = null;
+  let positionBeforeSwap = null;
+  function decisionIdentity() {
+    return (
+      document.querySelector("#decision-form")?.dataset.decision ??
+      (document.querySelector(".finished") ? "finished" : "opponents")
+    );
+  }
   function setup(root) {
     const players = root.querySelector("#players");
     const supply = root.querySelector("#supply-mode");
@@ -71,13 +79,25 @@
     selectionBeforeSwap = null;
     setup(document);
     const previous = focusedBeforeSwap ? document.getElementById(focusedBeforeSwap) : null;
-    const target =
-      previous && !previous.disabled ? previous : document.getElementById("decision-heading");
-    target?.focus({ preventScroll: true });
+    const changed = decisionBeforeSwap !== decisionIdentity();
+    const heading = document.querySelector("#decision-heading, #result-heading, #opponent-heading");
+    const target = changed ? heading : previous && !previous.disabled ? previous : heading;
+    const position = positionBeforeSwap;
+    // Run after layout changes so replacing a tall choice list cannot leave
+    // the player below the next decision. No animated scrolling is needed.
+    requestAnimationFrame(() => {
+      target?.focus({ preventScroll: true });
+      if (changed) heading?.scrollIntoView({ block: "start", behavior: "instant" });
+      else if (position) window.scrollTo({ ...position, behavior: "instant" });
+    });
     focusedBeforeSwap = null;
+    decisionBeforeSwap = null;
+    positionBeforeSwap = null;
   });
   document.addEventListener("htmx:beforeSwap", (event) => {
     focusedBeforeSwap = document.activeElement?.id;
+    decisionBeforeSwap = decisionIdentity();
+    positionBeforeSwap = { left: window.scrollX, top: window.scrollY };
     const form = document.querySelector("#decision-form");
     selectionBeforeSwap = form
       ? {

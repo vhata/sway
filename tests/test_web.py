@@ -104,6 +104,26 @@ def test_invalid_setup_and_missing_game(client: Client) -> None:
     assert client.get("/games/missing").status_code == 404
 
 
+def test_retained_setup_text_is_escaped_and_not_accepted_as_valid(client: Client) -> None:
+    token = csrf(client)
+    payload = '"><script>alert("setup")</script>'
+    response = client.post(
+        "/games",
+        data={
+            "csrf": token,
+            "players": "4",
+            "seed": payload,
+            "theme": "orbital",
+            "supply": "manual",
+        },
+    )
+    assert response.status_code == 422
+    assert "<script>alert" not in response.text
+    assert "&lt;script&gt;" in response.text
+    assert 'value="4" selected' in response.text
+    assert 'value="orbital" selected' in response.text
+
+
 def test_invalid_theme_preserves_active_pack(client: Client, tmp_path: Path) -> None:
     token = csrf(client)
     identifier = create_game(client, token)
