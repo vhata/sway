@@ -8,7 +8,8 @@ import socket
 import subprocess
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, replace
 from pathlib import Path
 from urllib.error import URLError
@@ -35,13 +36,17 @@ def server_data(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return tmp_path_factory.mktemp("browser-saves")
 
 
-@pytest.fixture(scope="module")
-def server_url(server_data: Path) -> Iterator[str]:
+@contextmanager
+def running_server(server_data: Path, *, developer_terminology: bool = False) -> Generator[str]:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
     url = f"http://127.0.0.1:{port}"
-    environment = {**os.environ, "SWAY_DATA_DIR": str(server_data)}
+    environment = {
+        **os.environ,
+        "SWAY_DATA_DIR": str(server_data),
+        "SWAY_DEV_TERMINOLOGY": "1" if developer_terminology else "0",
+    }
     output_path = server_data / "browser-server.log"
     with (
         output_path.open("w") as output,
@@ -81,11 +86,26 @@ def server_url(server_data: Path) -> Iterator[str]:
             process.wait(timeout=10)
 
 
+@pytest.fixture(scope="module")
+def server_url(server_data: Path) -> Iterator[str]:
+    with running_server(server_data) as url:
+        yield url
+
+
+@pytest.fixture(scope="module")
+def developer_server_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
+    with running_server(
+        tmp_path_factory.mktemp("developer-browser-saves"), developer_terminology=True
+    ) as url:
+        yield url
+
+
 def test_new_game_local_selection_theme_and_reload(page: Page, server_url: str) -> None:
     page.goto(server_url)
     page.get_by_role("button", name="Begin a game").click()
     expect(page.locator("#decision-form")).to_be_visible(timeout=15000)
     expect(page.locator("#board")).to_have_attribute("data-theme", "common-ground")
+    expect(page.locator(".original-name")).to_have_count(0)
     location = page.url
     revision = page.locator("#board").get_attribute("data-revision")
     requests: list[str] = []
@@ -112,6 +132,7 @@ def test_new_game_local_selection_theme_and_reload(page: Page, server_url: str) 
     page.get_by_role("combobox", name="Theme", exact=True).select_option("orbital")
     page.get_by_role("button", name="Apply theme").click()
     expect(page.locator("#board")).to_have_attribute("data-theme", "orbital")
+    expect(page.locator(".original-name")).to_have_count(0)
     expect(page.locator("#board")).to_have_attribute("data-revision", settled_revision or "")
     expect(page.locator(f'#decision-form input[value="{preserved_choice}"]')).to_be_checked()
     page.reload()
@@ -120,6 +141,39 @@ def test_new_game_local_selection_theme_and_reload(page: Page, server_url: str) 
     page.goto(server_url)
     page.locator(f'a[href="{location.removeprefix(server_url)}"]').click()
     expect(page.locator("#board")).to_have_attribute("data-theme", "orbital")
+
+
+def test_developer_names_are_visible_after_theme_and_decision_updates(
+    page: Page, developer_server_url: str
+) -> None:
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.goto(developer_server_url)
+    page.locator("#supply-mode").select_option("manual")
+    expect(
+        page.locator("#manual-supply").get_by_text("Original: Village", exact=True)
+    ).to_be_visible()
+    page.locator("#supply-mode").select_option("starter")
+    page.get_by_role("button", name="Begin a game").click()
+    expect(page.locator("#decision-form")).to_be_visible(timeout=15000)
+    supply_card = page.locator(".supply-grid .card-face").filter(has_text="Original: Village")
+    expect(supply_card.locator(".original-name")).to_be_visible()
+    expect(supply_card.locator("strong")).to_have_text("Crossroads")
+    revision = page.locator("#board").get_attribute("data-revision")
+    page.get_by_role("combobox", name="Theme", exact=True).select_option("orbital")
+    page.get_by_role("button", name="Apply theme").click()
+    expect(supply_card.locator("strong")).to_have_text("Waypoint")
+    expect(supply_card.locator(".original-name")).to_be_visible()
+    expect(page.locator("#board")).to_have_attribute("data-revision", revision or "")
+    page.locator('#decision-form input[name="choices"]').last.focus()
+    page.keyboard.press("Space")
+    page.get_by_role("button", name="Confirm choice").click()
+    expect(page.locator("#board")).not_to_have_attribute("data-revision", revision or "")
+    expect(page.locator("#decision-form")).to_be_visible(timeout=15000)
+    expect(supply_card.locator(".original-name")).to_be_visible()
+    page.reload()
+    expect(supply_card.locator("strong")).to_have_text("Waypoint")
+    expect(supply_card.locator(".original-name")).to_be_visible()
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
 def test_manual_setup_requires_ten_and_hides_extra_opponents(page: Page, server_url: str) -> None:

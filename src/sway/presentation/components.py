@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import htpy as h
 
-from sway.engine.catalog import CATALOG, KINGDOM_IDS
+from sway.engine.catalog import CATALOG, KINGDOM_IDS, OFFICIAL_NAMES
 from sway.engine.models import Card, Decision, Event, Option, PlayerView
 from sway.presentation.themes import Theme
 
@@ -33,6 +33,7 @@ class BoardContext:
     themes: tuple[Theme, ...]
     error: str | None = None
     pause_bots: bool = False
+    developer_terminology: bool = False
 
 
 def page(title: str, content: h.Node) -> h.Element:
@@ -65,7 +66,12 @@ def csrf_input(token: str) -> h.VoidElement:
 
 
 def home(
-    games: Sequence[SavedGame], themes: tuple[Theme, ...], csrf: str, error: str | None = None
+    games: Sequence[SavedGame],
+    themes: tuple[Theme, ...],
+    csrf: str,
+    error: str | None = None,
+    *,
+    developer_terminology: bool = False,
 ) -> h.Element:
     common_ground = next((theme for theme in themes if theme.id == "common-ground"), themes[0])
     return page(
@@ -145,6 +151,7 @@ def home(
                                         h.input(type="checkbox", name="kingdom", value=card_id),
                                         common_ground.cards[card_id].name,
                                         h.small[f" · {CATALOG[card_id].cost}"],
+                                        original_name(card_id, developer_terminology),
                                     ]
                                     for card_id in KINGDOM_IDS
                                 ]
@@ -191,8 +198,19 @@ def home(
     )
 
 
+def original_name(card_id: str | None, enabled: bool) -> h.Element | None:
+    if not enabled or card_id is None:
+        return None
+    return h.small(class_="original-name")[f"Original: {OFFICIAL_NAMES[card_id]}"]
+
+
 def card_face(
-    card_id: str, theme: Theme, *, count: int | None = None, compact: bool = False
+    card_id: str,
+    theme: Theme,
+    *,
+    count: int | None = None,
+    compact: bool = False,
+    developer_terminology: bool = False,
 ) -> h.Element:
     card = theme.cards[card_id]
     definition = CATALOG[card_id]
@@ -205,7 +223,11 @@ def card_face(
     )
     return h.div(class_=f"card-face card-{category}" + (" compact" if compact else ""))[
         h.div(class_="card-top")[
-            h.strong[card.name],
+            h.div(class_="card-title")[
+                h.strong[card.name], original_name(card_id, developer_terminology)
+            ]
+            if developer_terminology
+            else h.strong[card.name],
             h.span(class_="cost", title="Cost", aria_label=f"Costs {definition.cost}")[
                 str(definition.cost)
             ],
@@ -283,9 +305,15 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
                         value=option.id,
                         id=choice_id,
                     ),
-                    h.label(for_=choice_id)[option_label(option, ctx.theme)]
+                    h.label(for_=choice_id)[
+                        option_label(option, ctx.theme),
+                        original_name(option.card_id, ctx.developer_terminology),
+                    ]
                     if not full_order
-                    else h.span[option_label(option, ctx.theme)],
+                    else h.span[
+                        option_label(option, ctx.theme),
+                        original_name(option.card_id, ctx.developer_terminology),
+                    ],
                     h.button(
                         type="button",
                         data_move="up",
@@ -315,7 +343,12 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
                     ]
                     if decision.prompt == "buy" and option.card_id
                     else None,
-                    card_face(option.card_id, ctx.theme, compact=True)
+                    card_face(
+                        option.card_id,
+                        ctx.theme,
+                        compact=True,
+                        developer_terminology=ctx.developer_terminology,
+                    )
                     if option.card_id
                     else h.span[option_label(option, ctx.theme)],
                 ]
@@ -400,14 +433,29 @@ def event_text(event: Event, view: PlayerView, theme: Theme) -> str:
     return f"{player}: {event.kind.replace('_', ' ')}" + (f" — {names}" if names else "") + "."
 
 
-def card_row(cards: tuple[Card, ...], theme: Theme) -> h.Element:
+def card_row(
+    cards: tuple[Card, ...], theme: Theme, *, developer_terminology: bool = False
+) -> h.Element:
     return h.div(class_="card-row")[
-        [card_face(card.definition, theme, compact=True) for card in cards]
+        [
+            card_face(
+                card.definition,
+                theme,
+                compact=True,
+                developer_terminology=developer_terminology,
+            )
+            for card in cards
+        ]
     ]
 
 
-def class_looked(cards: tuple[Card, ...], theme: Theme) -> h.Element:
-    return h.div(class_="looked-cards")[h.h3["Cards you are inspecting"], card_row(cards, theme)]
+def class_looked(
+    cards: tuple[Card, ...], theme: Theme, *, developer_terminology: bool = False
+) -> h.Element:
+    return h.div(class_="looked-cards")[
+        h.h3["Cards you are inspecting"],
+        card_row(cards, theme, developer_terminology=developer_terminology),
+    ]
 
 
 def board(view: PlayerView, ctx: BoardContext) -> h.Element:
@@ -478,20 +526,30 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                     h.details[
                         h.summary["Public cards"],
                         h.h3["In play"],
-                        card_row(player.in_play, theme),
+                        card_row(
+                            player.in_play, theme, developer_terminology=ctx.developer_terminology
+                        ),
                         h.h3["Top discard"],
-                        card_row(player.discard, theme),
+                        card_row(
+                            player.discard, theme, developer_terminology=ctx.developer_terminology
+                        ),
                         h.h3["Revealed"],
-                        card_row(player.revealed, theme),
+                        card_row(
+                            player.revealed, theme, developer_terminology=ctx.developer_terminology
+                        ),
                         h.h3["Set aside"],
-                        card_row(player.set_aside, theme),
+                        card_row(
+                            player.set_aside, theme, developer_terminology=ctx.developer_terminology
+                        ),
                     ],
                 ]
                 for index, player in enumerate(view.players)
             ]
         ],
         h.section(class_="decision-panel panel", aria_label="Current decision")[
-            h.div[class_looked(view.looked, theme)] if view.looked else None,
+            h.div[class_looked(view.looked, theme, developer_terminology=ctx.developer_terminology)]
+            if view.looked
+            else None,
             h.div(class_="finished")[
                 h.p(class_="eyebrow")["Every choice counted"],
                 h.h2[
@@ -533,12 +591,12 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
             h.div(class_="main-table")[
                 h.section(class_="hand-section")[
                     h.h2[theme.term("hand")],
-                    card_row(view.hand, theme),
+                    card_row(view.hand, theme, developer_terminology=ctx.developer_terminology),
                     h.p(class_="fine-print")[f"{own.deck_count} in your deck"],
                 ],
                 h.section(class_="played-section")[
                     h.h2[theme.term("played")],
-                    card_row(own.in_play, theme)
+                    card_row(own.in_play, theme, developer_terminology=ctx.developer_terminology)
                     if own.in_play
                     else h.p(class_="empty-line")["Your played cards will gather here."],
                 ],
@@ -546,7 +604,12 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                     h.h2[theme.term("supply")],
                     h.div(class_="supply-grid")[
                         [
-                            card_face(card_id, theme, count=count)
+                            card_face(
+                                card_id,
+                                theme,
+                                count=count,
+                                developer_terminology=ctx.developer_terminology,
+                            )
                             for card_id, count in sorted(
                                 view.supply.items(),
                                 key=lambda item: (
@@ -566,7 +629,8 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                     [h.li[event_text(event, view, theme)] for event in reversed(view.events[-80:])]
                 ],
                 h.details[
-                    h.summary[f"Scrapped cards ({len(view.trash)})"], card_row(view.trash, theme)
+                    h.summary[f"Scrapped cards ({len(view.trash)})"],
+                    card_row(view.trash, theme, developer_terminology=ctx.developer_terminology),
                 ],
             ],
         ],

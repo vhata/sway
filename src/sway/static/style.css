@@ -535,6 +535,14 @@ legend {
     600 0.87rem / 1.15 Georgia,
     serif;
 }
+.original-name {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font:
+    400 0.7rem / 1.35 ui-sans-serif,
+    sans-serif;
+}
 .cost {
   background: color-mix(in srgb, var(--gold) 28%, var(--surface));
   border: 1px solid var(--gold);

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from collections.abc import Callable
 from importlib import import_module
@@ -83,14 +84,21 @@ async def main() -> None:
     if not {"common-ground", "orbital"} <= load_themes(frozenset(catalog)).keys():
         raise RuntimeError("Both bundled themes must load with complete card and image coverage.")
     create_app = cast(Callable[[Path], FastAPI], import_module("sway.web").create_app)
+    os.environ.pop("SWAY_DEV_TERMINOLOGY", None)
     application = create_app(Path.cwd() / "data")
     homepage = await request(application, "/")
     if b"htmx-" not in homepage:
         raise RuntimeError("Installed homepage does not reference its HTMX runtime.")
+    if b"Original:" in homepage:
+        raise RuntimeError("Original terminology must be absent by default.")
+    os.environ["SWAY_DEV_TERMINOLOGY"] = "1"
+    developer_homepage = await request(create_app(Path.cwd() / "data"), "/")
+    if b"Original: Village" not in developer_homepage:
+        raise RuntimeError("Installed developer terminology does not render its packaged mapping.")
     for name in ("app.js", "style.css", f"vendor/{htmx[0].name}"):
         await request(application, f"/static/{name}")
     print(
-        f"Installed sway-game {version('sway-game')}: homepage, both themes, images, CSS, JS and HTMX passed."
+        f"Installed sway-game {version('sway-game')}: homepage, developer terminology, both themes, images, CSS, JS and HTMX passed."
     )
 
 

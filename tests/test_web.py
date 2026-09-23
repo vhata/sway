@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from httpx import Client
 
+from sway.engine.catalog import CATALOG, OFFICIAL_NAMES
 from sway.service import GameService
 from sway.storage import SQLiteStore
 from sway.web import create_app
@@ -187,3 +188,81 @@ def test_unavailable_saved_theme_falls_back_without_changing_save(
     assert "Your game is unchanged" in response.text
     assert restarted.get("/").status_code == 200
     assert service.load(identifier) == original
+
+
+@pytest.mark.parametrize("flag", [None, "0", "true", "1"])
+def test_developer_terminology_is_opt_in_and_survives_updates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, flag: str | None
+) -> None:
+    if flag is None:
+        monkeypatch.delenv("SWAY_DEV_TERMINOLOGY", raising=False)
+    else:
+        monkeypatch.setenv("SWAY_DEV_TERMINOLOGY", flag)
+    enabled = flag == "1"
+    client = make_client(tmp_path)
+    token = csrf(client)
+    setup = client.get("/").text
+    assert ("Original: Village" in setup) is enabled
+    invalid = client.post("/games", data={"csrf": token, "players": "5"})
+    assert invalid.status_code == 422
+    assert ("Original: Village" in invalid.text) is enabled
+    identifier = create_game(client, token)
+    service = GameService(SQLiteStore(tmp_path / "games.sqlite3"))
+    before = service.load(identifier)
+    for theme in ("common-ground", "orbital"):
+        changed = client.post(
+            f"/games/{identifier}/theme",
+            data={"csrf": token, "theme": theme},
+            headers={"HX-Request": "true"},
+        )
+        assert changed.status_code == 200
+        assert "<html" not in changed.text
+        for response in (changed, client.get(f"/games/{identifier}")):
+            assert ("Original: Copper" in response.text) is enabled
+            assert ("Original: Village" in response.text) is enabled
+            if not enabled:
+                assert 'class="original-name"' not in response.text
+                for name in OFFICIAL_NAMES.values():
+                    assert f"Original: {name}" not in response.text
+        assert service.load(identifier).state == before.state
+        assert service.load(identifier).revision == before.revision
+
+    # A real human decision and bounded bot advancement both return the same mode.
+    view = service.view(identifier)
+    for _ in range(20):
+        if view.pending:
+            break
+        advanced = client.post(
+            f"/games/{identifier}/advance",
+            data={"csrf": token, "revision": str(view.revision)},
+            headers={"HX-Request": "true"},
+        )
+        assert advanced.status_code == 200
+        assert ("Original: Copper" in advanced.text) is enabled
+        view = service.view(identifier)
+    assert view.pending is not None
+    selected = view.pending.options[-1].id
+    decision = client.post(
+        f"/games/{identifier}/decisions",
+        data={
+            "csrf": token,
+            "revision": str(view.revision),
+            "decision": view.pending.id,
+            "choices": selected,
+        },
+        headers={"HX-Request": "true"},
+    )
+    assert decision.status_code == 200
+    assert ("Original: Copper" in decision.text) is enabled
+    assert service.load(identifier).revision == view.revision + 1
+
+
+def test_original_name_mapping_matches_catalog_and_developer_reference() -> None:
+    reference = Path(__file__).resolve().parents[1] / "docs/TERMINOLOGY.md"
+    documented = {
+        card_id: name.strip()
+        for card_id, name in re.findall(r"\| `([^`]+)` \| ([^|]+) \|", reference.read_text())
+        if card_id in CATALOG
+    }
+    assert set(OFFICIAL_NAMES) == set(CATALOG)
+    assert documented == OFFICIAL_NAMES

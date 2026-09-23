@@ -8,8 +8,9 @@ from typing import cast
 import pytest
 
 from sway.engine import GameConfig, new_game, view_for
-from sway.engine.catalog import CATALOG
-from sway.presentation.components import BoardContext, board, event_text
+from sway.engine.catalog import CATALOG, OFFICIAL_NAMES
+from sway.engine.models import Decision, Option
+from sway.presentation.components import BoardContext, board, card_face, choice_form, event_text
 from sway.presentation.themes import THEME_ROOT, load_theme, load_themes
 
 
@@ -20,6 +21,52 @@ def test_every_theme_covers_catalog_and_has_original_names() -> None:
         assert set(theme.cards) == set(CATALOG)
         assert len({card.name for card in theme.cards.values()}) == len(CATALOG)
         assert all(card.description and card.image_alt for card in theme.cards.values())
+
+
+@pytest.mark.parametrize("theme_id", ["common-ground", "orbital"])
+def test_developer_hints_supplement_every_themed_card(theme_id: str) -> None:
+    theme = load_themes(frozenset(CATALOG))[theme_id]
+    for card_id, official in OFFICIAL_NAMES.items():
+        normal = str(card_face(card_id, theme))
+        developer = str(card_face(card_id, theme, developer_terminology=True))
+        hint = f'<small class="original-name">Original: {official}</small>'
+        assert hint not in normal
+        assert hint in developer
+        themed_title = f"<strong>{theme.cards[card_id].name}</strong>"
+        assert (
+            str.replace(
+                developer, f'<div class="card-title">{themed_title}{hint}</div>', themed_title
+            )
+            == normal
+        )
+
+
+@pytest.mark.parametrize("theme_id", ["common-ground", "orbital"])
+@pytest.mark.parametrize("ordering", ["none", "subset", "full"])
+def test_original_names_remain_in_card_and_ordered_choices(theme_id: str, ordering: str) -> None:
+    themes = load_themes(frozenset(CATALOG))
+    ctx = BoardContext(
+        "game", "token", themes[theme_id], tuple(themes.values()), developer_terminology=True
+    )
+    view = view_for(new_game(GameConfig(), 13), 0)
+    options = (Option("village", "k24"), Option("smithy", "k21"))
+    decision = Decision(
+        "decision",
+        0,
+        "order" if ordering == "full" else "select",
+        "discard",
+        options,
+        2 if ordering == "full" else 0,
+        2,
+        ordering != "none",
+    )
+    rendered = str(choice_form(decision, view, ctx))
+    for option in options:
+        assert option.card_id is not None
+        assert f"Original: {OFFICIAL_NAMES[option.card_id]}" in rendered
+        assert themes[theme_id].cards[option.card_id].name in rendered
+    normal = str(choice_form(decision, view, replace(ctx, developer_terminology=False)))
+    assert "Original:" not in normal
 
 
 def test_invalid_pack_coverage_and_asset_escape_are_rejected(tmp_path: Path) -> None:

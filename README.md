@@ -16,6 +16,8 @@ The server defaults to `http://127.0.0.1:8000`. `scripts/dev.sh` supports uvicor
 
 Development saves live in the current worktree's ignored `.runtime/` directory, so separate worktrees never share games by default. Set `SWAY_DATA_DIR` to choose another location. Running the installed `sway.web:app` directly defaults to `~/.local/share/sway`; it honors the same override. Keep the server local: this release has no remote-user authentication.
 
+To compare cards with the [original terminology reference](docs/TERMINOLOGY.md), start the server with `SWAY_DEV_TERMINOLOGY=1 scripts/dev.sh`. This optional developer mode adds visible `Original: …` subtext beneath themed card names, including setup and decision choices. It works with either theme and does not change saved games or gameplay. The flag is read at server startup and is disabled unless its value is exactly `1`; omit it and restart to return to normal rendering. Installed servers support the same environment variable.
+
 [SPEC.md](SPEC.md) records the release requirements. PostgreSQL deployment, human multiplayer, expansions and more advanced opponents are deferred.
 
 `setup.sh` synchronizes `uv.lock`, installs checksum-verified Biome, and installs staged-format/lint and pre-push hooks. `install-browsers.sh --with-deps` also installs system dependencies on supported Linux hosts. All project Python commands run through `uv run --locked`.
