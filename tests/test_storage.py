@@ -15,7 +15,7 @@ def store(tmp_path: Path) -> Store:
 
 
 def test_create_list_reload_and_theme_preserve_state(store: Store) -> None:
-    created = store.create("a", '{"version":1}', '{"name":"test"}', "neutral")
+    created = store.create("a", '{"version":1}', '{"name":"test"}', "common-ground")
     assert store.load("a") == created
     assert store.list_games() == [created]
     themed = store.set_theme("a", "orbital")
@@ -26,7 +26,7 @@ def test_create_list_reload_and_theme_preserve_state(store: Store) -> None:
 
 
 def test_transition_is_atomic_and_repeat_is_idempotent(store: Store) -> None:
-    store.create("a", "{}", "{}", "neutral")
+    store.create("a", "{}", "{}", "common-ground")
     first = store.commit("a", 0, "decision-1", '{"x":1}', '{"pick":"one"}', "[]")
     assert first.revision == 1
     assert store.history("a")[0].revision == 1
@@ -44,7 +44,7 @@ def test_multiple_connections_cannot_overwrite_each_other(tmp_path: Path) -> Non
     path = tmp_path / "saves.sqlite3"
     first = SQLiteStore(path)
     second = SQLiteStore(path)
-    first.create("a", "{}", "{}", "neutral")
+    first.create("a", "{}", "{}", "common-ground")
 
     def attempt(store: Store, command: str) -> bool:
         try:
@@ -64,7 +64,7 @@ def test_multiple_connections_cannot_overwrite_each_other(tmp_path: Path) -> Non
 def test_failed_transaction_rolls_back_snapshot_and_history(tmp_path: Path) -> None:
     path = tmp_path / "saves.sqlite3"
     store = SQLiteStore(path)
-    before = store.create("a", "{}", "{}", "neutral")
+    before = store.create("a", "{}", "{}", "common-ground")
     with sqlite3.connect(path) as conn:
         conn.execute(
             "CREATE TRIGGER fail_save BEFORE UPDATE ON games "
@@ -77,7 +77,7 @@ def test_failed_transaction_rolls_back_snapshot_and_history(tmp_path: Path) -> N
 
 
 def test_invalid_save_preserves_original(store: Store) -> None:
-    before = store.create("a", "{}", "{}", "neutral")
+    before = store.create("a", "{}", "{}", "common-ground")
     for bad in ("{", "[]", "null", "3"):
         with pytest.raises(SaveFormatError):
             store.commit("a", 0, "one", bad, "{}", "[]")
@@ -103,7 +103,7 @@ def test_missing_and_duplicate_games(store: Store) -> None:
     with pytest.raises(GameNotFound):
         store.history("missing")
     with pytest.raises(GameNotFound):
-        store.set_theme("missing", "neutral")
-    store.create("a", "{}", "{}", "neutral")
+        store.set_theme("missing", "common-ground")
+    store.create("a", "{}", "{}", "common-ground")
     with pytest.raises(StorageConflict):
-        store.create("a", "{}", "{}", "neutral")
+        store.create("a", "{}", "{}", "common-ground")

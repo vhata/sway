@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "id": "common-ground",
+  "name": "Common Ground",
+  "tagline": "Build something worth keeping.",
+  "tokens": {
+    "background": "#f1eee5",
+    "surface": "#fffcf5",
+    "ink": "#233c37",
+    "muted": "#61716a",
+    "accent": "#245c4f",
+    "gold": "#be9047",
+    "heading_font": "Georgia, serif"
+  },
+  "terms": {
+    "actions": "Actions",
+    "buys": "Buys",
+    "coins": "Coins",
+    "points": "Points",
+    "supply": "The commons",
+    "hand": "Your hand",
+    "played": "In play"
+  },
+  "cards": {
+    "treasure1": {
+      "name": "Token",
+      "description": "Worth 1 coin when played.",
+      "image": "themes/common-ground/treasure.svg",
+      "image_alt": "An abstract treasure emblem"
+    },
+    "treasure2": {
+      "name": "Reserve",
+      "description": "Worth 2 coins when played.",
+      "image": "themes/common-ground/treasure.svg",
+      "image_alt": "An abstract treasure emblem"
+    },
+    "treasure3": {
+      "name": "Endowment",
+      "description": "Worth 3 coins when played.",
+      "image": "themes/common-ground/treasure.svg",
+      "image_alt": "An abstract treasure emblem"
+    },
+    "victory1": {
+      "name": "Plot",
+      "description": "Worth 1 point at the end of the game.",
+      "image": "themes/common-ground/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "victory2": {
+      "name": "Quarter",
+      "description": "Worth 3 points at the end of the game.",
+      "image": "themes/common-ground/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "victory3": {
+      "name": "City",
+      "description": "Worth 6 points at the end of the game.",
+      "image": "themes/common-ground/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "curse": {
+      "name": "Burden",
+      "description": "Worth minus 1 point at the end of the game.",
+      "image": "themes/common-ground/curse.svg",
+      "image_alt": "An abstract curse emblem"
+    },
+    "k01": {
+      "name": "Craftsperson",
+      "description": "Take a card costing up to 5 into your hand. Then put a card from your hand on top of your deck.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k02": {
+      "name": "Raider",
+      "description": "Take an Endowment. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Token if possible, and discards the rest.",
+      "image": "themes/common-ground/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k03": {
+      "name": "Administrator",
+      "description": "Take a Reserve onto your deck. Each opponent puts a Victory card from their hand onto their deck, or reveals a hand without any.",
+      "image": "themes/common-ground/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k04": {
+      "name": "Storeroom",
+      "description": "Gain 1 action. Discard as many cards as you choose, then draw that many cards.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k05": {
+      "name": "Sanctuary",
+      "description": "Scrap up to 4 cards from your hand.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k06": {
+      "name": "Assembly",
+      "description": "Draw 4 cards and gain 1 buy. Every other player draws 1 card.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k07": {
+      "name": "Celebration",
+      "description": "Gain 2 actions, 1 buy and 2 coins.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k08": {
+      "name": "Greenbelt",
+      "description": "Worth 1 point for every complete group of 10 cards in your deck, counting all zones, at game end.",
+      "image": "themes/common-ground/victory.svg",
+      "image_alt": "An abstract victory emblem"
+    },
+    "k09": {
+      "name": "Courier",
+      "description": "Draw 1 card and gain 1 action. You may put a card from your discard pile onto your deck.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k10": {
+      "name": "Research House",
+      "description": "Draw 2 cards and gain 1 action.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k11": {
+      "name": "Archive",
+      "description": "Draw until your hand contains 7 cards. You may set aside Action cards drawn this way; discard them after drawing finishes.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k12": {
+      "name": "Exchange",
+      "description": "Draw 1 card; gain 1 action, 1 buy and 1 coin.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k13": {
+      "name": "Broker",
+      "description": "Draw 1 card and gain 1 action. The first Reserve you play this turn provides 1 extra coin.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k14": {
+      "name": "Patrol",
+      "description": "Gain 2 coins. Every opponent discards until they have 3 cards in hand.",
+      "image": "themes/common-ground/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k15": {
+      "name": "Refinery",
+      "description": "You may scrap a Treasure from your hand, then take a Treasure costing at most 3 more into your hand.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k16": {
+      "name": "Breakwater",
+      "description": "Draw 2 cards. When an opponent attacks, you may reveal this from your hand to avoid that attack.",
+      "image": "themes/common-ground/reaction.svg",
+      "image_alt": "An abstract reaction emblem"
+    },
+    "k17": {
+      "name": "Financier",
+      "description": "You may scrap a Token from your hand to gain 3 coins.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k18": {
+      "name": "Forager",
+      "description": "Draw 1 card, gain 1 action and 1 coin. Discard 1 card for each empty supply pile.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k19": {
+      "name": "Renovator",
+      "description": "Scrap a card from your hand. Take a card costing at most 2 more into your discard pile.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k20": {
+      "name": "Lookout",
+      "description": "Draw 1 card and gain 1 action. Inspect the top 2 cards of your deck. Scrap any, discard any, then return the rest in your chosen order.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k21": {
+      "name": "Forge",
+      "description": "Draw 3 cards.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k22": {
+      "name": "Chamber",
+      "description": "You may choose an Action from your hand and play it twice.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k23": {
+      "name": "Deputy",
+      "description": "Gain 2 coins. Discard your top card; if it is an Action, you may play it.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k24": {
+      "name": "Crossroads",
+      "description": "Draw 1 card and gain 2 actions.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    },
+    "k25": {
+      "name": "Hexer",
+      "description": "Draw 2 cards. Every opponent takes a Burden, if any remain.",
+      "image": "themes/common-ground/attack.svg",
+      "image_alt": "An abstract attack emblem"
+    },
+    "k26": {
+      "name": "Atelier",
+      "description": "Take a card costing up to 4 into your discard pile.",
+      "image": "themes/common-ground/action.svg",
+      "image_alt": "An abstract action emblem"
+    }
+  }
+}

@@ -45,6 +45,7 @@ def test_save_resume_preserves_engine_and_bot_future(tmp_path: Path) -> None:
 def test_theme_does_not_change_decision_or_randomness(tmp_path: Path) -> None:
     service = make_service(tmp_path / "games.sqlite3")
     record = service.create(GameConfig(), 7, ("economy",))
+    assert record.theme_id == "common-ground"
     themed = service.set_theme(record.game_id, "orbital")
     assert themed.theme_id == "orbital"
     assert themed.revision == record.revision
@@ -94,7 +95,7 @@ def test_bad_profiles_and_versions_do_not_destroy_original(tmp_path: Path) -> No
         service.create(GameConfig(), 1, ("omniscient",))
     record = service.create(GameConfig(), 1, ("economy",))
     future = json.dumps({"schema": 999, "engine": state_to_json(record.state), "bots": []})
-    original = service.store.create("future", future, "{}", "neutral")
+    original = service.store.create("future", future, "{}", "common-ground")
     with pytest.raises(SaveFormatError, match="version"):
         service.load("future")
     assert service.store.load("future") == original

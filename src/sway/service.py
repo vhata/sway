@@ -128,7 +128,7 @@ class GameService:
         config: GameConfig,
         seed: int,
         strategies: tuple[str, ...],
-        theme_id: str = "neutral",
+        theme_id: str = "common-ground",
     ) -> GameRecord:
         self._check_theme(theme_id)
         if len(strategies) != config.player_count - 1:
