@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Raider</title>
+  <desc id="desc">A red-sailed raiding boat carrying a brass chest across blue water.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 115Q38 96 78 116T157 116T240 111V160H0Z" fill="#81afb7" stroke="none" />
+    <path d="M38 106L193 101L174 128H69Z" fill="#634f47" />
+    <path d="M115 29V111" stroke="#4d635c" stroke-width="5" />
+    <path d="M108 34L62 91H108Z" fill="#d77562" />
+    <path d="M124 36L170 90H124Z" fill="#f9ecd0" />
+    <path d="M67 85H108M79 69H108M92 53H108" stroke="#fff2db" stroke-width="4" />
+    <rect x="143" y="86" width="27" height="22" rx="3" fill="#e4b04f" />
+    <path d="M143 95H170M157 86V108" stroke="#7b693f" />
+    <path d="M23 135Q49 126 74 136M106 145Q134 137 156 144M180 136L215 131" fill="none" stroke="#e9efe1" stroke-width="3" />
+  </g>
+</svg>

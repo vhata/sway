@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Archive</title>
+  <desc id="desc">Tall wooden archive shelves, a rolling ladder and an open book.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="27" y="22" width="185" height="119" rx="5" fill="#aa805c" />
+    <path d="M36 66H203M36 106H203M91 24V139M155 24V139" stroke="#614f43" stroke-width="6" />
+    <path d="M43 36V62M56 30V62M70 39V62M107 33V62M122 38V62M174 33V62M189 28V62M44 80V101M59 76V101M115 80V102M173 78V101M187 84V101" stroke="#ddd0a1" stroke-width="8" />
+    <path d="M145 37L119 143M163 40L137 147M140 62L157 65M134 85L150 89M129 108L144 112M123 132L138 136" stroke="#ddb46f" stroke-width="5" />
+    <path d="M50 123Q70 115 87 128Q105 115 124 123L116 148Q99 142 86 151Q74 142 58 148Z" fill="#fff1cd" />
+    <path d="M87 128L86 151" stroke="#aa9671" />
+  </g>
+</svg>

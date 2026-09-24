@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">City</title>
+  <desc id="desc">A sunlit city skyline of towers, terracotta roofs and an arched bridge.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M16 132V89H39V60L61 44L82 60V133M91 131V52H120V25L139 12L158 25V131M164 131V73H187V46L209 66V132" fill="#d4bc8d" />
+    <path d="M34 60L61 36L88 60ZM113 27L139 6L164 27ZM178 48L188 34L216 66H204Z" fill="#c17c62" />
+    <path d="M50 79H70M50 98H70M125 50H151M125 72H151M125 94H151M174 94H199" stroke="#628a89" stroke-width="8" />
+    <path d="M0 135H240V160H0Z" fill="#81aeb6" stroke="none" />
+    <path d="M26 139H216V152H188Q184 128 168 152H138Q129 128 114 152H83Q75 128 60 152H26Z" fill="#d6c79f" />
+  </g>
+</svg>

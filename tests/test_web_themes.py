@@ -1,9 +1,12 @@
 """Presentation packs must be complete, safe, and independent of rules."""
 
 import json
+import re
 from dataclasses import replace
+from html import unescape
 from pathlib import Path
 from typing import cast
+from xml.etree import ElementTree
 
 import pytest
 
@@ -11,7 +14,7 @@ from sway.engine import GameConfig, new_game, view_for
 from sway.engine.catalog import CATALOG, OFFICIAL_NAMES
 from sway.engine.models import Decision, Option
 from sway.presentation.components import BoardContext, board, card_face, choice_form, event_text
-from sway.presentation.themes import THEME_ROOT, load_theme, load_themes
+from sway.presentation.themes import STATIC_ROOT, THEME_ROOT, load_theme, load_themes
 
 
 def test_every_theme_covers_catalog_and_has_original_names() -> None:
@@ -21,6 +24,53 @@ def test_every_theme_covers_catalog_and_has_original_names() -> None:
         assert set(theme.cards) == set(CATALOG)
         assert len({card.name for card in theme.cards.values()}) == len(CATALOG)
         assert all(card.description and card.image_alt for card in theme.cards.values())
+
+
+def test_bundled_illustrations_are_distinct_self_contained_svg_scenes() -> None:
+    for theme in load_themes(frozenset(CATALOG)).values():
+        assert len({card.image for card in theme.cards.values()}) == len(CATALOG)
+        assert len({card.image_alt for card in theme.cards.values()}) == len(CATALOG)
+        scenes: set[bytes] = set()
+        for card in theme.cards.values():
+            image = ElementTree.fromstring((STATIC_ROOT / card.image).read_text())
+            assert image.attrib["viewBox"] == "0 0 240 160"
+            description = image.find("{http://www.w3.org/2000/svg}desc")
+            assert description is not None
+            assert description.text == card.image_alt
+            for node in image.iter():
+                assert node.tag.rsplit("}", 1)[-1] not in {
+                    "script",
+                    "foreignObject",
+                    "image",
+                    "use",
+                }
+                assert not any(key.rsplit("}", 1)[-1].startswith("on") for key in node.attrib)
+            scene = image.find("{http://www.w3.org/2000/svg}g")
+            assert scene is not None
+            scenes.add(ElementTree.tostring(scene))
+        assert len(scenes) == len(CATALOG)
+
+
+@pytest.mark.parametrize("theme_id", ["common-ground", "orbital"])
+def test_card_faces_keep_complete_rules_and_show_only_fixed_catalog_values(theme_id: str) -> None:
+    theme = load_themes(frozenset(CATALOG))[theme_id]
+    for card_id, definition in CATALOG.items():
+        rendered = str(card_face(card_id, theme, count=0))
+        text = " ".join(unescape(re.sub(r"<[^>]*>", " ", rendered)).split())
+        assert " ".join(theme.cards[card_id].description.split()) in text
+        assert "0 left" in text
+        for kind in definition.types:
+            assert kind.capitalize() in text
+        fixed_value = definition.coins or definition.points
+        if fixed_value:
+            term = theme.term("coins" if definition.coins else "points")
+            assert (
+                f'<div class="card-value"><strong>{fixed_value}</strong><span>{term}</span>'
+                in rendered
+            )
+        else:
+            assert 'class="card-value"' not in rendered
+    assert "every complete group of 10 cards" in str(card_face("k08", theme))
 
 
 @pytest.mark.parametrize("theme_id", ["common-ground", "orbital"])

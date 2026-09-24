@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Conclave</title>
+  <desc id="desc">A circular council platform with six glowing seats around a holographic planet.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="120" cy="115" rx="87" ry="33" fill="#4e7090" />
+    <ellipse cx="120" cy="108" rx="80" ry="28" fill="#8a98b1" />
+    <path d="M99 101L96 66H144L141 101Z" fill="#70c7bc" opacity=".32" stroke="none" />
+    <circle cx="120" cy="61" r="30" fill="#6cadba" />
+    <path d="M102 39L108 56L91 65M134 40L126 55L141 69L133 85" fill="none" stroke="#a8ddc3" stroke-width="6" />
+    <ellipse cx="120" cy="60" rx="43" ry="13" fill="none" stroke="#e6b679" stroke-width="3" transform="rotate(-18 120 60)" />
+    <path d="M52 88V68H73V91M165 88V68H186V92M34 117V97H55V126M185 125V98H207V116M77 142V119H97V145M145 145V119H165V141" fill="#c18fa7" stroke="#c18fa7" stroke-width="5" />
+  </g>
+</svg>

@@ -20,6 +20,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from sway.engine import Command, GameConfig, InvalidCommand
 from sway.engine.catalog import CATALOG, KINGDOM_IDS
 from sway.presentation.components import BoardContext, SavedGame, SetupValues, board, home, page
+from sway.presentation.reference import card_reference
 from sway.presentation.themes import STATIC_ROOT, Theme, load_themes
 from sway.service import GameRecord, GameService, GameSummary
 from sway.storage import GameNotFound, SQLiteStore, StorageConflict, StorageError
@@ -214,6 +215,35 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         return _response(
             request,
             home(games, tuple(themes.values()), token, developer_terminology=developer_terminology),
+            token,
+        )
+
+    @application.get("/developer/cards", response_class=HTMLResponse)
+    def reference(request: Request, theme: str | None = None) -> HTMLResponse:
+        token = _csrf(request)
+        if not developer_terminology:
+            return _response(
+                request,
+                page("Page not found", h.main(id="main", class_="home")[h.h1["Page not found."]]),
+                token,
+                404,
+            )
+        if theme is not None and theme not in themes:
+            return _response(
+                request,
+                page(
+                    "Theme unavailable",
+                    h.main(id="main", class_="home")[
+                        h.h1["Choose an available theme."],
+                        h.a(href="/developer/cards")["Return to the card catalogue"],
+                    ],
+                ),
+                token,
+                422,
+            )
+        return _response(
+            request,
+            card_reference(themes[theme] if theme else default_theme, tuple(themes.values())),
             token,
         )
 

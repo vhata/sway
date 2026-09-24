@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Interceptor</title>
+  <desc id="desc">A sharp-winged interceptor accelerating with twin coral engine trails.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M24 139L97 54L125 18L140 84L209 116L139 114L102 144L82 111Z" fill="#81a6b8" />
+    <path d="M78 95L125 18L120 104L103 125Z" fill="#ced8d6" />
+    <path d="M108 58L122 38L119 76L107 89Z" fill="#61bdbb" />
+    <path d="M43 122L89 78L82 109ZM135 88L184 112H133Z" fill="#d69587" />
+    <path d="M88 126L68 153L98 134M128 117L121 151L142 122" fill="#efb878" stroke="none" />
+    <path d="M20 78L42 56M173 44L199 19M186 71L217 48" stroke="#64869e" stroke-width="3" />
+  </g>
+</svg>

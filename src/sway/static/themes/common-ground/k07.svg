@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Celebration</title>
+  <desc id="desc">Colorful festival bunting above a drum, lanterns and ribbons.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M5 32Q123 88 235 27" fill="none" stroke="#627b73" stroke-width="3" />
+    <path d="M28 41L46 70L58 52Z" fill="#d67666" />
+    <path d="M77 58L95 84L106 64Z" fill="#e7b64c" />
+    <path d="M130 64L147 88L162 57Z" fill="#5b9b85" />
+    <path d="M184 47L205 67L218 36Z" fill="#7a98b4" />
+    <ellipse cx="115" cy="108" rx="34" ry="17" fill="#f6db9d" />
+    <path d="M81 108V138Q115 156 149 138V108" fill="#c97563" />
+    <path d="M83 112L96 140L111 119L128 144L148 112" fill="none" stroke="#f4d49a" stroke-width="3" />
+    <ellipse cx="115" cy="108" rx="34" ry="17" fill="#ffe6b2" />
+    <path d="M93 95L131 113M139 92L105 115" stroke="#69594a" stroke-width="4" />
+    <rect x="32" y="88" width="25" height="36" rx="10" fill="#e0ad48" />
+    <path d="M44 77V87M44 124V138" stroke="#ce7859" stroke-width="4" />
+    <path d="M183 90Q213 104 187 126Q171 138 199 145" fill="none" stroke="#7e9caf" stroke-width="5" />
+  </g>
+</svg>

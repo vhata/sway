@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Greenbelt</title>
+  <desc id="desc">A winding path and small footbridge through a flowering green park.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 93Q45 71 88 93T173 87T240 92V160H0Z" fill="#97b98a" stroke="none" />
+    <path d="M131 88Q86 106 145 118T159 160H114Q133 141 109 132Q47 110 117 88Z" fill="#f0d7a6" stroke="none" />
+    <path d="M0 137Q76 112 121 131T240 124V144Q171 166 116 148T0 154Z" fill="#88b8bd" stroke="none" />
+    <path d="M83 137Q104 115 132 137M83 127Q104 105 132 127M87 127V139M126 126V138" fill="none" stroke="#866b51" stroke-width="5" />
+    <path d="M42 103V62M190 104V50" stroke="#79694e" stroke-width="7" />
+    <circle cx="42" cy="55" r="25" fill="#5c9270" />
+    <circle cx="190" cy="47" r="31" fill="#407863" />
+    <circle cx="175" cy="34" r="15" fill="#6c9b75" stroke="none" />
+    <circle cx="58" cy="127" r="4" fill="#d37e76" />
+    <circle cx="174" cy="121" r="4" fill="#e7bb61" />
+    <circle cx="208" cy="118" r="4" fill="#d37e76" />
+  </g>
+</svg>

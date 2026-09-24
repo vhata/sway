@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Breakwater</title>
+  <desc id="desc">A stone breakwater and red lighthouse protecting calm water from waves.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 89Q33 64 68 88T141 87T240 89V160H0Z" fill="#729eae" stroke="none" />
+    <path d="M0 126Q50 104 93 128T240 122V160H0Z" fill="#4d8398" stroke="none" />
+    <path d="M8 126L65 118L112 119L155 100L196 100V123L158 132L116 148L68 143L10 152Z" fill="#b7b69e" />
+    <path d="M53 122L56 143M94 124L95 146M137 113L145 138M174 105L181 127" stroke="#828f84" stroke-width="3" />
+    <path d="M154 98L162 48H184L192 98Z" fill="#f3dfbc" />
+    <path d="M158 75H188L190 87H156Z" fill="#ce7561" />
+    <path d="M159 48V32H188V48Z" fill="#eeb955" />
+    <path d="M154 32L172 19L192 32Z" fill="#bb715e" />
+    <path d="M184 37L229 19V59Z" fill="#f4dea0" opacity=".6" stroke="none" />
+    <path d="M16 102Q39 92 54 103M17 134L37 130M80 103L106 103" stroke="#e6f0df" stroke-width="3" fill="none" />
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Courier</title>
+  <desc id="desc">A coral courier bicycle with a basket of envelopes beside a signpost.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="63" cy="116" r="25" fill="#f4e4c3" />
+    <circle cx="171" cy="116" r="25" fill="#f4e4c3" />
+    <path d="M63 116L91 73L121 116H63L111 89H158L171 116M121 116L133 72M83 69H105M147 64H163L174 78" fill="none" stroke="#ca745c" stroke-width="6" />
+    <path d="M123 71H143" stroke="#4c655d" stroke-width="6" />
+    <path d="M165 76H204L198 98H171Z" fill="#cda874" />
+    <path d="M170 77V57H193V77Z" fill="#fff4d7" />
+    <path d="M170 58L182 68L193 58" fill="none" stroke="#7e9b95" />
+    <path d="M36 83V22M18 28H63L71 36L62 43H18Z" fill="#71998b" stroke="#56776a" stroke-width="3" />
+  </g>
+</svg>

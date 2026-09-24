@@ -95,6 +95,9 @@ def home(
                 h.p(class_="lede")[
                     "Shape your deck, find a rhythm, and make every turn count. Your next table is ready when you are."
                 ],
+                h.a(class_="quiet-link", href="/developer/cards")["Developer card gallery →"]
+                if developer_terminology
+                else None,
             ],
             h.div(class_="home-columns")[
                 h.section(class_="panel setup")[
@@ -268,19 +271,40 @@ def card_face(
             if developer_terminology
             else h.strong[card.name],
             h.span(class_="cost", title="Cost", aria_label=f"Costs {definition.cost}")[
-                str(definition.cost)
+                h.span[str(definition.cost)], h.small["Cost"]
             ],
         ],
         h.img(
-            src=f"/static/{card.image}", alt=card.image_alt, width="72", height="72", loading="lazy"
+            src=f"/static/{card.image}",
+            alt=card.image_alt,
+            width="240",
+            height="160",
+            loading="lazy",
         ),
-        h.p(class_="card-description")[card.description],
-        h.div(class_="card-bottom")[
-            h.small[" · ".join(sorted(definition.types))],
-            h.span(class_="pile-count", aria_label=f"{count} remaining")[str(count)]
-            if count is not None
-            else None,
+        h.div(class_="card-types")[
+            [
+                h.span(class_=f"type-chip type-{kind}")[kind.capitalize()]
+                for kind in sorted(definition.types)
+            ]
         ],
+        h.div(class_="card-value")[h.strong[str(definition.coins)], h.span[theme.term("coins")]]
+        if definition.coins
+        else h.div(class_="card-value")[
+            h.strong[str(definition.points)], h.span[theme.term("points")]
+        ]
+        if definition.points
+        else None,
+        h.div(class_="card-description")[
+            [
+                h.p(class_="effect-lead" if index == 0 else "effect-detail")[paragraph]
+                for index, paragraph in enumerate(card.description.splitlines())
+            ]
+        ],
+        h.div(class_="card-bottom")[
+            h.span(class_="pile-count", aria_label=f"{count} remaining")[f"{count} left"]
+        ]
+        if count is not None
+        else None,
     ]
 
 
@@ -509,7 +533,19 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
         data_revision=str(view.revision),
     )[
         h.div(id="main", class_="table-heading")[
-            h.div[h.p(class_="eyebrow")[theme.name], h.h1["Your table"], h.p[theme.tagline]],
+            h.div[
+                h.p(class_="eyebrow")[theme.name],
+                h.h1["Your table"],
+                h.p[theme.tagline],
+                h.a(
+                    class_="quiet-link",
+                    href=f"/developer/cards?theme={theme.id}",
+                    target="_blank",
+                    rel="noopener",
+                )["Developer card gallery ↗"]
+                if ctx.developer_terminology
+                else None,
+            ],
             h.form(
                 action=f"/games/{ctx.game_id}/theme",
                 method="post",

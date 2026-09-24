@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Deputy</title>
+  <desc id="desc">A deputy’s brass badge, folded map and walking staff beside a satchel.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M184 144V29Q184 16 195 19" fill="none" stroke="#9a7a50" stroke-width="7" />
+    <path d="M42 130L48 76H125L136 132Z" fill="#b9845f" />
+    <path d="M50 77Q48 45 89 44Q126 44 123 77" fill="none" stroke="#805f48" stroke-width="7" />
+    <path d="M44 79L90 102L129 79" fill="#d7ac75" />
+    <rect x="81" y="97" width="17" height="16" rx="3" fill="#dfc37c" />
+    <path d="M114 81L138 69L155 80L176 70V132L155 141L137 130L116 138Z" fill="#f4e5bc" />
+    <path d="M137 75V130M156 83V137M126 118L146 105L168 113" fill="none" stroke="#7f9c89" stroke-width="3" />
+    <path d="M70 20L80 35L99 35L88 50L92 66L75 58L60 67L62 48L50 36L68 35Z" fill="#e8bb62" />
+  </g>
+</svg>

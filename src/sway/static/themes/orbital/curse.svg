@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="currentColor" color="#71d5c0"><circle cx="48" cy="48" r="45" fill="#e7b777" opacity=".13"/><path d="m48 18 30 30-30 30-30-30Z"/><path d="m37 37 22 22m0-22L37 59" stroke="white" stroke-width="5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Debris</title>
+  <desc id="desc">Jagged satellite wreckage, a cracked panel and loose cables drifting in a debris cloud.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M40 99L64 44L98 55L85 83L103 98L79 131Z" fill="#827b9d" />
+    <path d="M122 41L180 29L203 60L177 92L149 73L131 84Z" fill="#718fa8" />
+    <path d="M62 52L75 71L61 90L77 115M151 39L160 57L148 71M179 42L178 69L191 61" fill="none" stroke="#c1a2b8" stroke-width="4" />
+    <path d="M113 104L144 92L164 124L129 147L109 129Z" fill="#bf8e9e" />
+    <path d="M79 118Q116 90 121 121Q116 145 176 138M179 82Q209 86 204 110" fill="none" stroke="#dab386" stroke-width="4" />
+    <path d="M25 65L34 50L43 69ZM186 124L200 113L214 131L201 146Z" fill="#9aacb9" />
+    <path d="M111 52L111 37M104 45L118 45M178 106L184 99" stroke="#e6bc87" stroke-width="3" />
+  </g>
+</svg>

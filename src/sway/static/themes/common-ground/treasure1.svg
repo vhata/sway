@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Token</title>
+  <desc id="desc">A single stamped brass token resting on a folded coral cloth.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M36 116L91 48L210 92L162 145Z" fill="#c98471" />
+    <path d="M46 121L92 59L192 94L154 133Z" fill="#df9e81" />
+    <ellipse cx="121" cy="95" rx="43" ry="37" fill="#b08243" />
+    <ellipse cx="121" cy="88" rx="43" ry="37" fill="#ebc67c" />
+    <ellipse cx="121" cy="88" rx="32" ry="27" fill="#f3d698" />
+    <path d="M121 68L127 83L143 88L127 94L121 108L115 94L99 88L115 83Z" fill="#997946" />
+  </g>
+</svg>

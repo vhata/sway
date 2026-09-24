@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Transmuter</title>
+  <desc id="desc">A matter transmuter turning a bronze block into a glowing faceted crystal.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M26 139H215V151H26Z" fill="#5d7895" />
+    <path d="M35 113V43H67V113M175 113V43H207V113" fill="#8aa6b7" />
+    <path d="M58 68L79 81L58 95ZM182 68L161 81L182 95Z" fill="#d9ad7e" />
+    <path d="M83 83H158" stroke="#8ee6cf" stroke-width="8" />
+    <path d="M99 68V95M118 63V100M140 68V95" stroke="#78c4c4" stroke-width="2" />
+    <path d="M69 124L88 113L107 125V143L87 153L69 142Z" fill="#c88c78" />
+    <path d="M148 113L166 103L184 121L169 147L143 127Z" fill="#9db5df" />
+    <path d="M148 114L162 125L183 121M162 125L168 147M162 125L166 105" fill="none" stroke="#d7e4e5" />
+    <circle cx="51" cy="53" r="5" fill="#78d8c0" />
+    <circle cx="192" cy="53" r="5" fill="#78d8c0" />
+  </g>
+</svg>

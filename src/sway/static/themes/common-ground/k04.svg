@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Storeroom</title>
+  <desc id="desc">A pantry shelf of jars, folded sacks and a wooden produce crate.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M37 31V145M203 31V145M37 73H203M37 133H203" stroke="#87694f" stroke-width="8" />
+    <rect x="48" y="39" width="29" height="31" rx="7" fill="#d8845e" />
+    <rect x="46" y="35" width="33" height="7" rx="2" fill="#647e6d" />
+    <rect x="96" y="31" width="30" height="39" rx="8" fill="#91b093" />
+    <rect x="95" y="28" width="32" height="8" rx="2" fill="#e4b266" />
+    <path d="M151 69L146 44L155 36H175L184 45L179 69Z" fill="#e2bf88" />
+    <path d="M156 37L176 37" stroke="#805f45" />
+    <rect x="50" y="99" width="69" height="30" rx="3" fill="#b98b62" />
+    <path d="M51 109H117M51 121H117M60 100V129M108 100V129" stroke="#705c47" />
+    <circle cx="66" cy="98" r="10" fill="#dca04e" />
+    <circle cx="86" cy="94" r="11" fill="#da745a" />
+    <path d="M92 94L111 79L110 102Z" fill="#608a67" />
+    <path d="M144 129Q133 107 149 89H176Q194 111 184 129Z" fill="#eee0b6" />
+    <path d="M148 88H178M157 92L155 117" stroke="#ba9b6c" stroke-width="3" />
+  </g>
+</svg>

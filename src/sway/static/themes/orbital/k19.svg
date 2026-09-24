@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Retrofitter</title>
+  <desc id="desc">An open spacecraft engine housing receiving a bright replacement module from a service arm.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M38 125V60L77 39H150L182 61V125Z" fill="#748da6" />
+    <path d="M54 66H169V125H54Z" fill="#25455f" />
+    <path d="M63 76H103V115H63Z" fill="#92b2be" />
+    <circle cx="82" cy="94" r="12" fill="#658894" />
+    <path d="M124 78H154V118H124Z" fill="#d89989" />
+    <path d="M128 87H150M128 104H150" stroke="#f3c68f" stroke-width="5" />
+    <path d="M35 51L58 25H150L180 50Z" fill="#a8bbcc" />
+    <path d="M199 145V100L179 84L180 50" fill="none" stroke="#d8b17f" stroke-width="11" />
+    <path d="M174 50L160 35L146 37M184 49L194 34L184 21" fill="none" stroke="#90bcc5" stroke-width="6" />
+    <path d="M149 26L166 17L182 30L166 46Z" fill="#7cdbbd" />
+    <path d="M29 133H192" stroke="#4d728d" stroke-width="10" />
+  </g>
+</svg>

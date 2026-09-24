@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Administrator</title>
+  <desc id="desc">A wax-sealed document beside a brass stamp and a neat stack of folders.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M37 128H205L221 145H22Z" fill="#ae8a62" />
+    <rect x="51" y="42" width="85" height="91" rx="5" fill="#fff0ce" transform="rotate(-9 90 88)" />
+    <path d="M64 66L119 57M67 78L122 69M70 90L110 83" stroke="#98aaa0" stroke-width="4" />
+    <circle cx="106" cy="109" r="14" fill="#cd6f5e" />
+    <path d="M99 113L105 102L112 110" fill="none" stroke="#ffe2ac" stroke-width="3" />
+    <path d="M155 98H191V121H150Z" fill="#d8b778" />
+    <path d="M165 96V76Q151 65 165 54Q181 47 187 62Q190 72 181 78V98Z" fill="#608c82" />
+    <path d="M149 124H205V133H144Z" fill="#567986" />
+    <path d="M143 133H204V139H139Z" fill="#c58968" />
+  </g>
+</svg>

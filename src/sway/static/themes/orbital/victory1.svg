@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Outpost</title>
+  <desc id="desc">A single landing outpost with a warm window and antenna on a quiet moon.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 131L64 107L149 123L205 113L240 132V160H0Z" fill="#8c7d91" stroke="none" />
+    <path d="M66 124V80L91 56H144L169 80V124Z" fill="#a4c1c9" />
+    <path d="M74 80L95 64H140L161 80Z" fill="#75aab8" />
+    <path d="M93 86H139V109H93Z" fill="#ebc086" />
+    <path d="M116 86V109" stroke="#6c8798" stroke-width="3" />
+    <path d="M64 125L53 142M169 125L180 142" stroke="#cfaaa0" stroke-width="6" />
+    <path d="M155 69V43L171 28M154 43L139 30" stroke="#92b6c8" stroke-width="3" />
+    <circle cx="174" cy="25" r="5" fill="#7ed8c3" />
+    <circle cx="33" cy="52" r="17" fill="#d1a586" />
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Patrol</title>
+  <desc id="desc">A watch lantern and striped patrol shield resting beside a gate.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M27 142V53L48 32L69 53V142M180 141V38L205 60V142" fill="#b6b493" />
+    <path d="M44 69H193M44 88H193M44 107H193" stroke="#8e8869" stroke-width="5" />
+    <path d="M111 66L159 80V112Q150 137 111 149Q74 137 67 112V80Z" fill="#557e80" />
+    <path d="M108 71H125V141L110 147L94 140V72Z" fill="#e4c17c" />
+    <path d="M88 94L111 82L137 94L126 102L111 94L99 104Z" fill="#d27b63" />
+    <path d="M150 57H185V90H150Z" fill="#f1c767" />
+    <path d="M145 57L155 46H180L190 57ZM146 89H188V96H146Z" fill="#607e72" />
+    <path d="M158 45V34Q168 21 178 34V45" fill="none" stroke="#607e72" stroke-width="4" />
+  </g>
+</svg>

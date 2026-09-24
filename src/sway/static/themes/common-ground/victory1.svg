@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Plot</title>
+  <desc id="desc">A small planted garden plot with a gate, young tree and tidy vegetable rows.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M24 126L90 71L220 103L155 153Z" fill="#bc9a6a" />
+    <path d="M58 117L94 88L120 94L85 124ZM106 129L141 100L166 107L132 138ZM153 139L187 113L207 118L175 145Z" fill="#6f9a72" />
+    <path d="M29 120V87M44 109V79M60 98V67M26 99L66 66M26 112L66 80" stroke="#f2dfb7" stroke-width="5" />
+    <path d="M172 99V53" stroke="#8a7351" stroke-width="6" />
+    <circle cx="172" cy="45" r="24" fill="#75a080" />
+    <circle cx="160" cy="38" r="13" fill="#91b38a" stroke="none" />
+    <path d="M108 81V65M112 67L120 55M108 70L96 59" stroke="#688967" stroke-width="3" />
+  </g>
+</svg>

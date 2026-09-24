@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Scavenger</title>
+  <desc id="desc">A compact scavenging tug towing a net of scrap through an asteroid field.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M29 60L51 37L96 49L111 82L89 105L44 95Z" fill="#83afa8" />
+    <path d="M51 48L86 56L94 77L77 90L46 83Z" fill="#3d6078" />
+    <circle cx="68" cy="67" r="14" fill="#a0d9d3" />
+    <path d="M31 58L16 72L33 83" fill="#e1ac73" />
+    <path d="M101 81L148 109M94 94L145 124" stroke="#b0bdc4" stroke-width="3" />
+    <path d="M142 95L177 82L212 102L215 129L176 145L141 127Z" fill="#345770" />
+    <path d="M149 100L163 90L177 106L164 116ZM184 98L200 107L194 122L178 113ZM161 123L175 115L190 132L174 140Z" fill="#c28a89" />
+    <path d="M142 97L178 145M157 89L202 135M178 84L214 115M141 113L203 99M153 135L213 116" stroke="#9babb8" stroke-width="2" />
+    <path d="M176 25L198 20L214 38L201 57L178 49Z" fill="#746c86" />
+  </g>
+</svg>

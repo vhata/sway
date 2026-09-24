@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Lookout</title>
+  <desc id="desc">A tall coastal lookout tower with a telescope facing the horizon.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M18 140Q82 107 127 132T233 133V160H18Z" fill="#98ad85" stroke="none" />
+    <path d="M76 139L94 63H135L150 139Z" fill="#d3b985" />
+    <path d="M82 111H145M87 87H140M97 72V137M129 71V138" stroke="#8f805f" stroke-width="4" />
+    <path d="M77 64H151V47L115 22L77 47Z" fill="#5e8a7c" />
+    <path d="M85 47H141M87 46L88 61M137 46V61" stroke="#e7d7ad" stroke-width="3" />
+    <path d="M147 52L183 39L190 53L151 64Z" fill="#d7a259" />
+    <path d="M147 62L137 87M174 45L179 56" stroke="#6a7770" stroke-width="4" />
+    <circle cx="194" cy="27" r="14" fill="#e8bc69" stroke="none" />
+    <path d="M177 90H234M189 104H225" stroke="#a2b9b1" stroke-width="3" />
+  </g>
+</svg>

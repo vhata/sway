@@ -14,9 +14,6 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
 
 ### Unprioritized
 
-- [UI] `distinct-card-visual-design` — **Give each card a distinct visual identity.** Original illustrations or shapes and a clear effect, type and cost hierarchy should make both themes easier to read and distinguish at a glance.
-  - Starting point: Explore consistent card layouts for Common Ground and Orbital Commons, with compact mobile decisions, keyboard access and readable contrast. Preserve themed names and game mechanics.
-  - Source: user request for clearer card design, 2026-09-23
 - [PLATFORM] `public-hosting-and-identity` — **Define a hosted deployment and player identity.** A public service requires explicit authentication, operations and abuse controls beyond the local release.
   - Starting point: Decide deployment scale and session ownership before exposing mutation routes publicly.
   - Source: accepted Sway implementation plan, 2026-09-22

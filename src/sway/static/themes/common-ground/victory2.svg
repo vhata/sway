@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Quarter</title>
+  <desc id="desc">A cozy neighborhood square with three colorful houses and a fountain.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M22 142L48 110H196L220 143Z" fill="#c7ba95" />
+    <path d="M29 112V67L64 40L98 67V112Z" fill="#dba677" />
+    <path d="M22 66L64 32L104 66Z" fill="#b56f58" />
+    <path d="M97 103V48L129 25L161 48V103Z" fill="#9aafa0" />
+    <path d="M91 48L129 17L168 48Z" fill="#667f86" />
+    <path d="M157 114V73L186 54L215 73V114Z" fill="#e7d0a1" />
+    <path d="M151 72L186 46L221 72Z" fill="#ce8c64" />
+    <path d="M52 80H70V112H52ZM119 58H137V80H119ZM177 81H194V113H177Z" fill="#537c7b" />
+    <ellipse cx="120" cy="130" rx="29" ry="10" fill="#8db5b8" />
+    <path d="M118 126V105M101 111H139" stroke="#6f9598" stroke-width="5" />
+  </g>
+</svg>

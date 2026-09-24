@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Observatory</title>
+  <desc id="desc">A long orbital telescope with golden solar wings aimed toward a distant star.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M71 89L100 47L163 87L134 130Z" fill="#a0bac5" />
+    <ellipse cx="86" cy="69" rx="24" ry="12" fill="#496a87" transform="rotate(-55 86 69)" />
+    <ellipse cx="86" cy="69" rx="14" ry="7" fill="#81d9d2" transform="rotate(-55 86 69)" />
+    <path d="M104 103L143 55M120 113L157 65" stroke="#6b8b9f" stroke-width="5" />
+    <path d="M55 70L17 48L41 14L79 37ZM153 137L193 157L219 121L179 100Z" fill="#dca776" />
+    <path d="M25 38L61 59M33 26L69 48M33 57L56 22M162 123L201 145M170 111L210 133M178 151L203 116" stroke="#876c79" stroke-width="2" />
+    <path d="M153 101L182 66" stroke="#a2c5cb" stroke-width="5" />
+    <path d="M184 61L196 54M184 50V35M201 63L216 65" stroke="#8be4cd" stroke-width="3" />
+  </g>
+</svg>

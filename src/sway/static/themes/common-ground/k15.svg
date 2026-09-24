@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Refinery</title>
+  <desc id="desc">Copper refining vessels and curled pipes above glowing furnace coals.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M32 136H211V147H32Z" fill="#928f78" />
+    <path d="M58 65V38H91V65Q111 81 105 114H44Q37 83 58 65Z" fill="#c5845e" />
+    <path d="M56 99H94V127H56Z" fill="#675c53" />
+    <path d="M62 121L73 103L80 113L86 107L91 124Z" fill="#edb45b" />
+    <path d="M90 49H142Q162 49 161 71V86" fill="none" stroke="#d5a164" stroke-width="12" />
+    <path d="M160 77V106M145 109H182L190 138H137Z" fill="#79a0a0" />
+    <path d="M146 113H181L185 130H142Z" fill="#e4b769" />
+    <path d="M49 34Q42 22 51 14M74 29Q65 16 78 9" fill="none" stroke="#bec7b4" stroke-width="5" />
+  </g>
+</svg>

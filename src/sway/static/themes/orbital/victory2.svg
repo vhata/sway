@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Habitat</title>
+  <desc id="desc">A circular orbital habitat with windowed living quarters and a green central garden.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="120" cy="90" rx="94" ry="47" fill="#a1b9ca" />
+    <ellipse cx="120" cy="82" rx="94" ry="45" fill="#7898b1" />
+    <ellipse cx="120" cy="82" rx="57" ry="24" fill="#294b67" />
+    <ellipse cx="120" cy="86" rx="40" ry="15" fill="#72b59d" />
+    <path d="M114 86V58M137 88V69" stroke="#b8cfbf" stroke-width="4" />
+    <circle cx="113" cy="58" r="13" fill="#89c6a6" />
+    <circle cx="137" cy="67" r="11" fill="#a0d5ac" />
+    <path d="M41 84L59 91M66 103L84 109M96 113L115 116M130 116L151 112M164 107L181 98M189 89L202 78" stroke="#f0c58f" stroke-width="6" />
+    <path d="M67 57L83 44M156 44L174 56" stroke="#c1d6da" stroke-width="9" />
+    <path d="M119 127V149M108 149H130" stroke="#a7c4cd" stroke-width="5" />
+  </g>
+</svg>

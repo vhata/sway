@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Corsair</title>
+  <desc id="desc">A violet corsair ship with swept fins and a glowing stolen cargo pod.</desc>
+  <rect width="240" height="160" fill="#152c45" />
+  <circle cx="197" cy="31" r="58" fill="#223f5d" />
+  <path d="M0 139L240 101V160H0Z" fill="#1b3551" />
+  <path d="M20 26h4m-2-2v4M207 112h4m-2-2v4M189 18h4m-2-2v4M41 87h3M106 19h3" stroke="#819fbd" stroke-width="2" />
+  <g stroke="#18334a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M19 125L78 106L155 53L218 51L180 89L112 132Z" fill="#8d88bd" />
+    <path d="M71 100L46 57L143 68ZM123 125L152 148L178 88Z" fill="#c283a1" />
+    <path d="M79 104L155 65L188 60L167 85L103 120Z" fill="#6da7b2" />
+    <path d="M147 78L175 66L158 86Z" fill="#a7efdc" />
+    <path d="M47 123L22 135L58 136" fill="#f1b362" stroke="none" />
+    <path d="M108 123L149 109L166 122L126 142Z" fill="#e5b56c" />
+    <path d="M128 127L148 119" stroke="#fff0be" stroke-width="4" />
+    <path d="M29 84L59 90M178 31L196 28" stroke="#6c8da4" stroke-width="2" />
+  </g>
+</svg>

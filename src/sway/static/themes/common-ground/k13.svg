@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">Broker</title>
+  <desc id="desc">A brass trading scale balancing coins and a cloth pouch beside a ledger.</desc>
+  <rect width="240" height="160" fill="#f5e7c9" />
+  <circle cx="190" cy="33" r="55" fill="#efdab0" />
+  <path d="M0 139Q91 111 240 136V160H0Z" fill="#dfd7b7" />
+  <g stroke="#536a5e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M109 130V43M69 57H166M100 130H120" stroke="#ae8b47" stroke-width="6" />
+    <circle cx="110" cy="40" r="7" fill="#dfb861" />
+    <path d="M69 59L46 96H93ZM164 59L142 96H186Z" fill="none" stroke="#728b80" stroke-width="2" />
+    <path d="M42 96H98Q69 127 42 96ZM138 96H190Q163 127 138 96Z" fill="#e6c27f" />
+    <circle cx="63" cy="91" r="9" fill="#d6a557" />
+    <circle cx="79" cy="91" r="8" fill="#efd085" />
+    <path d="M149 94Q145 78 158 74H174Q186 83 178 94Z" fill="#9dad89" />
+    <path d="M139 131L192 118L213 138L155 150Z" fill="#cc8269" />
+    <path d="M151 132L190 122L201 134L158 143Z" fill="#fff0d2" />
+  </g>
+</svg>
