@@ -75,7 +75,7 @@ class IdentityService:
         self, token: str, csrf: str, *, conn: sqlite3.Connection | None = None
     ) -> Session:
         session = self.authenticate(token, conn=conn)
-        if not hmac.compare_digest(session.csrf_token, csrf):
+        if not hmac.compare_digest(session.csrf_token.encode("utf-8"), csrf.encode("utf-8")):
             raise AuthenticationError("Invalid CSRF token.")
         return session
 
