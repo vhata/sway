@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import secrets
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import htpy as h
@@ -16,6 +16,7 @@ from starlette.datastructures import FormData
 from sway.engine import Command, GameConfig, InvalidCommand
 from sway.engine.catalog import CATALOG, KINGDOM_IDS
 from sway.hosting.config import HostedConfig
+from sway.hosting.dispatcher import BotDispatcher
 from sway.hosting.http import HostedBoundary
 from sway.hosting.identity import AuthenticationError, IdentityService, Session, SessionCredentials
 from sway.hosting.presentation import account, home, hosted_page, invitation, table_content
@@ -62,18 +63,16 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
     identity = IdentityService(store)
     service = HostedService(store)
     themes = tuple(load_themes(frozenset(CATALOG)).values())
+    dispatcher = BotDispatcher(service)
 
     @asynccontextmanager
-    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-        # Imported here so importing a factory never starts background work.
-        from sway.hosting.dispatcher import BotDispatcher
-
-        dispatcher = BotDispatcher(service)
-        dispatcher.start()
-        try:
-            yield
-        finally:
-            dispatcher.stop()
+    async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+        with settings.process_lock():
+            dispatcher.start()
+            try:
+                yield
+            finally:
+                dispatcher.stop()
 
     application = FastAPI(
         title="Sway private tables",
@@ -123,8 +122,26 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
 
     async def mutation(request: Request) -> FormData:
         data = await request.form(max_fields=100)
-        await run_in_threadpool(identity.check_csrf, token(request), _field(data, "csrf"))
+        current = await run_in_threadpool(session, request)
+        if not secrets.compare_digest(current.csrf_token.encode(), _field(data, "csrf").encode()):
+            raise PermissionError("This form expired. Reload before trying again.")
         return data
+
+    @application.exception_handler(PermissionError)
+    async def stale_form(_request: Request, _exc: PermissionError) -> HTMLResponse:
+        return HTMLResponse(
+            str(
+                hosted_page(
+                    "Reload your table",
+                    h.main(id="main", class_="home")[
+                        h.h1["This form has expired"],
+                        h.p["Reload your table to continue with your current player."],
+                        h.a(href="/")["Your tables"],
+                    ],
+                )
+            ),
+            status_code=403,
+        )
 
     @application.exception_handler(AuthenticationError)
     async def expired(_request: Request, _exc: AuthenticationError) -> HTMLResponse:
@@ -345,6 +362,12 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
         except ValueError as exc:
             table = await run_in_threadpool(service.view, bearer, game_id)
             return render(request, table, str(exc), 422)
+        if (
+            table.status == "active"
+            and table.pending_player is not None
+            and table.seats[table.pending_player].controller != "human"
+        ):
+            dispatcher.enqueue(table.game_id)
         return render(request, table)
 
     @application.get("/join/{invitation_id}", response_model=None)

@@ -48,6 +48,7 @@ class BoardContext:
     waiting_for: str | None = None
     bot_paused: bool = False
     preference_version: int = 0
+    request_id: str | None = None
 
 
 def page(title: str, content: h.Node) -> h.Element:
@@ -435,6 +436,7 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
         csrf_input(ctx.csrf),
         h.input(type="hidden", name="revision", value=str(view.revision)),
         h.input(type="hidden", name="decision", value=decision.id),
+        h.input(type="hidden", name="request_id", value=ctx.request_id) if ctx.request_id else None,
         h.fieldset[
             h.legend(id="decision-heading", tabindex="-1")[
                 PROMPTS.get(

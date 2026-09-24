@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 import htpy as h
 
 from sway.bots import STRATEGIES
@@ -208,6 +210,7 @@ def table_content(
                 waiting_for=waiting,
                 bot_paused=table.bot_paused is not None,
                 preference_version=table.preference_version,
+                request_id=uuid4().hex,
             ),
         )
         if table.view

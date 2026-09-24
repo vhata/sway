@@ -35,7 +35,10 @@
       const maximum = Number(form.dataset.maximum);
       const confirm = form.querySelector('[type="submit"]');
       if (confirm) {
-        confirm.disabled = selected.length < minimum || selected.length > maximum;
+        confirm.disabled =
+          document.documentElement.dataset.swayLocked === "true" ||
+          selected.length < minimum ||
+          selected.length > maximum;
       }
       for (const choice of form.querySelectorAll(".choice, .order-item")) {
         choice.classList.toggle("selected", Boolean(choice.querySelector("input:checked")));

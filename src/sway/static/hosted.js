@@ -16,6 +16,9 @@
 
   let busy = false;
   let queuedPoll = false;
+  let queuedMutation = null;
+  let stopped = false;
+  const disabledControls = new Map();
   let timer;
   let failures = 0;
   let uncertain = null;
@@ -26,13 +29,24 @@
 
   function schedule() {
     clearTimeout(timer);
+    if (stopped) return;
     const delay = failures ? Math.min(30000, 2000 * 2 ** failures) : document.hidden ? 15000 : 2000;
     timer = setTimeout(poll, delay);
   }
 
   function disableChoices(disabled) {
+    document.documentElement.dataset.swayLocked = String(disabled);
     for (const button of document.querySelectorAll('#table button[type="submit"]')) {
-      if (disabled) button.disabled = true;
+      if (disabled) {
+        if (!disabledControls.has(button)) disabledControls.set(button, button.disabled);
+        button.disabled = true;
+      } else if (disabledControls.has(button)) {
+        button.disabled = disabledControls.get(button);
+      }
+    }
+    if (!disabled) {
+      disabledControls.clear();
+      document.querySelector("#decision-form")?.dispatchEvent(new Event("change"));
     }
   }
 
@@ -46,7 +60,7 @@
         if (busy || !uncertain) return;
         // Refresh authoritative state before resolving a possibly committed request.
         await poll();
-        if (!busy && uncertain) await request(uncertain);
+        if (!busy && !failures && uncertain) await request(uncertain);
       });
       status.append(button);
     }
@@ -62,18 +76,22 @@
     const detail = {};
     document.dispatchEvent(new CustomEvent("sway:beforeSwap", { detail }));
     current.replaceWith(next);
+    disabledControls.clear();
     document.dispatchEvent(new CustomEvent("sway:afterSwap"));
-    if (uncertain) disableChoices(true);
+    if (uncertain || queuedMutation) disableChoices(true);
     return true;
   }
 
   async function request(pending) {
-    if (busy) return;
+    if (busy || stopped) return;
     busy = true;
     clearTimeout(timer);
     if (pending) disableChoices(true);
     const table = document.querySelector("#table");
-    if (!table) return;
+    if (!table) {
+      busy = false;
+      return;
+    }
     const params = new URLSearchParams({
       revision: table.dataset.revision,
       lobby_revision: table.dataset.lobbyRevision,
@@ -92,6 +110,8 @@
       });
       if ([401, 403, 404].includes(response.status)) {
         uncertain = null;
+        queuedMutation = null;
+        stopped = true;
         table.replaceChildren();
         notice("Your access to this table has ended. Return to your player to sign in again.");
         const link = document.createElement("a");
@@ -109,13 +129,6 @@
         const html = await response.text();
         if (pending) uncertain = null;
         if (!apply(html)) {
-          // Invitation creation returns a one-time secret page, never a poll.
-          if (pending) {
-            document.open();
-            document.write(html);
-            document.close();
-            return;
-          }
           throw new Error("No table in response");
         }
         failures = 0;
@@ -125,7 +138,7 @@
       }
     } catch {
       failures += 1;
-      if (pending) uncertain = pending;
+      if (pending?.retryable) uncertain = pending;
       notice(
         uncertain
           ? "The connection was interrupted. Your choice may be saved. Retry the same request to check safely."
@@ -136,7 +149,14 @@
     } finally {
       clearTimeout(timeout);
       busy = false;
-      if (document.querySelector("#table")) {
+      if (!uncertain && !failures && !queuedMutation) disableChoices(false);
+      if (!stopped && document.querySelector("#table")) {
+        if (queuedMutation && !failures) {
+          const next = queuedMutation;
+          queuedMutation = null;
+          void request(next);
+          return;
+        }
         schedule();
         if (queuedPoll) {
           queuedPoll = false;
@@ -156,21 +176,36 @@
 
   document.addEventListener("submit", async (event) => {
     const form = event.target;
-    if (!form.closest("#table")) return;
+    if (!form.closest("#table") || form.action.endsWith("/invite")) return;
     event.preventDefault();
-    if (busy || uncertain) return;
+    if (uncertain || queuedMutation || failures || stopped) return;
     const body = new URLSearchParams();
     for (const [key, value] of new FormData(form)) body.append(key, value);
     if (form.id === "decision-form") body.set("request_id", crypto.randomUUID());
-    await request({ url: form.action, body });
+    const pending = { url: form.action, body, retryable: form.id === "decision-form" };
+    if (busy) {
+      queuedMutation = pending;
+      disableChoices(true);
+    } else await request(pending);
   });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) void poll();
     else schedule();
   });
-  window.addEventListener("online", () => void poll());
+  window.addEventListener("online", () => {
+    disableChoices(true);
+    void poll();
+  });
+  window.addEventListener("offline", () => {
+    failures = 1;
+    disableChoices(true);
+    notice("Reconnecting to your table…");
+  });
   window.addEventListener("pageshow", (event) => {
-    if (event.persisted) void poll();
+    if (event.persisted) {
+      disableChoices(true);
+      void poll();
+    }
   });
   schedule();
 })();
