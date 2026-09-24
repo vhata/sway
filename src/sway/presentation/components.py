@@ -26,6 +26,16 @@ class SavedGame:
 
 
 @dataclass(frozen=True)
+class SetupValues:
+    players: str = "2"
+    seed: str = "42"
+    theme: str = "common-ground"
+    supply: str = "starter"
+    strategies: tuple[str, ...] = ("economy", "engine", "attack")
+    kingdom: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class BoardContext:
     game_id: str
     csrf: str
@@ -72,8 +82,10 @@ def home(
     error: str | None = None,
     *,
     developer_terminology: bool = False,
+    setup: SetupValues | None = None,
 ) -> h.Element:
     common_ground = next((theme for theme in themes if theme.id == "common-ground"), themes[0])
+    entered = setup or SetupValues(theme=common_ground.id)
     return page(
         "Your table awaits",
         h.main(id="main", class_="home", style=common_ground.style)[
@@ -95,15 +107,26 @@ def home(
                             h.label[
                                 "Players",
                                 h.select(name="players", id="players")[
-                                    h.option(value="2")["2 — you + one opponent"],
-                                    h.option(value="3")["3 — you + two opponents"],
-                                    h.option(value="4")["4 — you + three opponents"],
+                                    h.option(value="2", selected=entered.players == "2")[
+                                        "2 — you + one opponent"
+                                    ],
+                                    h.option(value="3", selected=entered.players == "3")[
+                                        "3 — you + two opponents"
+                                    ],
+                                    h.option(value="4", selected=entered.players == "4")[
+                                        "4 — you + three opponents"
+                                    ],
                                 ],
                             ],
                             h.label[
                                 "Table theme",
                                 h.select(name="theme")[
-                                    [h.option(value=theme.id)[theme.name] for theme in themes]
+                                    [
+                                        h.option(
+                                            value=theme.id, selected=entered.theme == theme.id
+                                        )[theme.name]
+                                        for theme in themes
+                                    ]
                                 ],
                             ],
                             h.label[
@@ -111,7 +134,7 @@ def home(
                                 h.input(
                                     type="number",
                                     name="seed",
-                                    value="42",
+                                    value=entered.seed,
                                     min="0",
                                     max=str(2**63 - 1),
                                 ),
@@ -119,9 +142,15 @@ def home(
                             h.label[
                                 "Supply",
                                 h.select(name="supply", id="supply-mode")[
-                                    h.option(value="starter")["First steps — a balanced selection"],
-                                    h.option(value="random")["Surprise me — 10 random cards"],
-                                    h.option(value="manual")["Choose my own 10 cards"],
+                                    h.option(value="starter", selected=entered.supply == "starter")[
+                                        "First steps — a balanced selection"
+                                    ],
+                                    h.option(value="random", selected=entered.supply == "random")[
+                                        "Surprise me — 10 random cards"
+                                    ],
+                                    h.option(value="manual", selected=entered.supply == "manual")[
+                                        "Choose my own 10 cards"
+                                    ],
                                 ],
                             ],
                         ],
@@ -131,13 +160,18 @@ def home(
                                 h.label(data_opponent=str(index))[
                                     f"Opponent {index}",
                                     h.select(name=f"strategy{index}")[
-                                        h.option(value="economy")["Economy — builds buying power"],
-                                        h.option(value="engine", selected=index == 2)[
-                                            "Engine — combines useful actions"
-                                        ],
-                                        h.option(value="attack", selected=index == 3)[
-                                            "Attack — disrupts your plans"
-                                        ],
+                                        h.option(
+                                            value="economy",
+                                            selected=entered.strategies[index - 1] == "economy",
+                                        )["Economy — builds buying power"],
+                                        h.option(
+                                            value="engine",
+                                            selected=entered.strategies[index - 1] == "engine",
+                                        )["Engine — combines useful actions"],
+                                        h.option(
+                                            value="attack",
+                                            selected=entered.strategies[index - 1] == "attack",
+                                        )["Attack — disrupts your plans"],
                                     ],
                                 ]
                                 for index in range(1, 4)
@@ -148,7 +182,12 @@ def home(
                             h.div(class_="manual-grid")[
                                 [
                                     h.label[
-                                        h.input(type="checkbox", name="kingdom", value=card_id),
+                                        h.input(
+                                            type="checkbox",
+                                            name="kingdom",
+                                            value=card_id,
+                                            checked=card_id in entered.kingdom,
+                                        ),
                                         common_ground.cards[card_id].name,
                                         h.small[f" · {CATALOG[card_id].cost}"],
                                         original_name(card_id, developer_terminology),
@@ -552,7 +591,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
             else None,
             h.div(class_="finished")[
                 h.p(class_="eyebrow")["Every choice counted"],
-                h.h2[
+                h.h2(id="result-heading", tabindex="-1")[
                     " & ".join(view.players[index].name for index in view.winners)
                     + " win"
                     + ("s" if len(view.winners) == 1 else "")
@@ -582,7 +621,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
             )[
                 csrf_input(ctx.csrf),
                 h.input(type="hidden", name="revision", value=str(view.revision)),
-                h.h2["The table is moving…"],
+                h.h2(id="opponent-heading", tabindex="-1")["The table is moving…"],
                 h.p["Your opponents are considering their next move. Your turn will appear here."],
                 h.button(type="submit", class_="secondary")["Continue opponents"],
             ],

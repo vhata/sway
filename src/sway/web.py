@@ -19,7 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from sway.engine import Command, GameConfig, InvalidCommand
 from sway.engine.catalog import CATALOG, KINGDOM_IDS
-from sway.presentation.components import BoardContext, SavedGame, board, home, page
+from sway.presentation.components import BoardContext, SavedGame, SetupValues, board, home, page
 from sway.presentation.themes import STATIC_ROOT, Theme, load_themes
 from sway.service import GameRecord, GameService, GameSummary
 from sway.storage import GameNotFound, SQLiteStore, StorageConflict, StorageError
@@ -32,6 +32,26 @@ def _field(data: FormData, key: str, default: str = "") -> str:
     if not isinstance(value, str):
         raise ValueError(f"Invalid {key} field")
     return value
+
+
+def _setup_values(data: FormData, default_theme: str) -> SetupValues:
+    """Keep text entries for correction without treating them as valid setup."""
+
+    def text_field(key: str, default: str) -> str:
+        value = data.get(key, default)
+        return value if isinstance(value, str) else default
+
+    return SetupValues(
+        players=text_field("players", "2"),
+        seed=text_field("seed", "42"),
+        theme=text_field("theme", default_theme),
+        supply=text_field("supply", "starter"),
+        strategies=tuple(
+            text_field(f"strategy{index}", default)
+            for index, default in enumerate(("economy", "engine", "attack"), 1)
+        ),
+        kingdom=tuple(value for value in data.getlist("kingdom") if isinstance(value, str)),
+    )
 
 
 def _csrf(request: Request) -> str:
@@ -245,6 +265,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                     token,
                     str(exc),
                     developer_terminology=developer_terminology,
+                    setup=_setup_values(data, default_theme.id),
                 ),
                 token,
                 422,

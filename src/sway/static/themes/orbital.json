@@ -72,7 +72,7 @@
     },
     "k02": {
       "name": "Corsair",
-      "description": "Take an Reactor. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Credit if possible, and discards the rest.",
+      "description": "Take a Reactor. Each opponent reveals their top 2 cards, scraps a revealed Treasure other than Credit if possible, and discards the rest.",
       "image": "themes/orbital/attack.svg",
       "image_alt": "An abstract attack emblem"
     },
@@ -210,7 +210,7 @@
     },
     "k25": {
       "name": "Saboteur",
-      "description": "Draw 2 cards. Every opponent takes a Debris, if any remain.",
+      "description": "Draw 2 cards. Every opponent takes Debris, if any remain.",
       "image": "themes/orbital/attack.svg",
       "image_alt": "An abstract attack emblem"
     },
