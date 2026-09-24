@@ -92,7 +92,7 @@ def _bot_seats(player_count: int, human_seats: frozenset[int]) -> tuple[int, ...
     return tuple(player for player in range(player_count) if player not in human_seats)
 
 
-def _snapshot(state: GameState, bots: tuple[BotState, ...], human_seats: frozenset[int]) -> str:
+def serialize_game(state: GameState, bots: tuple[BotState, ...], human_seats: frozenset[int]) -> str:
     return json.dumps(
         {
             "schema": 2,
@@ -110,7 +110,7 @@ def _snapshot(state: GameState, bots: tuple[BotState, ...], human_seats: frozens
     )
 
 
-def _record(saved: StoredGame) -> GameRecord:
+def deserialize_game(saved: StoredGame) -> GameRecord:
     try:
         payload = _object(cast(object, json.loads(saved.snapshot)))
         schema = _integer(payload.get("schema"))
@@ -199,10 +199,10 @@ class GameService:
             BotState(profile, seed ^ (player * 0x9E3779B97F4A7C15))
             for player, profile in zip(bot_seats, strategies, strict=True)
         )
-        return _record(
+        return deserialize_game(
             self.store.create(
                 uuid4().hex,
-                _snapshot(state, bots, human_seats),
+                serialize_game(state, bots, human_seats),
                 json.dumps(
                     {
                         "players": [player.name for player in state.players],
@@ -215,7 +215,7 @@ class GameService:
         )
 
     def load(self, game_id: str) -> GameRecord:
-        return _record(self.store.load(game_id))
+        return deserialize_game(self.store.load(game_id))
 
     def list_games(self) -> list[GameSummary]:
         summaries: list[GameSummary] = []
@@ -270,12 +270,12 @@ class GameService:
             record.game_id,
             command.expected_revision,
             command.decision_id,
-            _snapshot(result.state, bots, record.human_seats),
+            serialize_game(result.state, bots, record.human_seats),
             json.dumps(asdict(command), sort_keys=True),
             json.dumps([asdict(event) for event in result.events], sort_keys=True),
             "finished" if result.state.phase == "finished" else "active",
         )
-        return _record(saved)
+        return deserialize_game(saved)
 
     def submit(self, game_id: str, command: Command, *, player: int = 0) -> GameRecord:
         record = self.load(game_id)
@@ -309,4 +309,4 @@ class GameService:
 
     def set_theme(self, game_id: str, theme_id: str) -> GameRecord:
         self._check_theme(theme_id)
-        return _record(self.store.set_theme(game_id, theme_id))
+        return deserialize_game(self.store.set_theme(game_id, theme_id))
