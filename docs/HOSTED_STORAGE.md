@@ -4,7 +4,7 @@
 
 ## Database and transactions
 
-Hosted mode uses an explicitly selected, separate database. `HostedStore` creates new files with mode `0600`, marks them with SQLite application ID `0x53575948` and container format `user_version=1`, and rejects unmarked nonempty databases, including local saves. Component schema versions live in `hosting_schema(component, version)`; identity starts at version 1. Multiplayer owns its own component row and tables in this same database. Unknown container/identity versions fail without rewriting records.
+Hosted mode uses an explicitly selected, separate database. `HostedStore` creates new files with mode `0600`, marks them with SQLite application ID `0x53575948` and container format `user_version=1`, and rejects unmarked nonempty databases, including local saves. Existing database paths must be owner-only regular files; symlinks and permissive files are rejected without changing their permissions. Component schema versions live in `hosting_schema(component, version)`; identity starts at version 1. Multiplayer owns its own component row and tables in this same database. Unknown container/identity versions fail without rewriting records.
 
 `HostedStore(path, clock=...)` accepts an injectable clock returning Unix seconds. `transaction(write=False)` opens a connection with `sqlite3.Row`, foreign keys enabled and an explicit transaction. Reads are query-only and retain one snapshot. Writes use `BEGIN IMMEDIATE`, wait at most five seconds for SQLite locks, and commit only after the entire context succeeds. Exceptions roll back; connections close on every path. Caller code must not use `executescript`, which implicitly commits transactions, or hold a transaction while bots compute or templates render.
 

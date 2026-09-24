@@ -259,6 +259,7 @@ def test_read_transactions_reject_writes(identity: IdentityService) -> None:
 def test_unsupported_and_local_databases_are_preserved(tmp_path: Path) -> None:
     local_path = tmp_path / "local.sqlite3"
     SQLiteStore(local_path)
+    local_path.chmod(0o600)
     before = local_path.read_bytes()
     with pytest.raises(SaveFormatError, match="local saves are separate"):
         HostedStore(local_path)
@@ -303,3 +304,19 @@ def test_read_transaction_sees_consistent_snapshot(identity: IdentityService) ->
             ).fetchone()[0]
             == "Changed"
         )
+
+
+def test_existing_database_must_be_private_regular_file(identity: IdentityService) -> None:
+    path = identity.store.path
+    path.chmod(0o644)
+    before = path.read_bytes()
+    with pytest.raises(SaveFormatError, match="owner-only regular file"):
+        HostedStore(path)
+    assert path.read_bytes() == before
+    assert path.stat().st_mode & 0o777 == 0o644
+    path.chmod(0o600)
+    alias = path.with_name("alias.sqlite3")
+    alias.symlink_to(path)
+    with pytest.raises(SaveFormatError, match="not a symlink"):
+        HostedStore(alias)
+    assert path.read_bytes() == before

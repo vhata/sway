@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import stat
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
@@ -34,6 +35,11 @@ class HostedStore:
             pass
         else:
             os.close(descriptor)
+        metadata = path.lstat()
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_mode & 0o077:
+            raise SaveFormatError(
+                "Hosted database must be an owner-only regular file, not a symlink."
+            )
         with self.transaction(write=True) as conn:
             app_id = cast(int, conn.execute("PRAGMA application_id").fetchone()[0])
             version = cast(int, conn.execute("PRAGMA user_version").fetchone()[0])
