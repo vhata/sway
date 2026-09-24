@@ -1,6 +1,6 @@
 # Architecture contracts
 
-These boundaries guide implementation. The accepted release and unfinished capabilities are tracked in [SPEC.md](SPEC.md); implementation PRs establish the concrete typed interfaces.
+These boundaries guide implementation. [SPEC.md](SPEC.md) records the accepted local release; [the multiplayer contract](docs/MULTIPLAYER.md) covers the separate hosted extension, and [TODO.md](TODO.md) tracks remaining work. Implementation PRs establish the concrete typed interfaces.
 
 ## Rules and decisions
 
@@ -14,7 +14,7 @@ Bots receive the same filtered view and decision as a human, plus their own pers
 
 ## Presentation and privacy
 
-Use typed htpy functions accepting presentation data from a filtered player view. Rules, costs and effects never depend on visible text. HTMX submits completed decisions and requests fragments. Small JavaScript components maintain selection/order locally, preserve focus on refresh and reset when the decision ID changes.
+Use typed htpy functions accepting presentation data from a filtered player view. Rules, costs and effects never depend on visible text. Local play uses HTMX to submit decisions and request fragments; hosted play serializes polling and submissions through its fetch coordinator. Small JavaScript components maintain selection/order locally, preserve focus on refresh and reset when the decision ID changes.
 
 Filter structured events as well as state: discarded/revealed public cards and hidden draws have different visibility. Never send authoritative snapshots to templates or clients. Render pending choices only for their owner. The future API can expose the same player views and decisions without changing rules or bots.
 
@@ -32,7 +32,7 @@ The initial adapter uses standard-library `sqlite3`. Keep transactions short: lo
 
 Keep runtime data outside tracked files, isolate worktree data, and bind the development server to localhost. Reject cross-origin mutations. The local release does not promise remote identity/authentication.
 
-[The multiplayer proposal](docs/MULTIPLAYER.md) defines invite-only identity, private seats, reconnects and updates for a future implementation; it does not enable hosted access. [Development decisions](docs/DECISIONS.md) record the chosen defaults and their tradeoffs for review.
+[The multiplayer contract](docs/MULTIPLAYER.md) defines the implemented hosted identity, private seats, reconnects and updates. Its separate application and database follow the [hosted storage boundary](docs/HOSTED_STORAGE.md) and [hosting procedures](docs/HOSTING.md); local saves are never published automatically. [Development decisions](docs/DECISIONS.md) record the chosen defaults and their tradeoffs for review.
 
 ## PostgreSQL transition
 

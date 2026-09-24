@@ -15,7 +15,7 @@ view = service.view(record.game_id, player=3)
 record = service.submit(record.game_id, command, player=3)
 ```
 
-The caller supplies `player` from trusted application context. A future remote boundary must authenticate membership before selecting that index; never copy a player field from an HTTP request. `view` and `submit` reject bot seats and invalid indices, but do not authenticate a person. `load`, listing, bot advancement and theme changes likewise require caller authorization before any future public exposure.
+The caller supplies `player` from trusted application context. A remote boundary must authenticate membership before selecting that index; never copy a player field from an HTTP request. `view` and `submit` reject bot seats and invalid indices, but do not authenticate a person. `load`, listing, bot advancement and theme changes likewise require caller authorization before any future public exposure.
 
 `human_seats` is a nonempty `frozenset` of integer indices in the game, excluding booleans. It defaults to `{0}`. Every other seat is a bot, with exactly one strategy assigned in ascending seat order. All-human two-, three- and four-player games use an empty strategy tuple. Controller assignments are fixed for the saved game.
 
@@ -41,4 +41,4 @@ Original application schema-1 saves load as human seat 0 with positional bots in
 
 The existing local routes create only the default arrangement. A valid save with any other human arrangement receives a clear unsupported-table response before rendering or accepting a decision, bot advance or theme mutation. Its snapshot, revision and theme remain unchanged. The browser exposes no player-index input and does not simulate waiting for another human through its bot-progress loop.
 
-Hosted identity, private memberships, reconnect credentials, invitations and per-viewer preferences remain separate work. Service support for multiple human seats does not resolve that product work or make the local server safe to expose remotely.
+The separate [HostedService and application](MULTIPLAYER.md) implement identity, private memberships, reconnect credentials, invitations and per-viewer preferences using an isolated hosted database. They reuse the engine and application snapshot format; they do not expose this trusted local API or make the local server safe to publish.
