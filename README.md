@@ -20,13 +20,15 @@ To compare cards with the [original terminology reference](docs/TERMINOLOGY.md),
 
 Developer mode also links to `/developer/cards`, a read-only catalogue of all 33 cards with a theme selector. It uses the same card faces as the game and opens separately from an active table, so inspecting designs does not discard an unfinished selection. The catalogue is unavailable when developer mode is off.
 
-[SPEC.md](SPEC.md) records the release requirements. PostgreSQL deployment, human multiplayer, expansions and more advanced opponents are deferred.
+[SPEC.md](SPEC.md) records the accepted local release. A separate hosted application supports invite-only human multiplayer; [hosting instructions](docs/HOSTING.md) cover its configuration, TLS proxy and backup/restore. PostgreSQL, public matchmaking, expansions and more advanced opponents remain deferred.
+
 
 `setup.sh` synchronizes `uv.lock`, installs checksum-verified Biome, and installs staged-format/lint and pre-push hooks. `install-browsers.sh --with-deps` also installs system dependencies on supported Linux hosts. All project Python commands run through `uv run --locked`.
 
 | Command | Purpose |
 | --- | --- |
 | `scripts/dev.sh` | Local server with reload |
+| `scripts/hosted.sh` | Configured private multiplayer server behind a TLS proxy |
 | `scripts/format.sh` | Format Python, JavaScript, CSS and JSON |
 | `scripts/fmt-check.sh` | Check formatting without rewriting |
 | `scripts/lint.sh` | Ruff and Biome lint |
@@ -39,6 +41,15 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | `scripts/check.sh` | Formatting, lint, types, coverage tests, build and installed-wheel smoke |
 
 CI runs `check.sh` and the browser suite. For dependencies, use `uv add` or `uv add --dev` and commit both `pyproject.toml` and `uv.lock`. Change `.uv-version` and the matching `tool.uv.required-version` together; Biome upgrades also update `.biome-version`, configuration schema and `scripts/biome.sha256`.
+
+## Private multiplayer
+
+Hosted tables have two to four seats, with invited humans and independently selected computer opponents. Create a guest player, save the recovery code, and share a seat invitation privately. Every human readies the current setup before the host starts. Each browser sees only its own hand and decisions, including reactions during another player's turn. Waiting tables update automatically, and computers keep playing when no browser is open.
+
+Recovering a player rotates the recovery code and signs out older sessions. A disconnected human keeps their seat indefinitely. Save the recovery code: losing it and all browser sessions requires starting another table. The host can cancel a table but cannot take another player's seat or view their cards. Theme choices affect only the viewer.
+
+Run the hosted entrypoint with `scripts/hosted.sh` after configuring a canonical HTTPS origin and separate private data directory as described in [HOSTING.md](docs/HOSTING.md). Local saves are never published by hosted mode. The supported deployment is one application process behind a TLS proxy with SQLite on local disk. No public deployment is bundled or automatically performed.
+
 
 ## Project documents
 

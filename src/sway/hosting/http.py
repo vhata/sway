@@ -110,7 +110,7 @@ class HostedBoundary:
                 values.extend(
                     [
                         (b"cache-control", b"no-store"),
-                        (b"referrer-policy", b"no-referrer"),
+                        (b"referrer-policy", b"same-origin"),
                         (b"x-content-type-options", b"nosniff"),
                         (
                             b"content-security-policy",

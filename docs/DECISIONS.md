@@ -14,7 +14,7 @@ These choices record the defaults selected under the user's authorization to con
 | Prepare multiple-human-seat orchestration before remote routes. | Seat ownership, reaction timing and bot-state assignment can be tested independently of authentication and networking. Local browser behavior must remain explicit and safe while the remote interface is developed. |
 | Preserve existing local saves when changing the application snapshot shape. | Seat metadata needs an explicit representation. A lossless conversion of supported local snapshots protects saved games; it does not require legacy aliases for renamed themes. |
 
-## Multiplayer defaults to review
+## Multiplayer implementation defaults
 
 The [multiplayer proposal](MULTIPLAYER.md) owns the detailed identity, invitation, authorization, retry, update and recovery contracts. Its proposed defaults are:
 
@@ -25,3 +25,12 @@ The [multiplayer proposal](MULTIPLAYER.md) owns the detailed identity, invitatio
 - SQLite for one application process on one server. The [PostgreSQL transition](../ARCHITECTURE.md#postgresql-transition) applies before multiple application servers share games, or earlier when operational requirements justify it.
 
 The recovery policy and frozen seats deliberately limit takeover and substitution features. Verified accounts, replacement players, spectators and timed turns can be designed separately. Public deployment remains a separate operational task.
+
+## Hosted implementation
+
+- Keep local and hosted applications separate, including storage and route registration. Hosted mode requires a canonical HTTPS origin, private directory and exclusive process lock.
+- Use guest recovery credentials rather than adding an identity-provider dependency. Invitation links carry secrets only in fragments; a GET never claims a seat.
+- Keep SQLite for one application process. Use short authorization/write transactions, durable command receipts and two bounded bot workers with one outstanding job per table.
+- Use a small fetch coordinator for hosted updates so polling cannot overlap a confirmed submission. A lost decision response retains the exact request for an explicit retry; reconnect reloads authoritative state before re-enabling choices.
+- Keep forwarded-header trust disabled. The loopback backend checks the configured public Host and Origin; the TLS proxy must preserve them. In-process rate limits share the proxy's network identity and supplement edge limits.
+- Backups include credential hashes and private game data. Verify full-database copies and restore only to a fresh private directory; rollback can revive old credentials and requires a deployment recovery procedure.

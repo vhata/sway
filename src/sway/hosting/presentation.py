@@ -14,7 +14,9 @@ from sway.presentation.themes import Theme
 
 
 def hosted_page(title: str, content: h.Node) -> h.Element:
-    return page(title, h.div[content, h.script(src="/static/hosted.js", defer=True)])
+    return page(
+        title, h.div(class_="hosted")[content, h.script(src="/static/hosted.js", defer=True)]
+    )
 
 
 def form(path: str, csrf: str, label: str, *fields: h.Node) -> h.Element:

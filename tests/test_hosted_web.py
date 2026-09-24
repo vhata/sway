@@ -59,7 +59,7 @@ def test_anonymous_get_does_not_create_player_and_cookies_are_private(config: Ho
     )
     assert "Domain=" not in response.headers["set-cookie"]
     assert response.headers["cache-control"] == "no-store"
-    assert response.headers["referrer-policy"] == "no-referrer"
+    assert response.headers["referrer-policy"] == "same-origin"
     with HostedStore(config.database_path).transaction() as conn:
         assert conn.execute("SELECT count(*) FROM principals").fetchone()[0] == 0
     player(client, "Alice")

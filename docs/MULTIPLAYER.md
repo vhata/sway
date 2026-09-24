@@ -1,6 +1,6 @@
 # Invite-only multiplayer design and implementation
 
-**Backend implemented; browser and deployment integration follow separately.** The [release](../SPEC.md) remains local until the complete hosted stack is reviewed. The identity and multiplayer services implement the contracts below in an isolated hosted SQLite database. They do not expose HTTP routes or authorize public deployment.
+**Implemented as a separate hosted application.** The original [local release](../SPEC.md) keeps its no-account workflow. The hosted identity, service and browser layers implement the contracts below in a separate private SQLite database. [HOSTING.md](HOSTING.md) defines the single-process deployment and backup/restore procedures. A real deployment still needs its own TLS/proxy and recovery checks; none has been performed by these changes.
 
 ## Scope and defaults
 
@@ -8,14 +8,14 @@ A private table has two to four seats, at least one human, and independently sel
 
 The host chooses the supply and seat arrangement before play. Hosted games generate their gameplay seed on the server and keep it secret: the current local seed field would let a participant reproduce hidden shuffles. Supply randomization uses a separate random source. Seeds, bot memory and authoritative snapshots never enter browser responses.
 
-## Existing boundaries to extend
+## Application boundaries
 
-| Current code | Required change |
+| Boundary | Implementation |
 | --- | --- |
 | [Engine `view_for` and `advance`](../src/sway/engine/core.py) already support any player index and nested decisions. | Keep rules and serialization independent of identity and transport. Resolve authorization before calling them. |
 | [GameService](../src/sway/service.py) supports configured human seats and seat-indexed bot snapshots. | [HostedService](../src/sway/hosting/service.py) resolves seats from authenticated membership and reads room, preference and snapshot data consistently. |
 | [HostedStore](../src/sway/hosting/storage.py) provides short read/write transactions in an isolated hosted database. | Hosted rooms, memberships, invitations, preferences and attributed command receipts commit together; raw snapshots and history remain internal. |
-| [Web routes](../src/sway/web.py) list all local saves; [board rendering](../src/sway/presentation/components.py) treats every other decision owner as a bot. | List only a principal's tables. Render waiting-for-human and bot-progress states separately. Resolve theme preference per viewer instead of changing `games.theme_id` for everyone. |
+| [Hosted web routes](../src/sway/hosting/web.py) authenticate every private page, update and mutation. | Shared card components receive filtered views; hosted waiting states distinguish human decisions and paused bots. Themes use viewer preferences, while the separate local routes retain local save discovery. |
 
 ## Identity, invitations and reconnects
 
@@ -23,7 +23,7 @@ Use a server-issued guest principal rather than passwords or an identity-provide
 
 Join, recovery and first-time table creation begin with a short-lived anonymous session for CSRF protection. Only an explicit POST creates or restores a principal; replace the anonymous session with a fresh authenticated session after success and show a new principal's recovery code.
 
-| Record | Proposed contract |
+| Record | Contract |
 | --- | --- |
 | Principal | Stable opaque ID. At most one human membership per game. Display-name edits cannot change ownership. |
 | Session | Independent random 256-bit bearer token per browser, stored hashed server-side and delivered in a `Secure`, `HttpOnly`, `SameSite=Lax`, host-only cookie with path `/`. Fixed 30-day lifetime; revocable individually or for the whole principal. |
@@ -55,7 +55,7 @@ Multiple tabs may share a seat. The first valid choice wins; a conflicting choic
 
 ## Updates and bot progress
 
-Start with authenticated HTMX polling: every two seconds while visible, every fifteen seconds while hidden, with connection-error backoff capped at thirty seconds. Refetch immediately on reconnect or becoming visible. This fits four-seat, turn-based play and existing fragment rendering without a persistent connection or extra transport dependency. Reconsider SSE only if measured update delay or request volume warrants it; preserve the same authorization and filtering contract.
+The hosted browser serializes authenticated fetch polling with form submissions: every two seconds while visible, every fifteen seconds while hidden, with connection-error backoff capped at thirty seconds. Refetch immediately on reconnect or becoming visible. This fits four-seat, turn-based play and the shared HTML fragment renderer without a persistent connection or extra transport dependency. Local play retains HTMX; hosted play uses a small fetch coordinator to retain exact requests across uncertain transport failures. Reconsider SSE only if measured update delay or request volume warrants it; preserve the same authorization and filtering contract.
 
 An update request carries the last game revision, lobby/lifecycle revision and viewer-preference version. After authorization, return 204 if unchanged or a fresh filtered board. GET never advances gameplay. Serialize each tab's board requests, coalesce polls during a submission, and discard responses older than the latest applied versions; an old poll must not overwrite a successful choice. Private responses use `Cache-Control: no-store`; shared caches cannot serve one player's board to another.
 
