@@ -143,3 +143,38 @@ def test_existing_sidecars_are_preserved(tmp_path: Path, suffix: str, symlink: b
         assert sidecar.is_symlink()
     else:
         assert sidecar.read_text() == "preexisting unrelated file"
+
+
+def test_restored_multiplayer_database_keeps_sessions_seats_and_command_receipts(
+    tmp_path: Path,
+) -> None:
+    from sway.bots import BotState, choose
+    from sway.hosting.service import HostedService
+    from sway.hosting.storage import HostedStore
+
+    service = HostedService(HostedStore(tmp_path / "hosted.sqlite3"))
+    identity = service.identity
+    alice = identity.create_principal(identity.anonymous_session().token, "Alice")
+    bob = identity.create_principal(identity.anonymous_session().token, "Bob")
+    table = service.create(alice.session.token, ("human", "human"))
+    invitation = service.invite(alice.session.token, table.game_id, 1)
+    table = service.join(bob.session.token, invitation.invitation_id, invitation.secret)
+    for credentials in (alice, bob):
+        table = service.ready(credentials.session.token, table.game_id, table.lobby_revision)
+    table = service.start(alice.session.token, table.game_id, table.lobby_revision)
+    assert table.view is not None and table.view.pending is not None
+    command = choose(table.view, table.view.pending, BotState("engine", 7)).command
+    accepted = service.submit(alice.session.token, table.game_id, "first-choice", command)
+    bob_view = service.view(bob.session.token, table.game_id)
+    backup, restored = tmp_path / "backup.sqlite3", tmp_path / "restored.sqlite3"
+    _ = copy_database(service.store.path, backup)
+    _ = copy_database(backup, restored)
+    recovered = HostedService(HostedStore(restored))
+    assert recovered.identity.authenticate(alice.session.token) == alice.session.session
+    assert recovered.view(bob.session.token, table.game_id) == bob_view
+    retry = recovered.submit(alice.session.token, table.game_id, "first-choice", command)
+    assert retry == accepted
+    new = recovered.identity.recover(
+        recovered.identity.anonymous_session().token, bob.recovery_code
+    )
+    assert recovered.view(new.session.token, table.game_id).seat == 1
