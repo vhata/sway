@@ -81,6 +81,7 @@ def _metadata(record: GameRecord | GameSummary) -> SavedGame:
 
 
 def create_app(data_dir: Path | None = None) -> FastAPI:
+    developer_terminology = os.environ.get("SWAY_DEV_TERMINOLOGY") == "1"
     directory = data_dir or Path(
         os.environ.get("SWAY_DATA_DIR", str(Path.home() / ".local/share/sway"))
     )
@@ -122,7 +123,16 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         view = current_service.view(game_id)
         token = _csrf(request)
         content = board(
-            view, BoardContext(game_id, token, theme, tuple(themes.values()), error, pause_bots)
+            view,
+            BoardContext(
+                game_id,
+                token,
+                theme,
+                tuple(themes.values()),
+                error,
+                pause_bots,
+                developer_terminology=developer_terminology,
+            ),
         )
         node = (
             content if request.headers.get("HX-Request") == "true" else page("Your table", content)
@@ -181,7 +191,11 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     def index(request: Request) -> HTMLResponse:
         token = _csrf(request)
         games = [_metadata(game) for game in get_service().list_games()]
-        return _response(request, home(games, tuple(themes.values()), token), token)
+        return _response(
+            request,
+            home(games, tuple(themes.values()), token, developer_terminology=developer_terminology),
+            token,
+        )
 
     @application.post("/games", response_model=None)
     async def create_game(request: Request) -> HTMLResponse | RedirectResponse:
@@ -224,7 +238,16 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             token = _csrf(request)
             games = [_metadata(game) for game in get_service().list_games()]
             return _response(
-                request, home(games, tuple(themes.values()), token, str(exc)), token, 422
+                request,
+                home(
+                    games,
+                    tuple(themes.values()),
+                    token,
+                    str(exc),
+                    developer_terminology=developer_terminology,
+                ),
+                token,
+                422,
             )
         return RedirectResponse(f"/games/{record.game_id}", status_code=303)
 
