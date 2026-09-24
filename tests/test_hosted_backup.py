@@ -162,9 +162,12 @@ def test_restored_multiplayer_database_keeps_sessions_seats_and_command_receipts
     for credentials in (alice, bob):
         table = service.ready(credentials.session.token, table.game_id, table.lobby_revision)
     table = service.start(alice.session.token, table.game_id, table.lobby_revision)
+    assert table.pending_player is not None
+    actor = (alice, bob)[table.pending_player]
+    table = service.view(actor.session.token, table.game_id)
     assert table.view is not None and table.view.pending is not None
     command = choose(table.view, table.view.pending, BotState("engine", 7)).command
-    accepted = service.submit(alice.session.token, table.game_id, "first-choice", command)
+    accepted = service.submit(actor.session.token, table.game_id, "first-choice", command)
     bob_view = service.view(bob.session.token, table.game_id)
     backup, restored = tmp_path / "backup.sqlite3", tmp_path / "restored.sqlite3"
     _ = copy_database(service.store.path, backup)
@@ -172,7 +175,7 @@ def test_restored_multiplayer_database_keeps_sessions_seats_and_command_receipts
     recovered = HostedService(HostedStore(restored))
     assert recovered.identity.authenticate(alice.session.token) == alice.session.session
     assert recovered.view(bob.session.token, table.game_id) == bob_view
-    retry = recovered.submit(alice.session.token, table.game_id, "first-choice", command)
+    retry = recovered.submit(actor.session.token, table.game_id, "first-choice", command)
     assert retry == accepted
     new = recovered.identity.recover(
         recovered.identity.anonymous_session().token, bob.recovery_code
