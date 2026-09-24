@@ -69,7 +69,8 @@ class HostedBoundary:
             if mutation
             else 300
         )
-        if not self._allow(address, category, limit):
+        public_asset = not mutation and scope["path"].startswith("/static/")
+        if not public_asset and not self._allow(address, category, limit):
             await PlainTextResponse(
                 "Too many requests. Please wait a minute.", 429, headers={"Retry-After": "60"}
             )(scope, receive, send)

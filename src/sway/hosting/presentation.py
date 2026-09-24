@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from uuid import uuid4
 
 import htpy as h
@@ -78,13 +79,36 @@ def account(csrf: str, authenticated: bool, recovery: str | None = None) -> h.El
     )
 
 
-def setup_fields(themes: tuple[Theme, ...], table: TableView | None = None) -> h.Element:
-    count = len(table.seats) if table else 2
+@dataclass(frozen=True)
+class SetupEntries:
+    players: str = "2"
+    controllers: tuple[str, ...] = ("human", "human", "human")
+    supply: str = "starter"
+    kingdom: tuple[str, ...] = ()
+
+
+def setup_fields(
+    themes: tuple[Theme, ...], table: TableView | None = None, entered: SetupEntries | None = None
+) -> h.Element:
+    values = entered or (
+        SetupEntries(
+            str(len(table.seats)),
+            tuple(seat.controller for seat in table.seats[1:])
+            + ("human",) * (4 - len(table.seats)),
+            "manual",
+            table.kingdom,
+        )
+        if table
+        else SetupEntries()
+    )
     return h.div[
         h.label[
             "Players",
             h.select(name="players", id="players")[
-                [h.option(value=str(n), selected=n == count)[str(n)] for n in (2, 3, 4)]
+                [
+                    h.option(value=str(n), selected=str(n) == values.players)[str(n)]
+                    for n in (2, 3, 4)
+                ]
             ],
         ],
         h.p[
@@ -97,12 +121,7 @@ def setup_fields(themes: tuple[Theme, ...], table: TableView | None = None) -> h
                     [
                         h.option(
                             value=value,
-                            selected=value
-                            == (
-                                table.seats[index].controller
-                                if table and index < count
-                                else "human"
-                            ),
+                            selected=value == values.controllers[index - 1],
                         )["Invited human" if value == "human" else f"{value.capitalize()} computer"]
                         for value in ("human", *STRATEGIES)
                     ]
@@ -114,9 +133,7 @@ def setup_fields(themes: tuple[Theme, ...], table: TableView | None = None) -> h
             "Supply",
             h.select(name="supply", id="supply-mode")[
                 [
-                    h.option(value=value, selected=value == ("manual" if table else "starter"))[
-                        label
-                    ]
+                    h.option(value=value, selected=value == values.supply)[label]
                     for value, label in (
                         ("starter", "First steps"),
                         ("random", "Surprise me"),
@@ -133,7 +150,7 @@ def setup_fields(themes: tuple[Theme, ...], table: TableView | None = None) -> h
                         type="checkbox",
                         name="kingdom",
                         value=card,
-                        checked=bool(table and card in table.kingdom),
+                        checked=card in values.kingdom,
                     ),
                     themes[0].cards[card].name,
                 ]
@@ -143,7 +160,14 @@ def setup_fields(themes: tuple[Theme, ...], table: TableView | None = None) -> h
     ]
 
 
-def home(tables: tuple[TableView, ...], csrf: str, themes: tuple[Theme, ...]) -> h.Element:
+def home(
+    tables: tuple[TableView, ...],
+    csrf: str,
+    themes: tuple[Theme, ...],
+    *,
+    entered: SetupEntries | None = None,
+    error: str | None = None,
+) -> h.Element:
     return hosted_page(
         "Your tables",
         h.main(id="main", class_="home")[
@@ -152,7 +176,8 @@ def home(tables: tuple[TableView, ...], csrf: str, themes: tuple[Theme, ...]) ->
             h.div(class_="home-columns")[
                 h.section(class_="panel")[
                     h.h2["Set a private table"],
-                    form("/games", csrf, "Create table", setup_fields(themes)),
+                    h.p(class_="notice error", role="alert")[error] if error else None,
+                    form("/games", csrf, "Create table", setup_fields(themes, entered=entered)),
                 ],
                 h.section(class_="panel")[
                     h.h2["Your tables"],

@@ -274,3 +274,43 @@ def test_stale_tab_csrf_does_not_sign_out_current_player(config: HostedConfig) -
     assert stale.status_code == 403
     assert client.cookies[COOKIE] == bearer
     assert "Set a private table" in client.get("/").text
+
+
+def test_invalid_manual_setup_keeps_players_opponents_and_chosen_cards(
+    config: HostedConfig,
+) -> None:
+    client = make_client(create_app(config))
+    player(client, "Alice")
+    response = post(
+        client,
+        "/games",
+        {
+            "players": "4",
+            "controller1": "attack",
+            "controller2": "human",
+            "controller3": "engine",
+            "supply": "manual",
+            "kingdom": "k01",
+        },
+    )
+    assert response.status_code == 422
+    assert "Choose ten different supply cards" in response.text
+    assert '<option value="4" selected>' in response.text
+    assert '<option value="attack" selected>' in response.text
+    assert '<option value="engine" selected>' in response.text
+    assert '<option value="manual" selected>' in response.text
+    assert 'name="kingdom" value="k01" checked' in response.text
+    assert (
+        HostedService(HostedStore(config.database_path)).list_tables(client.cookies[COOKIE]) == ()
+    )
+
+
+def test_public_assets_do_not_consume_private_page_rate_budget(config: HostedConfig) -> None:
+    client = make_client(create_app(config))
+    for _ in range(310):
+        assert client.get("/static/hosted.js").status_code == 200
+    assert client.get("/").status_code == 200
+    for _ in range(300):
+        client.get("/account")
+    assert client.get("/account").status_code == 429
+    assert client.get("/static/hosted.js").status_code == 200

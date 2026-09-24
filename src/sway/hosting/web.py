@@ -19,7 +19,14 @@ from sway.hosting.config import HostedConfig
 from sway.hosting.dispatcher import BotDispatcher
 from sway.hosting.http import HostedBoundary
 from sway.hosting.identity import AuthenticationError, IdentityService, Session, SessionCredentials
-from sway.hosting.presentation import account, home, hosted_page, invitation, table_content
+from sway.hosting.presentation import (
+    SetupEntries,
+    account,
+    home,
+    hosted_page,
+    invitation,
+    table_content,
+)
 from sway.hosting.service import HostedService, TableView
 from sway.hosting.storage import HostedStore
 from sway.presentation.themes import STATIC_ROOT, load_themes
@@ -247,8 +254,22 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
     @application.post("/games", response_model=None)
     async def create_table(request: Request) -> Response:
         data = await mutation(request)
-        controllers, kingdom = _setup(data)
-        table = await run_in_threadpool(service.create, token(request), controllers, kingdom)
+        try:
+            controllers, kingdom = _setup(data)
+            table = await run_in_threadpool(service.create, token(request), controllers, kingdom)
+        except ValueError as exc:
+            entered = SetupEntries(
+                _field(data, "players", "2"),
+                tuple(_field(data, f"controller{index}", "human") for index in (1, 2, 3)),
+                _field(data, "supply", "starter"),
+                tuple(value for value in data.getlist("kingdom") if isinstance(value, str)),
+            )
+            tables = await run_in_threadpool(service.list_tables, token(request))
+            current = await run_in_threadpool(session, request)
+            return HTMLResponse(
+                str(home(tables, current.csrf_token, themes, entered=entered, error=str(exc))),
+                status_code=422,
+            )
         return RedirectResponse(f"/games/{table.game_id}", status_code=303)
 
     @application.get("/games/{game_id}", response_model=None)

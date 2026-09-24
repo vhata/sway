@@ -16,7 +16,7 @@ These choices record the defaults selected under the user's authorization to con
 
 ## Multiplayer implementation defaults
 
-The [multiplayer proposal](MULTIPLAYER.md) owns the detailed identity, invitation, authorization, retry, update and recovery contracts. Its proposed defaults are:
+The [multiplayer contract](MULTIPLAYER.md) owns the detailed identity, invitation, authorization, retry, update and recovery rules. The implemented defaults are:
 
 - Invite-only tables with two to four human/bot seats, guest credentials and a separate recovery code; no identity-provider dependency.
 - Fixed controller assignments after play begins; disconnected human decisions wait for that player. Losing both session access and recovery credentials requires starting another table.
