@@ -24,6 +24,8 @@ Theme packs contain versioned data for stable IDs: names, independently written 
 
 ## Persistence boundary
 
+The [game-service API](docs/SERVICE.md) defines trusted human controllers, bot-to-seat mapping and application-save compatibility. The local browser retains its single-human boundary.
+
 The storage interface supports creation, loading with revision, listing saves and committing a transition against an expected revision. Each commit atomically stores the versioned JSON snapshot, command, resulting events and next revision. Snapshot state includes pending effects/decisions, random states and bot memory. Do not use pickle or map every card/effect to database tables.
 
 The initial adapter uses standard-library `sqlite3`. Keep transactions short: load, compute the proposed transition outside the transaction, then commit only if the expected revision still matches. Duplicate or competing submissions cannot commit a second time. Preserve incompatible save data and explain version rejection.

@@ -28,6 +28,10 @@ from sway.storage import GameNotFound, SQLiteStore, StorageConflict, StorageErro
 COOKIE = "sway_csrf"
 
 
+class UnsupportedLocalGame(Exception):
+    """A valid save has controllers the local browser cannot represent."""
+
+
 def _field(data: FormData, key: str, default: str = "") -> str:
     value = data.get(key, default)
     if not isinstance(value, str):
@@ -129,12 +133,18 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             raise ValueError("Choose an available theme.")
         return themes[identifier]
 
+    def load_local_game(game_id: str) -> GameRecord:
+        record = get_service().load(game_id)
+        if record.human_seats != frozenset({0}):
+            raise UnsupportedLocalGame
+        return record
+
     def render_game(
         request: Request, game_id: str, error: str | None = None, status: int = 200
     ) -> HTMLResponse:
         current_service = get_service()
         pause_bots = error is not None
-        record = current_service.load(game_id)
+        record = load_local_game(game_id)
         theme = themes.get(record.theme_id, default_theme)
         if record.theme_id not in themes:
             fallback_notice = (
@@ -159,6 +169,25 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             content if request.headers.get("HX-Request") == "true" else page("Your table", content)
         )
         return _response(request, node, token, status)
+
+    @application.exception_handler(UnsupportedLocalGame)
+    async def unsupported_local_game(request: Request, _exc: UnsupportedLocalGame) -> HTMLResponse:
+        return _response(
+            request,
+            page(
+                "Table unavailable",
+                h.main(id="main", class_="home")[
+                    h.h1["This table cannot be opened here."],
+                    h.p[
+                        "This table’s player arrangement isn’t supported by the local browser. "
+                        "Your saved game has been preserved."
+                    ],
+                    h.a(href="/")["Return to your games"],
+                ],
+            ),
+            _csrf(request),
+            422,
+        )
 
     @application.exception_handler(GameNotFound)
     async def missing(request: Request, _exc: GameNotFound) -> HTMLResponse:
@@ -310,6 +339,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def submit_decision(request: Request, game_id: str) -> HTMLResponse:
         data = await request.form()
         _check_mutation(request, data)
+        await run_in_threadpool(load_local_game, game_id)
         try:
             selected = data.getlist("choices")
             if not all(isinstance(value, str) for value in selected):
@@ -332,6 +362,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def advance_opponents(request: Request, game_id: str) -> HTMLResponse:
         data = await request.form()
         _check_mutation(request, data)
+        await run_in_threadpool(load_local_game, game_id)
         try:
             await run_in_threadpool(
                 get_service().advance_bots, game_id, int(_field(data, "revision")), 8
@@ -356,6 +387,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def change_theme(request: Request, game_id: str) -> HTMLResponse:
         data = await request.form()
         _check_mutation(request, data)
+        await run_in_threadpool(load_local_game, game_id)
         try:
             theme = get_theme(_field(data, "theme"))
             await run_in_threadpool(get_service().set_theme, game_id, theme.id)
