@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import parse_qs
 from urllib.request import urlopen
+from uuid import uuid4
 
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page, Request, Route, expect
@@ -129,11 +130,20 @@ def hosted_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[HostedS
         yield server
 
 
+def close_context(context: BrowserContext) -> None:
+    if sys.exc_info()[0] is not None:
+        artifacts = ROOT / "test-results"
+        artifacts.mkdir(exist_ok=True)
+        context.tracing.stop(path=str(artifacts / f"hosted-{uuid4().hex}.zip"))
+    context.close()
+
+
 @contextmanager
 def player_browser(
     browser: Browser, server: HostedServer, credentials: IdentityCredentials | None = None
 ) -> Generator[tuple[BrowserContext, Page]]:
     context = browser.new_context(ignore_https_errors=True)
+    context.tracing.start(screenshots=True, snapshots=True)
     try:
         if credentials:
             context.add_cookies(
@@ -150,7 +160,7 @@ def player_browser(
             )
         yield context, context.new_page()
     finally:
-        context.close()
+        close_context(context)
 
 
 def capture_requests(page: Page) -> list[str]:
@@ -159,13 +169,30 @@ def capture_requests(page: Page) -> list[str]:
     return urls
 
 
+def capture(page: Page, name: str) -> None:
+    output = os.environ.get("SWAY_E2E_QA_DIR")
+    if output:
+        directory = Path(output)
+        directory.mkdir(parents=True, exist_ok=True)
+        width = page.viewport_size["width"] if page.viewport_size else 0
+        page.screenshot(path=str(directory / f"{name}-{width}.png"), full_page=True)
+
+
+def assert_no_overflow(page: Page) -> None:
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+
 def create_player(page: Page, server: HostedServer, name: str) -> None:
     page.goto(server.url)
+    assert_no_overflow(page)
+    capture(page, "signup")
     page.get_by_label("Display name").fill(name)
     with page.expect_request("**/identity") as identity_request:
         page.get_by_role("button", name="Create player", exact=True).click()
     assert identity_request.value.headers.get("origin") == server.url
     expect(page.locator("#recovery-code")).to_be_visible()
+    assert_no_overflow(page)
+    capture(page, "recovery")
     page.get_by_role("link", name="Continue to your tables").click()
 
 
@@ -198,14 +225,20 @@ def test_independent_players_join_fragment_links_ready_and_start(
     pages: list[Page] = []
     try:
         for _ in range(players):
-            context = browser.new_context(ignore_https_errors=True)
+            context = browser.new_context(
+                ignore_https_errors=True,
+                viewport={"width": 320 if players == 2 else 390, "height": 900},
+            )
+            context.tracing.start(screenshots=True, snapshots=True)
             contexts.append(context)
             pages.append(context.new_page())
         host = pages[0]
         create_player(host, hosted_server, "Alice")
-        host.get_by_label("Players", exact=True).select_option(str(players))
+        host.locator("#players").select_option(str(players))
         host.get_by_role("button", name="Create table", exact=True).click()
         expect(host.get_by_role("heading", name="Gather around")).to_be_visible()
+        assert_no_overflow(host)
+        capture(host, "lobby")
         table_url = host.url
         for index, guest in enumerate(pages[1:], 2):
             host.get_by_role("button", name=f"Invite seat {index}", exact=True).click()
@@ -214,6 +247,7 @@ def test_independent_players_join_fragment_links_ready_and_start(
             requested = capture_requests(guest)
             guest.goto(invitation)
             expect(guest.get_by_role("heading", name="You're invited")).to_be_visible()
+            assert_no_overflow(guest)
             assert "#" not in guest.url
             assert not any(invitation.split("#")[1] in url for url in requested)
             guest.get_by_label("Display name").fill(f"Guest {index}")
@@ -229,6 +263,7 @@ def test_independent_players_join_fragment_links_ready_and_start(
         host.reload()
         host.get_by_role("button", name="Start game", exact=True).click()
         expect(host.locator("#board")).to_be_visible()
+        capture(host, "game")
         for page in pages[1:]:
             page.reload()
             expect(page.locator("#board")).to_be_visible()
@@ -236,10 +271,12 @@ def test_independent_players_join_fragment_links_ready_and_start(
         for context in contexts:
             cookies = context.cookies()
             bearer = next(cookie for cookie in cookies if cookie.get("name") == COOKIE)
-            assert bearer.get("secure") and bearer.get("httpOnly") and bearer.get("sameSite") == "Lax"
+            assert (
+                bearer.get("secure") and bearer.get("httpOnly") and bearer.get("sameSite") == "Lax"
+            )
     finally:
         for context in contexts:
-            context.close()
+            close_context(context)
 
 
 def test_theme_keeps_selected_choice_and_other_viewer_theme(
@@ -367,3 +404,133 @@ def test_revoked_session_poll_clears_private_board(
         ).to_be_visible()
         expect(page.locator("#board")).to_have_count(0)
         expect(page.locator("#decision-form")).to_have_count(0)
+
+
+def test_reaction_is_private_to_target_and_survives_process_restart(
+    browser: Browser, tmp_path: Path
+) -> None:
+    from sway.engine import Card, Command, Decision, Effect, GameConfig, Option, advance, new_game
+    from sway.service import serialize_game
+
+    directory = tmp_path / "reaction-server"
+    contexts = [browser.new_context(ignore_https_errors=True) for _ in range(3)]
+    for context in contexts:
+        context.tracing.start(screenshots=True, snapshots=True)
+    try:
+        with serve(directory) as server:
+            service = server.service
+            users = [
+                service.identity.create_principal(service.identity.anonymous_session().token, name)
+                for name in ("Alice", "Bob", "Charlie")
+            ]
+            table = service.create(users[0].session.token, ("human", "human", "human"))
+            for index in (1, 2):
+                invitation = service.invite(users[0].session.token, table.game_id, index)
+                table = service.join(
+                    users[index].session.token, invitation.invitation_id, invitation.secret
+                )
+            for user in users:
+                table = service.ready(user.session.token, table.game_id, table.lobby_revision)
+            table = service.start(users[0].session.token, table.game_id, table.lobby_revision)
+            state = new_game(
+                GameConfig(player_count=3, player_names=("Alice", "Bob", "Charlie")), 2
+            )
+            attack = Card(f"c{state.next_instance_id}", "k14")
+            protection = Card(f"c{state.next_instance_id + 1}", "k16")
+            state.next_instance_id += 2
+            state.supply["k14"] -= 1
+            state.supply["k16"] -= 1
+            state.players[0].hand.append(attack)
+            state.players[1].hand.append(protection)
+            assert state.pending is not None
+            state.pending = Decision(
+                state.pending.id,
+                0,
+                "menu",
+                "action",
+                (Option(attack.id, attack.definition, attack.id), Option("end-actions")),
+                1,
+                1,
+            )
+            state.pending_effect = Effect("action", 0)
+            reaction = advance(state, Command(state.pending.id, state.revision, (attack.id,))).state
+            assert reaction.pending is not None and reaction.pending.player == 1
+            with service.store.transaction(write=True) as conn:
+                conn.execute(
+                    "UPDATE hosted_rooms SET revision=?,snapshot=? WHERE game_id=?",
+                    (
+                        reaction.revision,
+                        serialize_game(reaction, (), frozenset({0, 1, 2})),
+                        table.game_id,
+                    ),
+                )
+            pages: list[Page] = []
+            for context, user in zip(contexts, users, strict=True):
+                context.add_cookies(
+                    [
+                        {
+                            "name": COOKIE,
+                            "value": user.session.token,
+                            "url": server.url,
+                            "secure": True,
+                            "httpOnly": True,
+                            "sameSite": "Lax",
+                        }
+                    ]
+                )
+                page = context.new_page()
+                page.goto(f"{server.url}/games/{table.game_id}")
+                pages.append(page)
+            expect(pages[1].locator("#decision-heading")).to_have_text(
+                "Protect yourself from this attack?"
+            )
+            decision = pages[1].locator("#decision-form").get_attribute("data-decision")
+            for observer in (pages[0], pages[2]):
+                assert "Protect yourself from this attack?" not in observer.content()
+                expect(observer.locator("#decision-form")).to_have_count(0)
+                assert protection.id not in observer.content()
+            port = int(server.url.rsplit(":", 1)[1])
+        with serve(directory, port=port):
+            for page in pages:
+                page.reload()
+            expect(pages[1].locator("#decision-form")).to_have_attribute(
+                "data-decision", decision or ""
+            )
+            pages[1].locator('#decision-form input[value="yes"]').check()
+            pages[1].locator("#confirm-choice").click()
+            expect(pages[1].locator("#table")).to_have_attribute(
+                "data-revision", str(reaction.revision + 1)
+            )
+            assert "blocked the attack" in pages[1].locator(".history").inner_text()
+    finally:
+        for context in contexts:
+            close_context(context)
+
+
+def test_server_startup_discovers_bot_work_without_an_open_tab(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def seed(_bits: int) -> int:
+        return 0
+
+    monkeypatch.setattr("sway.hosting.service.secrets.randbits", seed)
+    directory = tmp_path / "bot-server"
+    directory.mkdir(mode=0o700)
+    service = HostedServer("https://unused.example", directory).service
+    host = service.identity.create_principal(service.identity.anonymous_session().token, "Alice")
+    table = service.create(host.session.token, ("human", "engine", "attack"))
+    table = service.ready(host.session.token, table.game_id, table.lobby_revision)
+    table = service.start(host.session.token, table.game_id, table.lobby_revision)
+    assert table.pending_player == 1 and table.revision == 0
+    # No enqueue call or browser connection exists before the process starts.
+    with serve(directory):
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            table = service.view(host.session.token, table.game_id)
+            if table.pending_player == 0:
+                break
+            time.sleep(0.05)
+        assert table.pending_player == 0 and table.revision > 0
+    revision = table.revision
+    with serve(directory):
+        assert service.view(host.session.token, table.game_id).revision == revision
