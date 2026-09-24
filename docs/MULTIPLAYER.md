@@ -1,6 +1,6 @@
-# Invite-only multiplayer proposal
+# Invite-only multiplayer design and implementation
 
-**Design only.** The implemented [release](../SPEC.md) is local, with one human seat. This proposal defines a small multiplayer extension; it does not enable hosting or resolve the deferred multiplayer task.
+**Backend implemented; browser and deployment integration follow separately.** The [release](../SPEC.md) remains local until the complete hosted stack is reviewed. The identity and multiplayer services implement the contracts below in an isolated hosted SQLite database. They do not expose HTTP routes or authorize public deployment.
 
 ## Scope and defaults
 
@@ -13,8 +13,8 @@ The host chooses the supply and seat arrangement before play. Hosted games gener
 | Current code | Required change |
 | --- | --- |
 | [Engine `view_for` and `advance`](../src/sway/engine/core.py) already support any player index and nested decisions. | Keep rules and serialization independent of identity and transport. Resolve authorization before calling them. |
-| [GameService](../src/sway/service.py) fixes the human to seat 0 and indexes bots as `decision.player - 1`. | Resolve a human seat from trusted membership; store bot state by seat index. Load one record for each authorization/view operation instead of independently reloading metadata and state. |
-| [Store](../src/sway/storage.py) commits snapshots, commands and events atomically against a revision. | Add membership, lobby and command-receipt contracts; retain short transactions and optimistic revision checks. Raw snapshots/history remain internal. |
+| [GameService](../src/sway/service.py) supports configured human seats and seat-indexed bot snapshots. | [HostedService](../src/sway/hosting/service.py) resolves seats from authenticated membership and reads room, preference and snapshot data consistently. |
+| [HostedStore](../src/sway/hosting/storage.py) provides short read/write transactions in an isolated hosted database. | Hosted rooms, memberships, invitations, preferences and attributed command receipts commit together; raw snapshots and history remain internal. |
 | [Web routes](../src/sway/web.py) list all local saves; [board rendering](../src/sway/presentation/components.py) treats every other decision owner as a bot. | List only a principal's tables. Render waiting-for-human and bot-progress states separately. Resolve theme preference per viewer instead of changing `games.theme_id` for everyone. |
 
 ## Identity, invitations and reconnects
@@ -32,7 +32,7 @@ Join, recovery and first-time table creation begin with a short-lived anonymous 
 
 Invitation links use a public invitation ID and put the secret in the URL fragment. The join page removes the fragment from browser history, retains it only in memory, and waits for an explicit **Join table** POST. A preview/GET never claims a seat. The POST validates same-origin CSRF protection, expiry and availability, then atomically consumes the invitation and binds the current or newly created principal to the seat. Concurrent claims have one winner. A retry by that same principal returns its existing membership; another principal receives no table details.
 
-The creator can change bot profiles, remove lobby members and issue invitations while the lobby is open. Every human explicitly readies the current lobby revision; any setup change clears readiness. Start requires all seats filled and humans ready, then atomically freezes controller assignments and creates the engine snapshot. Host powers do not grant another player's hand or decision. After start there is no seat transfer, replacement bot or reconnect invitation.
+The creator can change bot profiles, remove lobby members and issue invitations while the lobby is open. Every human explicitly readies the current lobby revision; any setup change clears readiness. A readiness change increments the visible lobby revision while carrying other ready humans forward, so polling detects it without cancelling their consent. Start requires all seats filled and humans ready, then atomically freezes controller assignments and creates the engine snapshot. Host powers do not grant another player's hand or decision. After start there is no seat transfer, replacement bot or reconnect invitation.
 
 Disconnection leaves the seat and pending decision intact indefinitely; approximate online presence is only a UI hint. Recovery restores access to all of the principal's seats. If both session and recovery code are lost, there is no name-based or host-assisted takeover: the group starts another table. The host may cancel an unfinished table, recorded as a separate lifecycle status with no invented score or winner; cancellation never reveals hidden cards. A stale tab with a revoked session must clear its private board when its next request is rejected.
 
@@ -49,7 +49,7 @@ Each confirmed choice sends a fresh request ID plus the existing decision ID, ex
 3. For a new request, validate lifecycle, pending owner, decision ID, revision and legal selections. Compute the transition outside the database transaction.
 4. In one short transaction, recheck session validity, membership, lifecycle and expected revision; store the snapshot, bot state, attributed command/events and receipt together. A competing commit either yields the same receipt or fails without changing state.
 
-The existing store's duplicate check is useful, but the service currently rejects stale revisions before it can reach that check. Move authenticated receipt lookup ahead of current-decision checks. Retain receipts for the lifetime of the saved game. Never replay old choices against a newer decision automatically.
+The hosted service checks authenticated receipts before current-decision checks; the local service retains its existing decision-bound command behaviour. Retain receipts for the lifetime of the saved game. Never replay old choices against a newer decision automatically.
 
 Multiple tabs may share a seat. The first valid choice wins; a conflicting choice gets a 409 and that viewer's current board. Preserve local selection/focus only while the decision ID still matches. Reconnect always reloads authoritative state before enabling a choice. Theme preference belongs to `(principal_id, game_id)` and has its own version; it neither advances the game nor changes another viewer's theme.
 
@@ -84,4 +84,4 @@ Local mode stays loopback-bound and retains its current no-account workflow. Hos
 - Viewer theme changes preserve that viewer's pending local choice and do not alter anyone else's theme or game revision. Hosted forms/responses expose no gameplay seed. Local saves remain private to local mode.
 - Repeat storage contracts with separate connections/processes, forced rollback and real schema migrations; prove backup/restore of identity and game data together. Run the same contracts against PostgreSQL before a multi-server deployment.
 
-These defaults are sufficient to begin a focused implementation proposal. Verified accounts, transferable seats, spectators and timed play are separate product decisions, not prerequisites for this scope.
+The backend service tests cover separate identities, concurrent invitation claims, guest-join rollback, readiness and start races, human-targeted reactions, command retry and revision races, credential revocation during computation, independent preferences and deterministic bot restart. The browser integration must still verify filtered HTML, polling ordering, CSRF and transport limits before this design is complete. Verified accounts, transferable seats, spectators and timed play remain separate product decisions.

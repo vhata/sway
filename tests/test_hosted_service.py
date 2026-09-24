@@ -420,6 +420,7 @@ def test_bot_restart_preserves_random_state_and_dispatcher_recovers_unqueued_wor
     bot_turn(service, host, table.game_id)
     service.step_bots(table.game_id, max_steps=1)
     backup = tmp_path / "control.sqlite3"
+    backup.touch(mode=0o600)
     with sqlite3.connect(service.store.path) as source, sqlite3.connect(backup) as destination:
         source.backup(destination)
     control = HostedService(HostedStore(backup))
@@ -480,3 +481,93 @@ def test_nested_human_reaction_authorizes_target_and_restarts_privately(tmp_path
     with pytest.raises(InvalidCommand):
         resumed.submit(users[0].session.token, table.game_id, "attack-owner", command(target))
     resumed.submit(users[1].session.token, table.game_id, "reaction-owner", command(target))
+
+
+def test_random_bot_start_is_durable_without_human_command(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def seed(_bits: int) -> int:
+        return 0
+
+    monkeypatch.setattr("sway.hosting.service.secrets.randbits", seed)
+    service, users, table = setup(tmp_path, ("human", "engine", "attack"))
+    table = start(service, users, table)
+    assert table.pending_player == 1
+    assert service.pending_bot_games() == (table.game_id,)
+    before = table.revision
+    service.step_bots(table.game_id, max_steps=1)
+    assert service.view(users[0].session.token, table.game_id).revision == before + 1
+
+
+def test_unready_during_start_compute_prevents_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sway.hosting.service as module
+
+    service, users, table = setup(tmp_path)
+    for user in users:
+        table = service.ready(user.session.token, table.game_id, table.lobby_revision)
+    original = module.new_game
+
+    def unready(config: GameConfig, seed: int) -> GameState:
+        state = original(config, seed)
+        service.ready(users[1].session.token, table.game_id, table.lobby_revision, False)
+        return state
+
+    monkeypatch.setattr(module, "new_game", unready)
+    with pytest.raises(StorageConflict):
+        service.start(users[0].session.token, table.game_id, table.lobby_revision)
+    current = service.view(users[0].session.token, table.game_id)
+    assert current.status == "lobby" and current.view is None
+
+
+def test_concurrent_bot_jobs_do_not_double_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sway.hosting.service as module
+
+    service, users, table = setup(tmp_path, ("human", "engine"))
+    table = start(service, users, table)
+    bot_turn(service, users[0].session.token, table.game_id)
+    before = service.view(users[0].session.token, table.game_id).revision
+    barrier = threading.Barrier(2)
+
+    # Synchronize the engine boundary; both jobs compute the same saved decision.
+    original_advance = module.advance
+
+    def racing_advance(state: GameState, cmd: Command) -> Transition:
+        result = original_advance(state, cmd)
+        barrier.wait(timeout=5)
+        return result
+
+    monkeypatch.setattr(module, "advance", racing_advance)
+
+    def job(_index: int) -> bool:
+        return service.step_bots(table.game_id, max_steps=1)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        list(pool.map(job, range(2)))
+    assert service.view(users[0].session.token, table.game_id).revision == before + 1
+
+
+def test_validation_and_cancelled_bot_work(tmp_path: Path) -> None:
+    service, users, table = setup(tmp_path)
+    token = users[0].session.token
+    for controllers in (("human",), ("engine", "human"), ("human", "unknown")):
+        with pytest.raises(ValueError):
+            service.create(token, controllers)
+    with pytest.raises(ValueError):
+        service.create(token, ("human", "human"), ("k01",))
+    with pytest.raises(ValueError):
+        service.submit(token, table.game_id, "invalid request", Command("d0", 0, ()))
+    for steps, budget in ((0, 0.1), (9, 0.1), (1, 0), (1, 0.2)):
+        with pytest.raises(ValueError):
+            service.step_bots(table.game_id, steps, budget)
+    with pytest.raises(ValueError):
+        service.pending_bot_games(0)
+    with pytest.raises(ValueError):
+        BotDispatcher(service, scan_seconds=0)
+    service.cancel(token, table.game_id)
+    assert service.step_bots(table.game_id) is False
+    with pytest.raises(StorageConflict):
+        service.retry_bots(token, table.game_id)
