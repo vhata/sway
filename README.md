@@ -20,7 +20,7 @@ To compare cards with the [original terminology reference](docs/TERMINOLOGY.md),
 
 Developer mode also links to `/developer/cards`, a read-only catalogue of all 33 cards with a theme selector. It uses the same card faces as the game and opens separately from an active table, so inspecting designs does not discard an unfinished selection. The catalogue is unavailable when developer mode is off.
 
-[SPEC.md](SPEC.md) records the accepted local release. A separate hosted application supports invite-only human multiplayer; [hosting instructions](docs/HOSTING.md) cover its configuration, TLS proxy and backup/restore. PostgreSQL, public matchmaking, expansions and more advanced opponents remain deferred.
+[SPEC.md](SPEC.md) records the accepted local release. A separate hosted application supports invite-only human multiplayer on a laptop/VM or Cloudflare Python Workers; [hosting instructions](docs/HOSTING.md) explain the deployment choices and their operational boundaries. PostgreSQL, public matchmaking, expansions and more advanced opponents remain deferred.
 
 
 `setup.sh` synchronizes `uv.lock`, installs checksum-verified Biome, and installs staged-format/lint and pre-push hooks. `install-browsers.sh --with-deps` also installs system dependencies on supported Linux hosts. All project Python commands run through `uv run --locked`.
@@ -29,6 +29,7 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | --- | --- |
 | `scripts/dev.sh` | Local server with reload |
 | `scripts/hosted.sh` | Configured private multiplayer server behind a TLS proxy |
+| `scripts/cloudflare.sh` | Cloudflare runtime tooling; defaults to local development ([guide](deployment/cloudflare/README.md)) |
 | `scripts/format.sh` | Format Python, JavaScript, CSS and JSON |
 | `scripts/fmt-check.sh` | Check formatting without rewriting |
 | `scripts/lint.sh` | Ruff and Biome lint |
@@ -48,7 +49,12 @@ Hosted tables have two to four seats, with invited humans and independently sele
 
 Recovering a player rotates the recovery code and signs out older sessions. A disconnected human keeps their seat indefinitely. Save the recovery code: losing it and all browser sessions requires starting another table. The host can cancel a table but cannot take another player's seat or view their cards. Theme choices affect only the viewer.
 
-Run the hosted entrypoint with `scripts/hosted.sh` after configuring a canonical HTTPS origin and separate private data directory as described in [HOSTING.md](docs/HOSTING.md). Local saves are never published by hosted mode. The supported deployment is one application process behind a TLS proxy with SQLite on local disk. No public deployment is bundled or automatically performed.
+Choose the deployment adapter described in [HOSTING.md](docs/HOSTING.md):
+
+- **Laptop or VM:** `scripts/hosted.sh`, one Python process behind a TLS proxy, a private SQLite database and local backup/restore tools.
+- **Cloudflare:** Python Workers with one SQLite-backed Durable Object per installation and durable bot alarms. The same hosted rules, identity policies and browser interface apply.
+
+Local saves are never published by hosted mode. Selecting another runtime does not copy existing players or games; cross-runtime export/import is not implemented. No public deployment is bundled or automatically performed.
 
 
 ## Project documents

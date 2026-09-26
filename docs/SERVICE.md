@@ -41,4 +41,10 @@ Original application schema-1 saves load as human seat 0 with positional bots in
 
 The existing local routes create only the default arrangement. A valid save with any other human arrangement receives a clear unsupported-table response before rendering or accepting a decision, bot advance or theme mutation. Its snapshot, revision and theme remain unchanged. The browser exposes no player-index input and does not simulate waiting for another human through its bot-progress loop.
 
-The separate [HostedService and application](MULTIPLAYER.md) implement identity, private memberships, reconnect credentials, invitations and per-viewer preferences using an isolated hosted database. They reuse the engine and application snapshot format; they do not expose this trusted local API or make the local server safe to publish.
+The separate [HostedService and application](MULTIPLAYER.md) implement identity, private memberships, reconnect credentials, invitations and per-viewer preferences using an isolated hosted data store. They reuse the engine and application snapshot format; they do not expose this trusted local API or make the local server safe to publish.
+
+## Hosted adapter boundary
+
+`IdentityService` and `HostedService` accept a `StateStore`, whose synchronous `read` and `write` callbacks receive typed SQL sessions. Complete domain operations own the authorization and persistence semantics: guest creation and invitation consumption compose in one callback; command commits recheck the authenticated session, membership and expected revision before storing the snapshot and receipt. Driver connections and cursors do not cross into these services. The [storage contract](HOSTED_STORAGE.md) defines the adapter requirements.
+
+The hosted web application receives runtime execution and scheduling adapters. Self-hosting uses its existing SQLite store and bounded threaded dispatcher; Cloudflare uses one installation Durable Object and alarms. The same hosted service and browser behaviour apply on both. This does not change the trusted `GameService` API above or add remote access to local saves. Switching runtimes does not automatically migrate data.
