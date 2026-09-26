@@ -903,3 +903,33 @@ h2,
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
+
+/* Account and lobby forms share the game's controls without exposing card data. */
+.hosted .home form {
+  margin-block: 1rem;
+}
+.hosted .home label {
+  margin-block: 0.8rem;
+}
+.hosted .home input:not([type]),
+.hosted .home input[type="password"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  border-radius: 7px;
+  padding: 0.65rem;
+  margin-top: 0.4rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+#recovery-code {
+  display: block;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  user-select: all;
+}
+.hosted .notice {
+  overflow-wrap: anywhere;
+}

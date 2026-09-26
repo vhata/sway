@@ -67,6 +67,8 @@ application. The application defaults are:
 | `SWAY_HOSTED_CREDENTIALS_PER_MINUTE` | 10 | Join/recovery/identity rate budget |
 | `SWAY_HOSTED_MAX_RATE_LIMIT_KEYS` | 10000 | Bound in-memory rate-limit tracking |
 
+Private page and update reads share a separate 300-per-minute budget per socket peer. Public bundled assets do not consume that budget; apply asset and connection limits at the proxy.
+
 Limits must be positive integers. They are per-process abuse controls, reset on
 restart, and supplement proxy limits. With forwarded headers disabled, connections
 through the same proxy share its network identity; do not solve this by trusting

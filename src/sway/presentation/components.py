@@ -44,6 +44,11 @@ class BoardContext:
     error: str | None = None
     pause_bots: bool = False
     developer_terminology: bool = False
+    hosted: bool = False
+    waiting_for: str | None = None
+    bot_paused: bool = False
+    preference_version: int = 0
+    request_id: str | None = None
 
 
 def page(title: str, content: h.Node) -> h.Element:
@@ -419,7 +424,7 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
     return h.form(
         action=path,
         method="post",
-        hx_post=path,
+        hx_post=None if ctx.hosted else path,
         hx_target="#board",
         hx_swap="outerHTML",
         id="decision-form",
@@ -431,6 +436,7 @@ def choice_form(decision: Decision, view: PlayerView, ctx: BoardContext) -> h.El
         csrf_input(ctx.csrf),
         h.input(type="hidden", name="revision", value=str(view.revision)),
         h.input(type="hidden", name="decision", value=decision.id),
+        h.input(type="hidden", name="request_id", value=ctx.request_id) if ctx.request_id else None,
         h.fieldset[
             h.legend(id="decision-heading", tabindex="-1")[
                 PROMPTS.get(
@@ -549,12 +555,15 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
             h.form(
                 action=f"/games/{ctx.game_id}/theme",
                 method="post",
-                hx_post=f"/games/{ctx.game_id}/theme",
+                hx_post=None if ctx.hosted else f"/games/{ctx.game_id}/theme",
                 hx_target="#board",
                 hx_swap="outerHTML",
                 class_="theme-control",
             )[
                 csrf_input(ctx.csrf),
+                h.input(
+                    type="hidden", name="preference_version", value=str(ctx.preference_version)
+                ),
                 h.label[
                     "Change the scenery",
                     h.select(name="theme", id="theme-select", aria_label="Theme")[
@@ -646,6 +655,21 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
             if view.phase == "finished"
             else choice_form(view.pending, view, ctx)
             if view.pending
+            else h.div[
+                h.h2(id="opponent-heading", tabindex="-1")[
+                    "An opponent needs a hand"
+                    if ctx.bot_paused
+                    else f"Waiting for {ctx.waiting_for or 'the next player'}"
+                ],
+                h.p["Your place is saved. This table updates automatically."],
+                h.form(action=f"/games/{ctx.game_id}/retry", method="post")[
+                    csrf_input(ctx.csrf),
+                    h.button(type="submit")["Retry opponent"],
+                ]
+                if ctx.bot_paused
+                else None,
+            ]
+            if ctx.hosted
             else h.form(
                 action=f"/games/{ctx.game_id}/advance",
                 method="post",
