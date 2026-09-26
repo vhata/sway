@@ -84,7 +84,7 @@ higher request limits.
 
 The reusable `contract_checks.py` runs against native SQLite in pytest and against
 real local workerd storage through the test-only Worker. It covers transaction
-rollback, session/recovery rotation, invitation consumption and guest rollback,
+rollback and foreign-key integrity, session/recovery rotation, invitation consumption and guest rollback,
 private views, membership, stale commands and receipt replay. The Worker also
 checks nested SQL/alarm rollback, concurrent transactions and alarm delivery.
 

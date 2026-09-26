@@ -44,6 +44,24 @@ def run(store):
         is None
     )
 
+    # Both backends must enforce the schema's identity ownership references.
+    try:
+        store.write(
+            lambda sql: sql.execute(
+                "INSERT INTO sessions VALUES (?, ?, ?, 0, 1)", (marker, marker, marker)
+            )
+        )
+    except Exception:
+        pass
+    else:
+        raise AssertionError("Foreign key accepted a missing principal")
+    assert (
+        store.read(
+            lambda sql: sql.execute("SELECT * FROM sessions WHERE session_id=?", (marker,)).one()
+        )
+        is None
+    )
+
     def account(name):
         anonymous = identity.anonymous_session()
         credentials = identity.create_principal(anonymous.token, name)
