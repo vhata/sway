@@ -1,0 +1,35 @@
+{
+  "name": "sway-private-tables",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": [
+    "python_workers"
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "INSTALLATION",
+        "class_name": "Installation"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "Installation"
+      ]
+    }
+  ],
+  "vars": {
+    "SWAY_HOSTED_ORIGIN": "https://localhost:8799"
+  },
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": false
+  }
+}
