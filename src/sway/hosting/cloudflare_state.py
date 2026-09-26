@@ -30,11 +30,17 @@ class DurableSession:
     def execute(self, sql: str, parameters: tuple[SqlValue, ...] = ()) -> SqlResult:
         if not self.active:
             raise RuntimeError("A transaction session cannot escape its callback.")
-        if not self.writable and not sql.lstrip().upper().startswith("SELECT "):
+        statement = sql.lstrip().split(maxsplit=1)[0].upper()
+        if not self.writable and statement != "SELECT":
             raise ValueError("A read transaction cannot modify state.")
         rows = tuple(self.sql.exec(sql, *parameters).toArray())
-        changes = self.sql.exec("SELECT changes() AS count").toArray()[0]["count"]
-        return SqlResult(rows, int(changes) if isinstance(changes, (int, float)) else 0)
+        # changes() retains the preceding DML count across SELECT and DDL.
+        # Match native cursor.rowcount: only a DML statement reports writes.
+        changes = 0
+        if statement in {"INSERT", "UPDATE", "DELETE", "REPLACE"}:
+            value = self.sql.exec("SELECT changes() AS count").toArray()[0]["count"]
+            changes = int(value) if isinstance(value, (int, float)) else 0
+        return SqlResult(rows, changes)
 
 
 class DurableStateStore:

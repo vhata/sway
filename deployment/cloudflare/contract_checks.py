@@ -29,7 +29,9 @@ def run(store):
     marker = str(uuid4())
 
     def rollback(sql):
-        sql.execute("INSERT INTO principals VALUES (?, 'rollback', 0)", (marker,))
+        inserted = sql.execute("INSERT INTO principals VALUES (?, 'rollback', 0)", (marker,))
+        assert inserted.rows_written == 1
+        assert sql.execute("SELECT * FROM principals").rows_written == 0
         raise ValueError("rollback")
 
     expect(ValueError, lambda: store.write(rollback))

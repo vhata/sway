@@ -72,6 +72,16 @@ cross-platform export/import utility is not implemented by this adapter.
 
 ## Verification
 
+Run `scripts/cloudflare-check.sh` from the repository root (no account login or
+deployment). It owns a temporary local server and state directory, checks alarm
+and bot progress, restarts workerd and checks persistence. Set
+`SWAY_CLOUDFLARE_TEST_PORT` to change its default port 8798. After installing
+Chromium with `scripts/install-browsers.sh`, run
+`scripts/cloudflare-check.sh --browser` to also start the full HTTPS application
+on port 8800 (contract port plus two) and run the same two-, three- and four-player
+browser flows used for self-hosting. Only that synthetic test process receives
+higher request limits.
+
 The reusable `contract_checks.py` runs against native SQLite in pytest and against
 real local workerd storage through the test-only Worker. It covers transaction
 rollback, session/recovery rotation, invitation consumption and guest rollback,

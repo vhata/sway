@@ -2,9 +2,7 @@
   "name": "sway-private-tables",
   "main": "src/entry.py",
   "compatibility_date": "2026-09-25",
-  "compatibility_flags": [
-    "python_workers"
-  ],
+  "compatibility_flags": ["python_workers"],
   "durable_objects": {
     "bindings": [
       {
@@ -16,9 +14,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": [
-        "Installation"
-      ]
+      "new_sqlite_classes": ["Installation"]
     }
   ],
   "vars": {

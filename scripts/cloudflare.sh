@@ -20,6 +20,9 @@ if assets.exists():
     shutil.rmtree(assets)
 shutil.copytree(source / 'static', assets)
 PY
+if [[ "${1:-}" == prepare ]]; then
+  exit 0
+fi
 if [[ $# -eq 0 ]]; then
   set -- dev --local --port 8799 --local-protocol https
 fi
