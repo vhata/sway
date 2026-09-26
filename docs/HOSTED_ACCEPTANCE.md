@@ -1,10 +1,40 @@
 # Invite-only multiplayer acceptance evidence
 
+## Dual-hosting verification — 2026-09-25
+
+The revised stack supports the shared hosted application on a laptop/VM and Cloudflare Python Workers. [#14](https://github.com/vhata/sway/pull/14) and [#15](https://github.com/vhata/sway/pull/15) provide portable atomic state callbacks; [#16](https://github.com/vhata/sway/pull/16) retains self-hosted operations and defines runtime contracts; [#17](https://github.com/vhata/sway/pull/17) assembles the shared browser application; [#20](https://github.com/vhata/sway/pull/20) adds the Cloudflare adapter. All remain pending user review and landing. No production deployment or release tag has been performed.
+
+| Scope | Executed outcome |
+| --- | --- |
+| Combined quality gates at `9825e2e` | `scripts/check.sh` passed: 388 unit/integration tests, formatting/lint, strict typing, both coverage gates, builds and installed-wheel smoke |
+| Engine coverage | Statements 98.13% (736/750); branches 95.40% (311/326); no threshold change |
+| Native browser at `4fdebec` | All 29 Chromium cases passed in 57.70 seconds |
+| Worker browser parity | The identical two-, three- and four-player scenarios passed against actual local workerd; direct run 8.26 seconds and final integrated wrapper run 8.27 seconds at `13cd083` |
+| Shared persistence contract | The same assertions passed on native SQLite and real Durable Object storage, including rollback, foreign keys, invitation/session/recovery semantics, private views, stale revisions and command receipts |
+| Cloudflare scheduling | Real workerd checks passed nested SQL/alarm rollback, concurrent transactions, alarm delivery and bot progress after stopping with a future alarm pending and restarting on the same storage |
+| Shared runtime isolation | Tests passed with threadpool execution forbidden and `fcntl` unavailable |
+
+The final adapter/source and required CI integration are at `13cd083`. The Cloudflare test wrapper `scripts/cloudflare-check.sh --browser` builds its own test-only Worker, owns isolated local state and processes, verifies readiness with a run nonce, and launches the shared browser scenarios against the actual application. It does not deploy. Native development uses Python 3.12; the pinned Workers compatibility date selects Python 3.14. Dependency environments and locks remain separate.
+
+Independent review covered the portable state refactor, runtime extraction, integrated native application, Cloudflare adapter, check tooling, CI and documentation; the reviewer was separate from each code author. Review found one adapter mismatch: SELECT reported a prior write's affected-row count. The author corrected it and added an assertion exercised by both storage backends. No actionable findings remain in those reviewed scopes.
+
+### Verification limitations and retained evidence
+
+An initial native browser run passed nine cases before the existing complete-game scenario timed out. Its preserved trace showed about 48 seconds of browser/input inactivity before the request was sent; the server then replied successfully in 18 ms and advanced revision 12 to 13. No application or JavaScript exception was found. The isolated scenario passed unchanged in 35.19 seconds, and the complete 29-case rerun passed unchanged. The stall's underlying cause remains unproven. Original trace, database and logs were preserved at `/private/tmp/sway-dual-failure-6Aj78SC9` before any rerun; no timeout or assertion was weakened.
+
+The first direct Cloudflare browser run passed the two- and three-player cases but the four-player case reached the real default request budget: an already-running Wrangler process had not loaded newly created test overrides. Restarting with explicit test-only limit arguments made all three cases pass. The reproducible wrapper now supplies those arguments when launching its isolated application; production defaults are unchanged.
+
+Local workerd evidence does not establish a real Cloudflare deployment, remote recovery, production capacity or TLS/origin setup. Self-hosted deployment acceptance also remains operator work. One Durable Object contains the complete Cloudflare installation, so its capacity bounds apply to all hosted games. Runtime selection does not migrate existing identities or games; cross-runtime export/import is deferred in [TODO](../TODO.md). The original single-human local application remains separate.
+
+## Historical single-server verification — 2026-09-24
+
+The following record retains the original source revisions and outcomes; it is not Cloudflare validation.
+
 Verified on 2026-09-24 for source commit `47d7d6c`. The implementation is recorded in four focused PRs: [#14 identity and storage](https://github.com/vhata/sway/pull/14), [#15 multiplayer service](https://github.com/vhata/sway/pull/15), [#16 hosting operations](https://github.com/vhata/sway/pull/16) and [#17 browser play](https://github.com/vhata/sway/pull/17). No deployment or release tag has been performed. The historical local release checks remain in [ACCEPTANCE.md](../ACCEPTANCE.md).
 
 [Multiplayer contracts](MULTIPLAYER.md) describe the behavior; [hosted storage](HOSTED_STORAGE.md) defines identity and transaction semantics; [hosting instructions](HOSTING.md) own deployment and recovery procedures. This record documents verification rather than adding operational rules.
 
-## Completed checks
+### Completed checks
 
 Counts at successive component heads include inherited tests; they are not additive.
 
@@ -22,7 +52,7 @@ Counts at successive component heads include inherited tests; they are not addit
 
 The engine branch result remains **95.40% (311/326)**; statements remain 98.13% (736/750). No coverage threshold was lowered. Local validation used macOS, Python 3.12.14, uv 0.12.17, locked dependencies and separate worktree environments. Chromium required permission to launch outside the process sandbox; installing locked runtime dependencies for the wheel probe required network access. Existing upstream Starlette/httpx and AnyIO deprecation warnings remain visible.
 
-## Behavior and review evidence
+### Behavior and review evidence
 
 | Contract | Evidence |
 | --- | --- |
@@ -47,11 +77,11 @@ Repeated independent browser identities also exposed bundled scripts being throt
 
 Independent integration drills verified HTTP identity and private-view continuity through live backup, fresh-directory restore and recovery; exclusive application lifetime locking; bot-first startup without an enqueue or browser; and target-only reaction HTML/poll responses before and after restart. Mobile screenshots and geometry checks at 320 and 390 pixels showed readable signup, recovery, lobby and game layouts without horizontal overflow.
 
-## Observed verification limitation
+### Observed verification limitation
 
 One combined browser run executed alongside coverage failed the existing full-game test after the command committed revision 151 while the browser assertion still observed revision 150. That run was interrupted after 17 passing cases. The failed trace was cleared by the next pytest run, so the precise transport/render cause is unconfirmed. An independent isolated reproduction passed in 28.55 seconds, and the final integrated 29-case run passed without code or timeout changes. Preserve a failed trace before rerunning if this recurs; no assertion or quality gate was weakened.
 
-## Deployment limits
+### Deployment limits
 
 There has been no public deployment, release tag or production TLS/proxy verification. Deployment-specific host/origin rejection, cookie behavior through the actual TLS proxy, backup/restore rehearsal and operational monitoring remain the acceptance checks in [HOSTING.md](HOSTING.md#deployment-acceptance).
 

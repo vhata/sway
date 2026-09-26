@@ -30,6 +30,7 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | `scripts/dev.sh` | Local server with reload |
 | `scripts/hosted.sh` | Configured private multiplayer server behind a TLS proxy |
 | `scripts/cloudflare.sh` | Cloudflare runtime tooling; defaults to local development ([guide](deployment/cloudflare/README.md)) |
+| `scripts/cloudflare-check.sh --browser` | Shared contracts, pending-alarm restart and multiplayer browser checks on real local workerd |
 | `scripts/format.sh` | Format Python, JavaScript, CSS and JSON |
 | `scripts/fmt-check.sh` | Check formatting without rewriting |
 | `scripts/lint.sh` | Ruff and Biome lint |
@@ -41,7 +42,7 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | `scripts/install-smoke.sh` | Install the wheel into an isolated uv environment and probe packaged assets |
 | `scripts/check.sh` | Formatting, lint, types, coverage tests, build and installed-wheel smoke |
 
-CI runs `check.sh` and the browser suite. For dependencies, use `uv add` or `uv add --dev` and commit both `pyproject.toml` and `uv.lock`. Change `.uv-version` and the matching `tool.uv.required-version` together; Biome upgrades also update `.biome-version`, configuration schema and `scripts/biome.sha256`.
+CI runs `check.sh`, the native browser suite and `cloudflare-check.sh --browser`. For dependencies, use `uv add` or `uv add --dev` and commit both `pyproject.toml` and `uv.lock`. Change `.uv-version` and the matching `tool.uv.required-version` together; Biome upgrades also update `.biome-version`, configuration schema and `scripts/biome.sha256`.
 
 ## Private multiplayer
 
