@@ -8,17 +8,19 @@ The revised stack supports the shared hosted application on a laptop/VM and Clou
 | --- | --- |
 | Combined quality gates at `9825e2e` | `scripts/check.sh` passed: 388 unit/integration tests, formatting/lint, strict typing, both coverage gates, builds and installed-wheel smoke |
 | Engine coverage | Statements 98.13% (736/750); branches 95.40% (311/326); no threshold change |
-| Native browser at `4fdebec` | All 29 Chromium cases passed in 57.70 seconds |
+| Native browser at `2424b13` | All 30 browser-suite cases passed in 56.36 seconds, including the deterministic privacy-assertion regression |
 | Worker browser parity | The identical two-, three- and four-player scenarios passed against actual local workerd; direct run 8.26 seconds and final integrated wrapper run 8.27 seconds at `13cd083` |
 | Shared persistence contract | The same assertions passed on native SQLite and real Durable Object storage, including rollback, foreign keys, invitation/session/recovery semantics, private views, stale revisions and command receipts |
 | Cloudflare scheduling | Real workerd checks passed nested SQL/alarm rollback, concurrent transactions, alarm delivery and bot progress after stopping with a future alarm pending and restarting on the same storage |
 | Shared runtime isolation | Tests passed with threadpool execution forbidden and `fcntl` unavailable |
 
-The final adapter/source and required CI integration are at `13cd083`. The Cloudflare test wrapper `scripts/cloudflare-check.sh --browser` builds its own test-only Worker, owns isolated local state and processes, verifies readiness with a run nonce, and launches the shared browser scenarios against the actual application. It does not deploy. Native development uses Python 3.12; the pinned Workers compatibility date selects Python 3.14. Dependency environments and locks remain separate.
+The adapter/source and required CI integration were verified at `13cd083`; rebasing onto the privacy-test correction produced `4243eaa` with no production-code changes. The Cloudflare test wrapper `scripts/cloudflare-check.sh --browser` builds its own test-only Worker, owns isolated local state and processes, verifies readiness with a run nonce, and launches the shared browser scenarios against the actual application. It does not deploy. Native development uses Python 3.12; the pinned Workers compatibility date selects Python 3.14. Dependency environments and locks remain separate.
 
 Independent review covered the portable state refactor, runtime extraction, integrated native application, Cloudflare adapter, check tooling, CI and documentation; the reviewer was separate from each code author. Review found one adapter mismatch: SELECT reported a prior write's affected-row count. The author corrected it and added an assertion exercised by both storage backends. No actionable findings remain in those reviewed scopes.
 
 ### Verification limitations and retained evidence
+
+CI at the documentation head exposed a false positive in the reaction privacy assertion: the private card ID `c32` occurred inside an unrelated random CSRF token. The correction at `2424b13` checks complete identifiers across the entire HTML response. A deterministic regression accepts the exact token collision while rejecting card IDs in form values, arbitrary attributes, embedded JSON and text. That regression and the native reaction/restart scenario passed together (2 cases); independent review found no actionable findings. The full browser suite now contains 30 cases. Production code and timeouts are unchanged. The original failed CI log is retained at `/private/tmp/sway-dual-ci19-failure.log`.
 
 An initial native browser run passed nine cases before the existing complete-game scenario timed out. Its preserved trace showed about 48 seconds of browser/input inactivity before the request was sent; the server then replied successfully in 18 ms and advanced revision 12 to 13. No application or JavaScript exception was found. The isolated scenario passed unchanged in 35.19 seconds, and the complete 29-case rerun passed unchanged. The stall's underlying cause remains unproven. Original trace, database and logs were preserved at `/private/tmp/sway-dual-failure-6Aj78SC9` before any rerun; no timeout or assertion was weakened.
 
