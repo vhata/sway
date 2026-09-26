@@ -1,0 +1,9 @@
+{
+  "name": "sway-local-contracts-only",
+  "main": "tests/entry.py",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": ["python_workers"],
+  "workers_dev": false,
+  "durable_objects": { "bindings": [{ "name": "CONTRACTS", "class_name": "Contracts" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Contracts"] }]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "sway-cloudflare-tools",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "4.141.0"
+  }
+}
