@@ -1,0 +1,11 @@
+{
+  "name": "sway-recovery-drill",
+  "main": "src/worker.py",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": ["python_workers"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": false },
+  "durable_objects": { "bindings": [{ "name": "RECOVERY", "class_name": "RecoveryDrill" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RecoveryDrill"] }]
+}
