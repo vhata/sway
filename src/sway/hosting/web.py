@@ -3,22 +3,17 @@
 from __future__ import annotations
 
 import secrets
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 import htpy as h
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from fastapi.staticfiles import StaticFiles
-from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import FormData
 
 from sway.engine import Command, GameConfig, InvalidCommand
 from sway.engine.catalog import CATALOG, KINGDOM_IDS
-from sway.hosting.config import HostedConfig
-from sway.hosting.dispatcher import BotDispatcher
 from sway.hosting.http import HostedBoundary
-from sway.hosting.identity import AuthenticationError, IdentityService, Session, SessionCredentials
+from sway.hosting.identity import AuthenticationError, Session, SessionCredentials
 from sway.hosting.presentation import (
     SetupEntries,
     account,
@@ -27,10 +22,13 @@ from sway.hosting.presentation import (
     invitation,
     table_content,
 )
-from sway.hosting.service import HostedService, TableView
-from sway.hosting.storage import HostedStore
-from sway.presentation.themes import STATIC_ROOT, load_themes
+from sway.hosting.runtime import HostedRuntime, WebConfig
+from sway.hosting.service import TableView
+from sway.presentation.themes import load_themes
 from sway.storage import GameNotFound, StorageConflict
+
+if TYPE_CHECKING:
+    from sway.hosting.config import HostedConfig
 
 COOKIE = "__Host-sway_session"
 
@@ -64,38 +62,32 @@ def _setup(data: FormData) -> tuple[tuple[str, ...], tuple[str, ...]]:
 
 
 def create_app(config: HostedConfig | None = None) -> FastAPI:
-    settings = config or HostedConfig.from_env()
-    settings.prepare_directory()
-    store = HostedStore(settings.database_path)
-    identity = IdentityService(store)
-    service = HostedService(store)
+    """Compatibility entrypoint for the laptop/VM deployment."""
+    from sway.hosting.selfhost import create_selfhost_app
+
+    return create_selfhost_app(config)
+
+
+def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
+    """The same routes, privacy rules and browser experience on either runtime."""
+    identity, service = runtime.identity, runtime.service
     themes = tuple(load_themes(frozenset(CATALOG)).values())
-    dispatcher = BotDispatcher(service)
-
-    @asynccontextmanager
-    async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
-        with settings.process_lock():
-            dispatcher.start()
-            try:
-                yield
-            finally:
-                dispatcher.stop()
-
     application = FastAPI(
         title="Sway private tables",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
-        lifespan=lifespan,
+        lifespan=runtime.lifespan,
     )
-    application.add_middleware(HostedBoundary, config=settings)
-    application.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
+    application.add_middleware(HostedBoundary, config=settings, limiter=runtime.limiter)
+    if runtime.assets is not None:
+        application.mount("/static", runtime.assets, name="static")
 
     def token(request: Request) -> str:
         return request.cookies.get(COOKIE, "")
 
-    def session(request: Request) -> Session:
-        return identity.authenticate(token(request))
+    async def session(request: Request) -> Session:
+        return await runtime.execute(identity.authenticate, token(request))
 
     def cookie(response: Response, credentials: SessionCredentials) -> Response:
         response.set_cookie(
@@ -105,21 +97,21 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
             httponly=True,
             samesite="lax",
             path="/",
-            max_age=max(1, int(credentials.session.expires_at - store.clock())),
+            max_age=max(1, int(credentials.session.expires_at - runtime.clock())),
         )
         return response
 
-    def anonymous(request: Request) -> tuple[Session, SessionCredentials | None]:
+    async def anonymous(request: Request) -> tuple[Session, SessionCredentials | None]:
         try:
-            return session(request), None
+            return await session(request), None
         except AuthenticationError:
-            credentials = identity.anonymous_session()
+            credentials = await runtime.execute(identity.anonymous_session)
             return credentials.session, credentials
 
-    def render(
+    async def render(
         request: Request, table: TableView, error: str | None = None, status: int = 200
     ) -> HTMLResponse:
-        content = table_content(table, session(request).csrf_token, themes, error)
+        content = table_content(table, (await session(request)).csrf_token, themes, error)
         node = (
             content
             if request.headers.get("HX-Request") == "true"
@@ -129,7 +121,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
 
     async def mutation(request: Request) -> FormData:
         data = await request.form(max_fields=100)
-        current = await run_in_threadpool(session, request)
+        current = await session(request)
         if not secrets.compare_digest(current.csrf_token.encode(), _field(data, "csrf").encode()):
             raise PermissionError("This form expired. Reload before trying again.")
         return data
@@ -197,26 +189,32 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
         )
 
     @application.get("/", response_model=None)
-    def index(request: Request) -> Response:
-        current, credentials = anonymous(request)
+    async def index(request: Request) -> Response:
+        current, credentials = await anonymous(request)
         if current.principal_id is None:
             response = HTMLResponse(str(account(current.csrf_token, False)))
         else:
             response = HTMLResponse(
-                str(home(service.list_tables(token(request)), current.csrf_token, themes))
+                str(
+                    home(
+                        await runtime.execute(service.list_tables, token(request)),
+                        current.csrf_token,
+                        themes,
+                    )
+                )
             )
         return cookie(response, credentials) if credentials else response
 
     @application.get("/account", response_model=None)
-    def account_page(request: Request) -> Response:
-        current, credentials = anonymous(request)
+    async def account_page(request: Request) -> Response:
+        current, credentials = await anonymous(request)
         response = HTMLResponse(str(account(current.csrf_token, current.principal_id is not None)))
         return cookie(response, credentials) if credentials else response
 
     @application.post("/identity", response_model=None)
     async def create_identity(request: Request) -> Response:
         data = await mutation(request)
-        credentials = await run_in_threadpool(
+        credentials = await runtime.execute(
             identity.create_principal, token(request), _field(data, "display_name")
         )
         return cookie(
@@ -231,7 +229,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
     @application.post("/recover", response_model=None)
     async def recover(request: Request) -> Response:
         data = await mutation(request)
-        credentials = await run_in_threadpool(
+        credentials = await runtime.execute(
             identity.recover, token(request), _field(data, "recovery_code")
         )
         return cookie(
@@ -246,7 +244,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
     @application.post("/logout", response_model=None)
     async def logout(request: Request) -> Response:
         await mutation(request)
-        await run_in_threadpool(identity.revoke_session, token(request))
+        await runtime.execute(identity.revoke_session, token(request))
         response = RedirectResponse("/account", status_code=303)
         response.delete_cookie(COOKIE, path="/", secure=True, httponly=True, samesite="lax")
         return response
@@ -256,7 +254,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
         data = await mutation(request)
         try:
             controllers, kingdom = _setup(data)
-            table = await run_in_threadpool(service.create, token(request), controllers, kingdom)
+            table = await runtime.execute(service.create, token(request), controllers, kingdom)
         except ValueError as exc:
             entered = SetupEntries(
                 _field(data, "players", "2"),
@@ -264,8 +262,8 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                 _field(data, "supply", "starter"),
                 tuple(value for value in data.getlist("kingdom") if isinstance(value, str)),
             )
-            tables = await run_in_threadpool(service.list_tables, token(request))
-            current = await run_in_threadpool(session, request)
+            tables = await runtime.execute(service.list_tables, token(request))
+            current = await session(request)
             return HTMLResponse(
                 str(home(tables, current.csrf_token, themes, entered=entered, error=str(exc))),
                 status_code=422,
@@ -273,19 +271,19 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
         return RedirectResponse(f"/games/{table.game_id}", status_code=303)
 
     @application.get("/games/{game_id}", response_model=None)
-    def show(request: Request, game_id: str) -> Response:
-        return render(request, service.view(token(request), game_id))
+    async def show(request: Request, game_id: str) -> Response:
+        return await render(request, await runtime.execute(service.view, token(request), game_id))
 
     @application.get("/games/{game_id}/updates", response_model=None)
-    def updates(request: Request, game_id: str) -> Response:
-        table = service.view(token(request), game_id)
+    async def updates(request: Request, game_id: str) -> Response:
+        table = await runtime.execute(service.view, token(request), game_id)
         versions = (str(table.revision), str(table.lobby_revision), str(table.preference_version))
         if versions == tuple(
             request.query_params.get(key)
             for key in ("revision", "lobby_revision", "preference_version")
         ):
             return Response(status_code=204)
-        return render(request, table)
+        return await render(request, table)
 
     @application.post("/games/{game_id}/{action}", response_model=None)
     async def table_action(request: Request, game_id: str, action: str) -> Response:
@@ -296,7 +294,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                 choices = tuple(
                     value for value in data.getlist("choices") if isinstance(value, str)
                 )
-                result = await run_in_threadpool(
+                result = await runtime.execute(
                     service.submit,
                     bearer,
                     game_id,
@@ -308,7 +306,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                 theme = _field(data, "theme")
                 if theme not in {pack.id for pack in themes}:
                     raise ValueError("Choose an available theme.")
-                table = await run_in_threadpool(
+                table = await runtime.execute(
                     service.set_theme,
                     bearer,
                     game_id,
@@ -316,7 +314,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                     int(_field(data, "preference_version")),
                 )
             elif action == "ready":
-                table = await run_in_threadpool(
+                table = await runtime.execute(
                     service.ready,
                     bearer,
                     game_id,
@@ -324,12 +322,12 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                     _field(data, "ready") == "true",
                 )
             elif action == "start":
-                table = await run_in_threadpool(
+                table = await runtime.execute(
                     service.start, bearer, game_id, int(_field(data, "lobby_revision"))
                 )
             elif action == "configure":
                 controllers, kingdom = _setup(data)
-                table = await run_in_threadpool(
+                table = await runtime.execute(
                     service.configure,
                     bearer,
                     game_id,
@@ -338,7 +336,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                     kingdom,
                 )
             elif action == "remove":
-                table = await run_in_threadpool(
+                table = await runtime.execute(
                     service.remove,
                     bearer,
                     game_id,
@@ -346,16 +344,16 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                     int(_field(data, "lobby_revision")),
                 )
             elif action == "cancel":
-                table = await run_in_threadpool(service.cancel, bearer, game_id)
+                table = await runtime.execute(service.cancel, bearer, game_id)
             elif action == "retry":
-                table = await run_in_threadpool(service.retry_bots, bearer, game_id)
+                table = await runtime.execute(service.retry_bots, bearer, game_id)
             elif action == "revoke-invite":
-                await run_in_threadpool(
+                await runtime.execute(
                     service.revoke_invite, bearer, game_id, int(_field(data, "seat"))
                 )
-                table = await run_in_threadpool(service.view, bearer, game_id)
+                table = await runtime.execute(service.view, bearer, game_id)
             elif action == "invite":
-                invite = await run_in_threadpool(
+                invite = await runtime.execute(
                     service.invite, bearer, game_id, int(_field(data, "seat"))
                 )
                 link = f"{settings.origin}/join/{invite.invitation_id}#{invite.secret}"
@@ -378,22 +376,22 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
             else:
                 raise GameNotFound("Unknown action.")
         except (StorageConflict, InvalidCommand) as exc:
-            table = await run_in_threadpool(service.view, bearer, game_id)
-            return render(request, table, str(exc), 409)
+            table = await runtime.execute(service.view, bearer, game_id)
+            return await render(request, table, str(exc), 409)
         except ValueError as exc:
-            table = await run_in_threadpool(service.view, bearer, game_id)
-            return render(request, table, str(exc), 422)
+            table = await runtime.execute(service.view, bearer, game_id)
+            return await render(request, table, str(exc), 422)
         if (
             table.status == "active"
             and table.pending_player is not None
             and table.seats[table.pending_player].controller != "human"
         ):
-            dispatcher.enqueue(table.game_id)
-        return render(request, table)
+            await runtime.notify(table.game_id)
+        return await render(request, table)
 
     @application.get("/join/{invitation_id}", response_model=None)
-    def join_page(request: Request, invitation_id: str) -> Response:
-        current, credentials = anonymous(request)
+    async def join_page(request: Request, invitation_id: str) -> Response:
+        current, credentials = await anonymous(request)
         response = HTMLResponse(
             str(invitation(current.csrf_token, invitation_id, current.principal_id is not None))
         )
@@ -402,9 +400,9 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
     @application.post("/join/{invitation_id}", response_model=None)
     async def join(request: Request, invitation_id: str) -> Response:
         data = await mutation(request)
-        current = await run_in_threadpool(session, request)
+        current = await session(request)
         if current.principal_id is None:
-            credentials, table = await run_in_threadpool(
+            credentials, table = await runtime.execute(
                 service.join_guest,
                 token(request),
                 invitation_id,
@@ -425,7 +423,7 @@ def create_app(config: HostedConfig | None = None) -> FastAPI:
                 )
             )
             return cookie(response, credentials.session)
-        table = await run_in_threadpool(
+        table = await runtime.execute(
             service.join, token(request), invitation_id, _field(data, "secret")
         )
         return RedirectResponse(f"/games/{table.game_id}", status_code=303)

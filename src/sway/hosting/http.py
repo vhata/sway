@@ -2,41 +2,18 @@
 
 from __future__ import annotations
 
-import time
-from collections import deque
-from threading import Lock
-
 from starlette.datastructures import Headers
 from starlette.responses import PlainTextResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from sway.hosting.config import HostedConfig
+from sway.hosting.runtime import RateLimiter, WebConfig
 
 
 class HostedBoundary:
-    def __init__(self, app: ASGIApp, config: HostedConfig) -> None:
+    def __init__(self, app: ASGIApp, config: WebConfig, limiter: RateLimiter) -> None:
         self.app = app
         self.config = config
-        self.buckets: dict[tuple[str, str], deque[float]] = {}
-        self.lock = Lock()
-
-    def _allow(self, peer: str, category: str, limit: int) -> bool:
-        now = time.monotonic()
-        with self.lock:
-            for key in tuple(self.buckets):
-                bucket = self.buckets[key]
-                while bucket and bucket[0] <= now - 60:
-                    bucket.popleft()
-                if not bucket:
-                    del self.buckets[key]
-            key = (peer, category)
-            if key not in self.buckets and len(self.buckets) >= self.config.max_rate_limit_keys:
-                return False
-            bucket = self.buckets.setdefault(key, deque())
-            if len(bucket) >= limit:
-                return False
-            bucket.append(now)
-            return True
+        self.limiter = limiter
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -70,7 +47,7 @@ class HostedBoundary:
             else 300
         )
         public_asset = not mutation and scope["path"].startswith("/static/")
-        if not public_asset and not self._allow(address, category, limit):
+        if not public_asset and not self.limiter.allow(address, category, limit):
             await PlainTextResponse(
                 "Too many requests. Please wait a minute.", 429, headers={"Retry-After": "60"}
             )(scope, receive, send)
