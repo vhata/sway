@@ -6,9 +6,7 @@ import hashlib
 import json
 import re
 import secrets
-import sqlite3
 import time
-from contextlib import nullcontext
 from dataclasses import asdict, dataclass, field
 from typing import cast
 from uuid import uuid4
@@ -16,8 +14,8 @@ from uuid import uuid4
 from sway.bots import STRATEGIES, BotState, choose
 from sway.engine import Command, GameConfig, InvalidCommand, PlayerView, advance, new_game, view_for
 from sway.hosting.identity import IdentityCredentials, IdentityService
-from sway.hosting.storage import HostedStore
-from sway.service import deserialize_game, serialize_game
+from sway.hosting.state import SqlRow, SqlSession, SqlValue, StateStore
+from sway.service import GameRecord, deserialize_game, serialize_game
 from sway.storage import GameNotFound, StorageConflict, StoredGame
 
 
@@ -68,29 +66,29 @@ def _digest(secret: str) -> str:
     return hashlib.sha256(secret.encode()).hexdigest()
 
 
-def _row(conn: sqlite3.Connection, sql: str, parameters: tuple[object, ...]) -> sqlite3.Row:
-    row = cast(sqlite3.Row | None, conn.execute(sql, parameters).fetchone())
+def _row(conn: SqlSession, sql: str, parameters: tuple[SqlValue, ...]) -> SqlRow:
+    row = conn.execute(sql, parameters).one()
     if row is None:
         raise GameNotFound("Table unavailable.")
     return row
 
 
-def _rows(conn: sqlite3.Connection, sql: str, parameters: tuple[object, ...]) -> list[sqlite3.Row]:
-    return cast(list[sqlite3.Row], conn.execute(sql, parameters).fetchall())
+def _rows(conn: SqlSession, sql: str, parameters: tuple[SqlValue, ...]) -> list[SqlRow]:
+    return conn.execute(sql, parameters).all()
 
 
-def _text(row: sqlite3.Row, key: str) -> str:
+def _text(row: SqlRow, key: str) -> str:
     return cast(str, row[key])
 
 
-def _int(row: sqlite3.Row, key: str) -> int:
+def _int(row: SqlRow, key: str) -> int:
     return cast(int, row[key])
 
 
 class HostedService:
     """Short read/write transactions surround computation, never bot thinking."""
 
-    def __init__(self, store: HostedStore) -> None:
+    def __init__(self, store: StateStore) -> None:
         self.store = store
         self.identity = IdentityService(store)
         statements = (
@@ -117,25 +115,26 @@ class HostedService:
                 actor TEXT NOT NULL, request_id TEXT NOT NULL, payload TEXT NOT NULL,
                 events TEXT NOT NULL, PRIMARY KEY(game_id,revision), UNIQUE(game_id,actor,request_id))""",
         )
-        with store.transaction(write=True) as conn:
+
+        def _write(conn: SqlSession) -> None:
             version = conn.execute(
                 "SELECT version FROM hosting_schema WHERE component='multiplayer'"
-            ).fetchone()
-            if version is not None and version[0] != 1:
+            ).one()
+            if version is not None and version["version"] != 1:
                 raise ValueError("Unsupported multiplayer schema version.")
             for statement in statements:
                 conn.execute(statement)
             conn.execute("INSERT OR IGNORE INTO hosting_schema VALUES ('multiplayer',1)")
 
-    def _principal(self, conn: sqlite3.Connection, token: str) -> str:
+        store.write(_write)
+
+    def _principal(self, conn: SqlSession, token: str) -> str:
         principal = self.identity.authenticate(token, conn=conn).principal_id
         if principal is None:
             raise GameNotFound("Sign in before opening a table.")
         return principal
 
-    def _member(
-        self, conn: sqlite3.Connection, token: str, game_id: str
-    ) -> tuple[str, sqlite3.Row, sqlite3.Row]:
+    def _member(self, conn: SqlSession, token: str, game_id: str) -> tuple[str, SqlRow, SqlRow]:
         principal = self._principal(conn, token)
         seat = _row(
             conn,
@@ -146,17 +145,17 @@ class HostedService:
         return principal, room, seat
 
     @staticmethod
-    def _host(principal: str, room: sqlite3.Row) -> None:
+    def _host(principal: str, room: SqlRow) -> None:
         if principal != _text(room, "host_id"):
             raise GameNotFound("Table unavailable.")
 
     @staticmethod
-    def _lobby(room: sqlite3.Row, revision: int) -> None:
+    def _lobby(room: SqlRow, revision: int) -> None:
         if _text(room, "status") != "lobby" or _int(room, "lobby_revision") != revision:
             raise StorageConflict("The lobby changed. Reload before continuing.")
 
     @staticmethod
-    def _bump(conn: sqlite3.Connection, game_id: str) -> None:
+    def _bump(conn: SqlSession, game_id: str) -> None:
         conn.execute(
             "UPDATE hosted_rooms SET lobby_revision=lobby_revision+1 WHERE game_id=?", (game_id,)
         )
@@ -180,7 +179,8 @@ class HostedService:
     ) -> TableView:
         self._validate(controllers, kingdom)
         game_id = uuid4().hex
-        with self.store.transaction(write=True) as conn:
+
+        def _write(conn: SqlSession) -> None:
             principal = self._principal(conn, token)
             conn.execute(
                 "INSERT INTO hosted_rooms VALUES (?,?, 'lobby',0,0,?,NULL,?,NULL,0)",
@@ -191,10 +191,12 @@ class HostedService:
                     "INSERT INTO hosted_seats VALUES (?,?,?,?,NULL)",
                     (game_id, seat, controller, principal if seat == 0 else None),
                 )
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     @staticmethod
-    def _record(room: sqlite3.Row):
+    def _record(room: SqlRow):
         return deserialize_game(
             StoredGame(
                 _text(room, "game_id"),
@@ -207,22 +209,17 @@ class HostedService:
             )
         )
 
-    def _view(
-        self, conn: sqlite3.Connection, principal: str, room: sqlite3.Row, own: sqlite3.Row
-    ) -> TableView:
+    def _view(self, conn: SqlSession, principal: str, room: SqlRow, own: SqlRow) -> TableView:
         game_id = _text(room, "game_id")
         seats = _rows(
             conn,
             "SELECT s.*,p.display_name FROM hosted_seats s LEFT JOIN principals p ON p.principal_id=s.principal_id WHERE game_id=? ORDER BY seat",
             (game_id,),
         )
-        preference = cast(
-            sqlite3.Row | None,
-            conn.execute(
-                "SELECT * FROM hosted_preferences WHERE game_id=? AND principal_id=?",
-                (game_id, principal),
-            ).fetchone(),
-        )
+        preference = conn.execute(
+            "SELECT * FROM hosted_preferences WHERE game_id=? AND principal_id=?",
+            (game_id, principal),
+        ).one()
         record = self._record(room) if room["snapshot"] is not None else None
         return TableView(
             game_id,
@@ -256,12 +253,14 @@ class HostedService:
         )
 
     def view(self, token: str, game_id: str) -> TableView:
-        with self.store.transaction() as conn:
+        def _read(conn: SqlSession) -> TableView:
             principal, room, seat = self._member(conn, token, game_id)
             return self._view(conn, principal, room, seat)
 
+        return self.store.read(_read)
+
     def list_tables(self, token: str) -> tuple[TableView, ...]:
-        with self.store.transaction() as conn:
+        def _read(conn: SqlSession) -> tuple[TableView, ...]:
             principal = self._principal(conn, token)
             seats = _rows(
                 conn,
@@ -282,9 +281,12 @@ class HostedService:
                 for seat in seats
             )
 
+        return self.store.read(_read)
+
     def invite(self, token: str, game_id: str, seat: int) -> Invitation:
         invitation = Invitation(uuid4().hex, secrets.token_urlsafe(32), self.store.clock() + 86400)
-        with self.store.transaction(write=True) as conn:
+
+        def _write(conn: SqlSession) -> None:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, _int(room, "lobby_revision"))
@@ -307,10 +309,12 @@ class HostedService:
                     invitation.expires_at,
                 ),
             )
+
+        self.store.write(_write)
         return invitation
 
     def revoke_invite(self, token: str, game_id: str, seat: int) -> None:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, _int(room, "lobby_revision"))
@@ -319,10 +323,12 @@ class HostedService:
                 (game_id, seat),
             )
 
+        self.store.write(_write)
+
     def join(
-        self, token: str, invitation_id: str, secret: str, *, conn: sqlite3.Connection | None = None
+        self, token: str, invitation_id: str, secret: str, *, conn: SqlSession | None = None
     ) -> TableView:
-        with nullcontext(conn) if conn is not None else self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> TableView:
             principal = self._principal(conn, token)
             invite = _row(
                 conn, "SELECT * FROM hosted_invitations WHERE invitation_id=?", (invitation_id,)
@@ -344,14 +350,14 @@ class HostedService:
                 existing = conn.execute(
                     "SELECT 1 FROM hosted_seats WHERE game_id=? AND principal_id=?",
                     (game_id, principal),
-                ).fetchone()
+                ).one()
                 if existing:
                     raise StorageConflict("You already occupy a seat at this table.")
                 changed = conn.execute(
                     "UPDATE hosted_seats SET principal_id=? WHERE game_id=? AND seat=? AND principal_id IS NULL AND controller='human'",
                     (principal, game_id, _int(invite, "seat")),
                 )
-                if changed.rowcount != 1:
+                if changed.rows_written != 1:
                     raise GameNotFound("Invitation unavailable.")
                 conn.execute(
                     "UPDATE hosted_invitations SET claimed_by=? WHERE invitation_id=?",
@@ -361,18 +367,22 @@ class HostedService:
             principal, room, seat = self._member(conn, token, game_id)
             return self._view(conn, principal, room, seat)
 
+        return _write(conn) if conn is not None else self.store.write(_write)
+
     def join_guest(
         self, anonymous_token: str, invitation_id: str, secret: str, display_name: str
     ) -> tuple[IdentityCredentials, TableView]:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> tuple[IdentityCredentials, TableView]:
             credentials = self.identity.create_principal(anonymous_token, display_name, conn=conn)
             table = self.join(credentials.session.token, invitation_id, secret, conn=conn)
             return credentials, table
 
+        return self.store.write(_write)
+
     def ready(
         self, token: str, game_id: str, expected_lobby_revision: int, ready: bool = True
     ) -> TableView:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             principal, room, _ = self._member(conn, token, game_id)
             self._lobby(room, expected_lobby_revision)
             conn.execute(
@@ -384,6 +394,8 @@ class HostedService:
                 (expected_lobby_revision + 1 if ready else None, game_id, principal),
             )
             self._bump(conn, game_id)
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     def configure(
@@ -395,7 +407,8 @@ class HostedService:
         kingdom: tuple[str, ...],
     ) -> TableView:
         self._validate(controllers, kingdom)
-        with self.store.transaction(write=True) as conn:
+
+        def _write(conn: SqlSession) -> None:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, expected_lobby_revision)
@@ -421,12 +434,14 @@ class HostedService:
                 "UPDATE hosted_rooms SET kingdom=? WHERE game_id=?", (_json(kingdom), game_id)
             )
             self._bump(conn, game_id)
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     def remove(
         self, token: str, game_id: str, seat: int, expected_lobby_revision: int
     ) -> TableView:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, expected_lobby_revision)
@@ -448,10 +463,12 @@ class HostedService:
                 (game_id, seat),
             )
             self._bump(conn, game_id)
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     def start(self, token: str, game_id: str, expected_lobby_revision: int) -> TableView:
-        with self.store.transaction() as conn:
+        def load_state(conn: SqlSession) -> tuple[SqlRow, list[SqlRow]]:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, expected_lobby_revision)
@@ -469,6 +486,9 @@ class HostedService:
                 for seat in seats
             ):
                 raise StorageConflict("Every human must join and ready this lobby.")
+            return room, seats
+
+        room, seats = self.store.read(load_state)
         humans = frozenset(_int(seat, "seat") for seat in seats if seat["controller"] == "human")
         names = tuple(
             cast(str, seat["display_name"])
@@ -489,14 +509,15 @@ class HostedService:
             if seat["controller"] != "human"
         )
         snapshot = serialize_game(state, bots, humans)
-        with self.store.transaction(write=True) as conn:
+
+        def commit_state(conn: SqlSession) -> None:
             principal, current, _ = self._member(conn, token, game_id)
             self._host(principal, current)
             self._lobby(current, expected_lobby_revision)
             unready = conn.execute(
                 "SELECT 1 FROM hosted_seats WHERE game_id=? AND controller='human' AND (principal_id IS NULL OR ready_revision IS NULL OR ready_revision!=?)",
                 (game_id, expected_lobby_revision),
-            ).fetchone()
+            ).one()
             if unready:
                 raise StorageConflict("Every human must ready this lobby.")
             conn.execute(
@@ -508,10 +529,12 @@ class HostedService:
                 ),
             )
             conn.execute("UPDATE hosted_invitations SET revoked=1 WHERE game_id=?", (game_id,))
+
+        self.store.write(commit_state)
         return self.view(token, game_id)
 
     def cancel(self, token: str, game_id: str) -> TableView:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             if room["status"] not in ("lobby", "active", "cancelled"):
@@ -521,19 +544,18 @@ class HostedService:
                     "UPDATE hosted_rooms SET status='cancelled',lobby_revision=lobby_revision+1 WHERE game_id=?",
                     (game_id,),
                 )
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     @staticmethod
     def _receipt(
-        conn: sqlite3.Connection, game_id: str, principal: str, request_id: str, payload: str
+        conn: SqlSession, game_id: str, principal: str, request_id: str, payload: str
     ) -> int | None:
-        receipt = cast(
-            sqlite3.Row | None,
-            conn.execute(
-                "SELECT payload,revision FROM hosted_commands WHERE game_id=? AND actor=? AND request_id=?",
-                (game_id, principal, request_id),
-            ).fetchone(),
-        )
+        receipt = conn.execute(
+            "SELECT payload,revision FROM hosted_commands WHERE game_id=? AND actor=? AND request_id=?",
+            (game_id, principal, request_id),
+        ).one()
         if receipt is None:
             return None
         if _text(receipt, "payload") != payload:
@@ -542,8 +564,8 @@ class HostedService:
 
     @staticmethod
     def _commit(
-        conn: sqlite3.Connection,
-        room: sqlite3.Row,
+        conn: SqlSession,
+        room: SqlRow,
         expected_revision: int,
         actor: str,
         request_id: str,
@@ -578,7 +600,8 @@ class HostedService:
         if re.fullmatch(r"[A-Za-z0-9_-]{1,128}", request_id) is None:
             raise ValueError("Invalid request identifier.")
         payload = _json(asdict(command))
-        with self.store.transaction() as conn:
+
+        def load_state(conn: SqlSession) -> CommandResult | tuple[SqlRow, GameRecord]:
             principal, room, seat = self._member(conn, token, game_id)
             receipt = self._receipt(conn, game_id, principal, request_id, payload)
             if receipt is not None:
@@ -588,9 +611,16 @@ class HostedService:
             record = self._record(room)
             if record.state.pending is None or record.state.pending.player != _int(seat, "seat"):
                 raise InvalidCommand("It is not your decision.")
+            return seat, record
+
+        loaded = self.store.read(load_state)
+        if isinstance(loaded, CommandResult):
+            return loaded
+        seat, record = loaded
         transition = advance(record.state, command)
         snapshot = serialize_game(transition.state, record.bots, record.human_seats)
-        with self.store.transaction(write=True) as conn:
+
+        def commit_state(conn: SqlSession) -> int:
             principal, current, own = self._member(conn, token, game_id)
             receipt = self._receipt(conn, game_id, principal, request_id, payload)
             if receipt is None:
@@ -611,6 +641,9 @@ class HostedService:
                         and transition.state.pending.player not in record.human_seats
                     ),
                 )
+            return receipt
+
+        receipt = self.store.write(commit_state)
         return CommandResult(receipt, self.view(token, game_id))
 
     def set_theme(
@@ -618,25 +651,25 @@ class HostedService:
     ) -> TableView:
         if re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", theme_id) is None:
             raise ValueError("Invalid theme identifier.")
-        with self.store.transaction(write=True) as conn:
+
+        def _write(conn: SqlSession) -> None:
             principal, _, _ = self._member(conn, token, game_id)
-            previous = cast(
-                sqlite3.Row | None,
-                conn.execute(
-                    "SELECT version FROM hosted_preferences WHERE game_id=? AND principal_id=?",
-                    (game_id, principal),
-                ).fetchone(),
-            )
+            previous = conn.execute(
+                "SELECT version FROM hosted_preferences WHERE game_id=? AND principal_id=?",
+                (game_id, principal),
+            ).one()
             if (0 if previous is None else _int(previous, "version")) != expected_version:
                 raise StorageConflict("Your theme preference changed.")
             conn.execute(
                 "INSERT INTO hosted_preferences VALUES (?,?,?,?) ON CONFLICT(game_id,principal_id) DO UPDATE SET theme_id=excluded.theme_id,version=excluded.version",
                 (game_id, principal, theme_id, expected_version + 1),
             )
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     def retry_bots(self, token: str, game_id: str) -> TableView:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             _, room, _ = self._member(conn, token, game_id)
             if room["status"] != "active":
                 raise StorageConflict("This table is not active.")
@@ -644,13 +677,15 @@ class HostedService:
                 "UPDATE hosted_rooms SET bot_paused=NULL,lobby_revision=lobby_revision+1 WHERE game_id=?",
                 (game_id,),
             )
+
+        self.store.write(_write)
         return self.view(token, game_id)
 
     def pending_bot_games(self, limit: int = 100) -> tuple[str, ...]:
         if not 1 <= limit <= 1000:
             raise ValueError("Invalid scan limit.")
-        with self.store.transaction() as conn:
-            # Cursor-free bounded scans prioritize oldest progress, avoiding a busy first page.
+
+        def _read(conn: SqlSession) -> tuple[str, ...]:
             rooms = _rows(
                 conn,
                 "SELECT * FROM hosted_rooms WHERE status='active' AND bot_paused IS NULL AND bot_pending=1 ORDER BY updated_at LIMIT ?",
@@ -658,7 +693,9 @@ class HostedService:
             )
             return tuple(_text(room, "game_id") for room in rooms if self._bot_pending(room))
 
-    def _bot_pending(self, room: sqlite3.Row) -> bool:
+        return self.store.read(_read)
+
+    def _bot_pending(self, room: SqlRow) -> bool:
         record = self._record(room)
         return bool(record.state.pending and record.state.pending.player not in record.human_seats)
 
@@ -667,60 +704,81 @@ class HostedService:
             raise ValueError("Bot jobs allow at most eight decisions and 100ms.")
         deadline = time.monotonic() + budget_seconds
         for _ in range(max_steps):
-            with self.store.transaction() as conn:
-                room = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
-                if (
-                    room["status"] != "active"
-                    or room["bot_paused"] is not None
-                    or not self._bot_pending(room)
-                ):
-                    return False
-                record = self._record(room)
-            decision = record.state.pending
-            assert decision is not None
-            index = record.bot_seats.index(decision.player)
-            try:
-                choice = choose(
-                    view_for(record.state, decision.player), decision, record.bots[index]
-                )
-                transition = advance(record.state, choice.command)
-                bots = list(record.bots)
-                bots[index] = choice.state
-                snapshot = serialize_game(transition.state, tuple(bots), record.human_seats)
-            except Exception:
-                with self.store.transaction(write=True) as conn:
-                    conn.execute(
-                        "UPDATE hosted_rooms SET bot_paused='decision_failed',lobby_revision=lobby_revision+1 WHERE game_id=? AND status='active' AND revision=?",
-                        (game_id, record.revision),
-                    )
-                return False
-            with self.store.transaction(write=True) as conn:
-                current = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
-                if current["status"] != "active" or current["bot_paused"] is not None:
-                    return False
-                if _int(current, "revision") != record.revision:
-                    return True
-                self._commit(
-                    conn,
-                    current,
-                    record.revision,
-                    f"bot:{decision.player}",
-                    decision.id,
-                    _json(asdict(choice.command)),
-                    snapshot,
-                    _json([asdict(event) for event in transition.events]),
-                    transition.state.phase == "finished",
-                    bool(
-                        transition.state.pending
-                        and transition.state.pending.player not in record.human_seats
-                    ),
-                )
+            stopped = self._step_bot(game_id)
+            if stopped is not None:
+                return stopped
             if time.monotonic() >= deadline:
                 break
-        with self.store.transaction() as conn:
+
+        def read_pending(conn: SqlSession) -> bool:
             room = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
             return (
                 room["status"] == "active"
                 and room["bot_paused"] is None
                 and self._bot_pending(room)
             )
+
+        return self.store.read(read_pending)
+
+    def _step_bot(self, game_id: str) -> bool | None:
+        def load_state(conn: SqlSession) -> GameRecord | None:
+            room = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
+            if (
+                room["status"] != "active"
+                or room["bot_paused"] is not None
+                or not self._bot_pending(room)
+            ):
+                return None
+            record = self._record(room)
+            return record
+
+        record = self.store.read(load_state)
+        if record is None:
+            return False
+        decision = record.state.pending
+        assert decision is not None
+        index = record.bot_seats.index(decision.player)
+        try:
+            choice = choose(view_for(record.state, decision.player), decision, record.bots[index])
+            transition = advance(record.state, choice.command)
+            bots = list(record.bots)
+            bots[index] = choice.state
+            snapshot = serialize_game(transition.state, tuple(bots), record.human_seats)
+        except Exception:
+
+            def commit_state(conn: SqlSession) -> None:
+                conn.execute(
+                    "UPDATE hosted_rooms SET bot_paused='decision_failed',lobby_revision=lobby_revision+1 WHERE game_id=? AND status='active' AND revision=?",
+                    (game_id, record.revision),
+                )
+
+            self.store.write(commit_state)
+            return False
+
+        def commit_bot(conn: SqlSession) -> bool | None:
+            current = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
+            if current["status"] != "active" or current["bot_paused"] is not None:
+                return False
+            if _int(current, "revision") != record.revision:
+                return True
+            self._commit(
+                conn,
+                current,
+                record.revision,
+                f"bot:{decision.player}",
+                decision.id,
+                _json(asdict(choice.command)),
+                snapshot,
+                _json([asdict(event) for event in transition.events]),
+                transition.state.phase == "finished",
+                bool(
+                    transition.state.pending
+                    and transition.state.pending.player not in record.human_seats
+                ),
+            )
+            return None
+
+        stopped = self.store.write(commit_bot)
+        if stopped is not None:
+            return stopped
+        return None

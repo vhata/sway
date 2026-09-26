@@ -64,7 +64,7 @@ def command(table: TableView) -> Command:
 def raw(
     service: HostedService, game_id: str
 ) -> tuple[GameState, tuple[BotState, ...], frozenset[int]]:
-    with service.store.transaction() as conn:
+    with cast(HostedStore, service.store).transaction() as conn:
         row = conn.execute("SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,)).fetchone()
         assert row is not None
         record = deserialize_game(
@@ -147,7 +147,7 @@ def test_invites_single_use_reissued_revoked_expired_and_same_member_retry(tmp_p
     now[0] = expiring.expires_at
     with pytest.raises(GameNotFound):
         service.join(eve, expiring.invitation_id, expiring.secret)
-    with service.store.transaction() as conn:
+    with cast(HostedStore, service.store).transaction() as conn:
         stored = str(conn.execute("SELECT * FROM hosted_invitations").fetchall())
     assert invitation.secret not in stored
     assert invitation.secret not in repr(invitation)
@@ -164,7 +164,7 @@ def test_invite_concurrent_claim_has_one_winner_and_guest_rollback(tmp_path: Pat
     def claim(token: str) -> bool:
         barrier.wait()
         try:
-            independent = HostedService(HostedStore(service.store.path))
+            independent = HostedService(HostedStore(cast(HostedStore, service.store).path))
             independent.join(token, invitation.invitation_id, invitation.secret)
         except GameNotFound:
             return False
@@ -173,12 +173,12 @@ def test_invite_concurrent_claim_has_one_winner_and_guest_rollback(tmp_path: Pat
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert sorted(pool.map(claim, tokens)) == [False, True]
     anonymous = service.identity.anonymous_session()
-    with service.store.transaction() as conn:
+    with cast(HostedStore, service.store).transaction() as conn:
         before = conn.execute("SELECT count(*) FROM principals").fetchone()[0]
     with pytest.raises(GameNotFound):
         service.join_guest(anonymous.token, invitation.invitation_id, "wrong", "New guest")
     assert service.identity.authenticate(anonymous.token).principal_id is None
-    with service.store.transaction() as conn:
+    with cast(HostedStore, service.store).transaction() as conn:
         assert conn.execute("SELECT count(*) FROM principals").fetchone()[0] == before
 
 
@@ -260,7 +260,7 @@ def test_receipt_retry_precedes_stale_and_pending_owner_checks(tmp_path: Path) -
         )
     service.cancel(host, table.game_id)
     assert service.submit(host, table.game_id, "request-1", cmd).table.status == "cancelled"
-    with service.store.transaction() as conn:
+    with cast(HostedStore, service.store).transaction() as conn:
         assert conn.execute("SELECT count(*) FROM hosted_commands").fetchone()[0] == 1
 
 
@@ -336,13 +336,13 @@ def test_cancel_during_compute_and_atomic_failed_commit(
     service, users, table = setup(tmp_path)
     table = start(service, users, table)
     host = users[0].session.token
-    with service.store.transaction(write=True) as conn:
+    with cast(HostedStore, service.store).transaction(write=True) as conn:
         conn.execute(
             "CREATE TRIGGER reject_snapshot BEFORE UPDATE OF snapshot ON hosted_rooms BEGIN SELECT RAISE(ABORT, 'injected'); END"
         )
     with pytest.raises(sqlite3.IntegrityError):
         service.submit(host, table.game_id, "rollback", command(table))
-    with service.store.transaction(write=True) as conn:
+    with cast(HostedStore, service.store).transaction(write=True) as conn:
         assert conn.execute("SELECT count(*) FROM hosted_commands").fetchone()[0] == 0
         conn.execute("DROP TRIGGER reject_snapshot")
     original = module.advance
@@ -421,12 +421,15 @@ def test_bot_restart_preserves_random_state_and_dispatcher_recovers_unqueued_wor
     service.step_bots(table.game_id, max_steps=1)
     backup = tmp_path / "control.sqlite3"
     backup.touch(mode=0o600)
-    with sqlite3.connect(service.store.path) as source, sqlite3.connect(backup) as destination:
+    with (
+        sqlite3.connect(cast(HostedStore, service.store).path) as source,
+        sqlite3.connect(backup) as destination,
+    ):
         source.backup(destination)
     control = HostedService(HostedStore(backup))
     while control.step_bots(table.game_id):
         pass
-    resumed = HostedService(HostedStore(service.store.path))
+    resumed = HostedService(HostedStore(cast(HostedStore, service.store).path))
     dispatcher = BotDispatcher(resumed, scan_seconds=0.02)
     dispatcher.start()
     dispatcher.start()
@@ -463,13 +466,13 @@ def test_nested_human_reaction_authorizes_target_and_restarts_privately(tmp_path
     state.next_instance_id = 102
     state.pending_effect = Effect("action", 0)
     result = advance(state, Command("fixture-attack", state.revision, ("c100",)))
-    with service.store.transaction(write=True) as conn:
+    with cast(HostedStore, service.store).transaction(write=True) as conn:
         conn.execute(
             "UPDATE hosted_rooms SET snapshot=?,revision=? WHERE game_id=?",
             (serialize_game(result.state, bots, humans), result.state.revision, table.game_id),
         )
     assert result.state.pending is not None and result.state.pending.player == 1
-    resumed = HostedService(HostedStore(service.store.path))
+    resumed = HostedService(HostedStore(cast(HostedStore, service.store).path))
     host = resumed.view(users[0].session.token, table.game_id)
     target = resumed.view(users[1].session.token, table.game_id)
     other = resumed.view(users[2].session.token, table.game_id)
