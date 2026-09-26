@@ -24,6 +24,10 @@ jobs:
       - run: scripts/check.sh
       - run: scripts/install-browsers.sh --with-deps
       - run: scripts/e2e.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: scripts/cloudflare-check.sh --browser
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
