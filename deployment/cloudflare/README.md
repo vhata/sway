@@ -43,7 +43,18 @@ Defaults are 65536, 60, 10 and 10000 respectively. Local `.dev.vars` overrides
 are ignored by Git; never increase production limits merely to make tests pass.
 
 After reviewing the target configuration and authenticating Wrangler, an
-operator can run `scripts/cloudflare.sh deploy`. No deployment is performed by
+operator can run `scripts/cloudflare.sh deploy`. The verified pilot used the
+existing Worker name `sway-private-tables` and supplied its canonical origin at
+deploy time, without changing the committed configuration:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=<reviewed-account-id>
+scripts/cloudflare.sh deploy --var SWAY_HOSTED_ORIGIN:https://sway-private-tables.vhata.workers.dev
+```
+
+This enables the configured application's `workers.dev` endpoint; ensure the
+account's registered subdomain is `vhata` before reproducing that exact origin.
+Choose the matching canonical origin for another account. No deployment is performed by
 checks. The test-only `wrangler.test.jsonc` is never a deployment configuration.
 
 ## Durability and operations
@@ -88,8 +99,12 @@ rollback and foreign-key integrity, session/recovery rotation, invitation consum
 private views, membership, stale commands and receipt replay. The Worker also
 checks nested SQL/alarm rollback, concurrent transactions and alarm delivery.
 
-Live Cloudflare account deployment and remote recovery remain operator release
-checks; successful local workerd tests do not establish those outcomes.
+The [acceptance record](../../docs/HOSTED_ACCEPTANCE.md) includes the verified
+Cloudflare pilot and an isolated remote PITR drill. The
+[private recovery harness](recovery/README.md) restores synthetic data in its own
+namespace; it does not restore the deployed application's `Installation`.
+Actual installation recovery procedures, capacity and self-hosted deployment
+acceptance remain operator work.
 
 Sources: [Python Workers](https://developers.cloudflare.com/workers/languages/python/),
 [SQLite transactions](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/),

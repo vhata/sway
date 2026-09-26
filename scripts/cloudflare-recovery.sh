@@ -57,6 +57,6 @@ case "$mode" in
   prepare) exit 0 ;;
   deploy) exec node "$SWAY_ROOT/deployment/cloudflare/node_modules/wrangler/bin/wrangler.js" deploy --config "$stage/wrangler.jsonc" ;;
   dev) exec node "$SWAY_ROOT/deployment/cloudflare/node_modules/wrangler/bin/wrangler.js" dev --config "$stage/wrangler.jsonc" --local --port 8811 ;;
-  run) exec node "$stage/controller.mjs" ;;
+  run) exec node "$stage/controller.mjs" "${@:2}" ;;
   run-local) exec node "$stage/controller.mjs" --local ;;
 esac

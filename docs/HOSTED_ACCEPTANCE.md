@@ -1,8 +1,49 @@
 # Invite-only multiplayer acceptance evidence
 
+## Cloudflare pilot and isolated recovery — 2026-09-26
+
+Source `d9e50c3` was deployed unchanged to
+`https://sway-private-tables.vhata.workers.dev`, Worker version
+`2fbfad41-dfd4-434d-b0be-d211ca31b21d`. The operator selected the authenticated
+account explicitly and supplied the canonical origin using the
+[deployment command](../deployment/cloudflare/README.md#configuration-and-deployment).
+No release was tagged. The implementation stack below has since been merged.
+
+| Scope | Executed outcome |
+| --- | --- |
+| Live HTTPS boundary | Seven probe groups passed with certificate verification: TLS/cookies, private access, origin/CSRF rejection, invitation and identical-retry handling, durable bot progress without clients, recovery rotation, and logout with synthetic cleanup |
+| Live browser parity | The unchanged two-, three- and four-player browser scenarios passed in 22.40, 14.49 and 13.34 seconds respectively against the real endpoint |
+| Production request limits | Default limits stayed unchanged; browser phases were paced more than 60 seconds apart |
+| Isolated remote PITR | A separate private Worker `sway-recovery-20260926`, version `bf2067b0-44ca-4143-bd6f-692f30275938`, restored exact SQL table digests, revision/status, receipts, historical session validity and KV state, replayed the original receipt without advancement, then undid the restore exactly |
+| Interrupted-run recovery | The first controller run reached restoration but rejected remote RPC proxy identity during comparison. JSON normalization corrected the controller; resuming its protected checkpoint verified restore and undo, and a fresh complete run then passed |
+
+The recovery harness reuses the actual Python runtime and identity/game services,
+but binds only its own `RecoveryDrill` namespace. It exposes no HTTP handler,
+workers.dev URL, preview URL or custom route. This verifies the remote storage
+mechanism with synthetic data; **the deployed application's `Installation` was
+not restored**. Whole-database restoration deliberately restores historical
+credential validity, including formerly revoked sessions. Baseline, changed and
+undo bookmarks remain outside the object in atomic, flushed mode-0600 files;
+credentials and bookmark contents are not published. The private recovery Worker
+and synthetic namespace remain retained; their permanent deletion requires
+explicit operator approval.
+
+The seven-group HTTP probe cancelled its two synthetic tables. Browser-created
+human-only tables remain in the pilot; those scenarios do not include cleanup or
+background bots. The initial post-deploy HTTPS connection failed before a later
+certificate-verified TLS 1.3 connection succeeded, without a configuration change.
+This record does not establish full-game playthrough, production capacity,
+self-hosted deployment acceptance or an operator recovery procedure for the real
+installation; these remain in [TODO](../TODO.md).
+
+Independent review cleared the harness and the controller recovery correction.
+Local private RPC, deployment dry-run, syntax/format checks, strict typing and all
+388 native tests also passed. The reusable harness remains reviewable in
+[#22](https://github.com/vhata/sway/pull/22).
+
 ## Dual-hosting verification — 2026-09-25
 
-The revised stack supports the shared hosted application on a laptop/VM and Cloudflare Python Workers. [#14](https://github.com/vhata/sway/pull/14) and [#15](https://github.com/vhata/sway/pull/15) provide portable atomic state callbacks; [#16](https://github.com/vhata/sway/pull/16) retains self-hosted operations and defines runtime contracts; [#17](https://github.com/vhata/sway/pull/17) assembles the shared browser application; [#20](https://github.com/vhata/sway/pull/20) adds the Cloudflare adapter. All remain pending user review and landing. No production deployment or release tag has been performed.
+The revised stack supports the shared hosted application on a laptop/VM and Cloudflare Python Workers. [#14](https://github.com/vhata/sway/pull/14) and [#15](https://github.com/vhata/sway/pull/15) provide portable atomic state callbacks; [#16](https://github.com/vhata/sway/pull/16) retains self-hosted operations and defines runtime contracts; [#17](https://github.com/vhata/sway/pull/17) assembles the shared browser application; [#20](https://github.com/vhata/sway/pull/20) adds the Cloudflare adapter. These were pending user review and landing at that verification point. Subsequent merge and pilot deployment evidence appears above; no release tag was created.
 
 | Scope | Executed outcome |
 | --- | --- |
@@ -26,7 +67,7 @@ An initial native browser run passed nine cases before the existing complete-gam
 
 The first direct Cloudflare browser run passed the two- and three-player cases but the four-player case reached the real default request budget: an already-running Wrangler process had not loaded newly created test overrides. Restarting with explicit test-only limit arguments made all three cases pass. The reproducible wrapper now supplies those arguments when launching its isolated application; production defaults are unchanged.
 
-Local workerd evidence does not establish a real Cloudflare deployment, remote recovery, production capacity or TLS/origin setup. Self-hosted deployment acceptance also remains operator work. One Durable Object contains the complete Cloudflare installation, so its capacity bounds apply to all hosted games. Runtime selection does not migrate existing identities or games; cross-runtime export/import is deferred in [TODO](../TODO.md). The original single-human local application remains separate.
+The local workerd evidence in this section does not establish a real Cloudflare deployment, remote recovery, production capacity or TLS/origin setup; the subsequent pilot evidence above is separate. Self-hosted deployment acceptance also remains operator work. One Durable Object contains the complete Cloudflare installation, so its capacity bounds apply to all hosted games. Runtime selection does not migrate existing identities or games; cross-runtime export/import is deferred in [TODO](../TODO.md). The original single-human local application remains separate.
 
 ## Historical single-server verification — 2026-09-24
 

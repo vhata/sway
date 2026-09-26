@@ -54,7 +54,17 @@ the Durable Object. Checkpoints are written atomically, flushed, mode `0600`, in
 `.cache/cloudflare-recovery/proof-*.json`. They contain synthetic credentials;
 do not publish or commit them. Output prints only the result and checkpoint path.
 An interrupted run retains its latest checkpoint; do not assume an interrupted
-restore succeeded merely because the abort RPC failed.
+restore succeeded merely because the abort RPC failed. After the changed-state
+bookmark has been saved, resume against the same prepared account/Worker:
+
+```sh
+scripts/cloudflare-recovery.sh run --resume /absolute/path/to/proof-<run-id>.json
+```
+
+Resume checks the checkpoint target, skips creation/mutation, then repeats the
+baseline restore and changed-state undo. Completed checkpoints cannot be resumed.
+Remote RPC results are normalized to JSON data before comparison because gateway
+proxy identity is unrelated to the stored application state.
 
 Whole-database recovery also restores old credential validity. This drill tests
 that historical behaviour deliberately; it does not claim revoked credentials
