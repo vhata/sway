@@ -11,6 +11,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
 
+from sway.hosting.schema import initialize_identity
+from sway.hosting.state import SqlResult, SqlSession, SqlValue
 from sway.storage import SaveFormatError
 
 APPLICATION_ID = 0x53575948
@@ -53,8 +55,7 @@ class HostedStore:
             if version not in (0, SCHEMA_VERSION):
                 raise SaveFormatError(f"Unsupported hosted database version: {version}.")
             if version == 0:
-                for statement in _SCHEMA:
-                    conn.execute(statement)
+                initialize_identity(SQLiteSession(conn))
                 conn.execute(f"PRAGMA application_id = {APPLICATION_ID}")
                 conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             else:
@@ -63,6 +64,14 @@ class HostedStore:
                 ).fetchone()
                 if row is None or row[0] != SCHEMA_VERSION:
                     raise SaveFormatError("Unsupported hosted identity schema version.")
+
+    def read[T](self, operation: Callable[[SqlSession], T]) -> T:
+        with self.transaction() as connection:
+            return operation(SQLiteSession(connection))
+
+    def write[T](self, operation: Callable[[SqlSession], T]) -> T:
+        with self.transaction(write=True) as connection:
+            return operation(SQLiteSession(connection))
 
     @contextmanager
     def transaction(self, *, write: bool = False) -> Generator[sqlite3.Connection]:
@@ -83,24 +92,13 @@ class HostedStore:
             conn.close()
 
 
-_SCHEMA = (
-    "CREATE TABLE hosting_schema (component TEXT PRIMARY KEY, version INTEGER NOT NULL)",
-    "INSERT INTO hosting_schema VALUES ('identity', 1)",
-    """CREATE TABLE principals (
-        principal_id TEXT PRIMARY KEY,
-        display_name TEXT NOT NULL,
-        created_at REAL NOT NULL
-    )""",
-    """CREATE TABLE sessions (
-        session_id TEXT PRIMARY KEY,
-        token_hash TEXT NOT NULL UNIQUE,
-        principal_id TEXT REFERENCES principals(principal_id),
-        created_at REAL NOT NULL,
-        expires_at REAL NOT NULL
-    )""",
-    "CREATE INDEX sessions_principal ON sessions(principal_id)",
-    """CREATE TABLE recovery_credentials (
-        principal_id TEXT PRIMARY KEY REFERENCES principals(principal_id),
-        code_hash TEXT NOT NULL UNIQUE
-    )""",
-)
+class SQLiteSession:
+    """Materialize values inside the transaction; never expose SQLite cursors."""
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+
+    def execute(self, sql: str, parameters: tuple[SqlValue, ...] = ()) -> SqlResult:
+        cursor = self._connection.execute(sql, parameters)
+        rows = tuple(cast(dict[str, SqlValue], dict(row)) for row in cursor.fetchall())
+        return SqlResult(rows, max(0, cursor.rowcount))

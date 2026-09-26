@@ -19,7 +19,7 @@ from sway.hosting.identity import (
     IdentityService,
     hash_secret,
 )
-from sway.hosting.storage import HostedStore
+from sway.hosting.storage import HostedStore, SQLiteSession
 from sway.storage import SaveFormatError, SQLiteStore
 
 
@@ -50,7 +50,7 @@ def test_explicit_principal_creation_consumes_anonymous_session(identity: Identi
     assert credentials.session.session.csrf_token != anonymous.session.csrf_token
     with pytest.raises(AuthenticationError):
         identity.authenticate(anonymous.token)
-    with identity.store.transaction() as conn:
+    with cast(HostedStore, identity.store).transaction() as conn:
         assert conn.execute("SELECT display_name FROM principals").fetchone()[0] == "Alice"
 
 
@@ -64,12 +64,12 @@ def test_secrets_are_hash_only_and_not_repr(identity: IdentityService) -> None:
     for secret in secrets:
         assert len(secret) >= 43
         assert secret not in repr(credentials)
-    with identity.store.transaction() as conn:
+    with cast(HostedStore, identity.store).transaction() as conn:
         data = "\n".join(conn.iterdump())
         assert all(secret not in data for secret in secrets)
         assert hash_secret(credentials.session.token) in data
         assert hash_secret(credentials.recovery_code) in data
-    assert identity.store.path.stat().st_mode & 0o777 == 0o600
+    assert cast(HostedStore, identity.store).path.stat().st_mode & 0o777 == 0o600
 
 
 def test_sessions_expire_at_exact_fixed_boundary(identity: IdentityService) -> None:
@@ -103,7 +103,7 @@ def test_recovery_rotates_code_and_revokes_all_existing_sessions(identity: Ident
     old = guest(identity)
     unrelated = guest(identity, "Bob")
     # Model another browser session belonging to this principal.
-    with identity.store.transaction(write=True) as conn:
+    with cast(HostedStore, identity.store).transaction(write=True) as conn:
         conn.execute(
             "INSERT INTO sessions VALUES (?, ?, ?, ?, ?)",
             (
@@ -146,7 +146,7 @@ def test_invalid_names_leave_anonymous_session_usable(identity: IdentityService,
     with pytest.raises(ValueError):
         identity.create_principal(anonymous.token, name)
     identity.authenticate(anonymous.token)
-    with identity.store.transaction() as conn:
+    with cast(HostedStore, identity.store).transaction() as conn:
         assert conn.execute("SELECT COUNT(*) FROM principals").fetchone()[0] == 0
 
 
@@ -181,17 +181,23 @@ def test_revocation_is_per_session_or_principal(identity: IdentityService) -> No
 def test_create_and_recovery_compose_with_caller_rollback(identity: IdentityService) -> None:
     anonymous = identity.anonymous_session()
     issued: IdentityCredentials | None = None
-    with pytest.raises(RuntimeError), identity.store.transaction(write=True) as conn:
-        issued = identity.create_principal(anonymous.token, "Alice", conn=conn)
-        identity.authenticate(issued.session.token, conn=conn)
+    with (
+        pytest.raises(RuntimeError),
+        cast(HostedStore, identity.store).transaction(write=True) as conn,
+    ):
+        issued = identity.create_principal(anonymous.token, "Alice", conn=SQLiteSession(conn))
+        identity.authenticate(issued.session.token, conn=SQLiteSession(conn))
         raise RuntimeError("joining failed")
     identity.authenticate(anonymous.token)
     assert issued is not None
     with pytest.raises(AuthenticationError):
         identity.authenticate(issued.session.token)
     old = guest(identity)
-    with pytest.raises(RuntimeError), identity.store.transaction(write=True) as conn:
-        identity.recover(anonymous.token, old.recovery_code, conn=conn)
+    with (
+        pytest.raises(RuntimeError),
+        cast(HostedStore, identity.store).transaction(write=True) as conn,
+    ):
+        identity.recover(anonymous.token, old.recovery_code, conn=SQLiteSession(conn))
         raise RuntimeError("response preparation failed")
     identity.authenticate(old.session.token)
     identity.recover(anonymous.token, old.recovery_code)
@@ -210,7 +216,7 @@ def test_concurrent_creation_has_one_winner(identity: IdentityService) -> None:
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(create) for _ in range(2)]
         assert sorted(future.result(timeout=10) for future in futures) == [False, True]
-    with identity.store.transaction() as conn:
+    with cast(HostedStore, identity.store).transaction() as conn:
         assert conn.execute("SELECT COUNT(*) FROM principals").fetchone()[0] == 1
 
 
@@ -230,11 +236,16 @@ def test_recovery_has_one_winner_across_processes(identity: IdentityService) -> 
         max_workers=2, mp_context=multiprocessing.get_context("spawn")
     ) as executor:
         futures = [
-            executor.submit(_recover_process, identity.store.path, token, credentials.recovery_code)
+            executor.submit(
+                _recover_process,
+                cast(HostedStore, identity.store).path,
+                token,
+                credentials.recovery_code,
+            )
             for token in tokens
         ]
         assert sorted(future.result(timeout=20) for future in futures) == [False, True]
-    with identity.store.transaction() as conn:
+    with cast(HostedStore, identity.store).transaction() as conn:
         assert (
             conn.execute("SELECT COUNT(*) FROM sessions WHERE principal_id IS NOT NULL").fetchone()[
                 0
@@ -245,14 +256,17 @@ def test_recovery_has_one_winner_across_processes(identity: IdentityService) -> 
 
 def test_reopen_preserves_authentication_and_recovery(identity: IdentityService) -> None:
     original = guest(identity)
-    reopened = IdentityService(HostedStore(identity.store.path, clock=Clock()))
+    reopened = IdentityService(HostedStore(cast(HostedStore, identity.store).path, clock=Clock()))
     assert reopened.authenticate(original.session.token) == original.session.session
     restored = reopened.recover(reopened.anonymous_session().token, original.recovery_code)
     assert restored.session.session.principal_id == original.session.session.principal_id
 
 
 def test_read_transactions_reject_writes(identity: IdentityService) -> None:
-    with pytest.raises(sqlite3.OperationalError), identity.store.transaction() as conn:
+    with (
+        pytest.raises(sqlite3.OperationalError),
+        cast(HostedStore, identity.store).transaction() as conn,
+    ):
         conn.execute("DELETE FROM principals")
 
 
@@ -274,17 +288,17 @@ def test_unsupported_and_local_databases_are_preserved(tmp_path: Path) -> None:
 
 
 def test_component_schema_mismatch_rejected(identity: IdentityService) -> None:
-    with identity.store.transaction(write=True) as conn:
+    with cast(HostedStore, identity.store).transaction(write=True) as conn:
         conn.execute("UPDATE hosting_schema SET version=99 WHERE component='identity'")
     with pytest.raises(SaveFormatError, match="identity schema"):
-        HostedStore(identity.store.path)
+        HostedStore(cast(HostedStore, identity.store).path)
 
 
 def test_read_transaction_sees_consistent_snapshot(identity: IdentityService) -> None:
     credentials = guest(identity)
     principal_id = credentials.session.session.principal_id
-    with identity.store.transaction(write=True) as writer:
-        with identity.store.transaction() as reader:
+    with cast(HostedStore, identity.store).transaction(write=True) as writer:
+        with cast(HostedStore, identity.store).transaction() as reader:
             before = reader.execute(
                 "SELECT display_name FROM principals WHERE principal_id=?", (principal_id,)
             ).fetchone()[0]
@@ -297,7 +311,7 @@ def test_read_transaction_sees_consistent_snapshot(identity: IdentityService) ->
                 ).fetchone()[0]
                 == before
             )
-    with identity.store.transaction() as reader:
+    with cast(HostedStore, identity.store).transaction() as reader:
         assert (
             reader.execute(
                 "SELECT display_name FROM principals WHERE principal_id=?", (principal_id,)
@@ -307,7 +321,7 @@ def test_read_transaction_sees_consistent_snapshot(identity: IdentityService) ->
 
 
 def test_existing_database_must_be_private_regular_file(identity: IdentityService) -> None:
-    path = identity.store.path
+    path = cast(HostedStore, identity.store).path
     path.chmod(0o644)
     before = path.read_bytes()
     with pytest.raises(SaveFormatError, match="owner-only regular file"):

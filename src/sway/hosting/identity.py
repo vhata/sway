@@ -5,13 +5,11 @@ from __future__ import annotations
 import hashlib
 import hmac
 import secrets
-import sqlite3
-from contextlib import nullcontext
 from dataclasses import dataclass, field
 from typing import cast
 from uuid import uuid4
 
-from sway.hosting.storage import HostedStore
+from sway.hosting.state import SqlSession, StateStore
 
 SESSION_SECONDS = 30 * 24 * 60 * 60
 ANONYMOUS_SECONDS = 30 * 60
@@ -51,17 +49,18 @@ def _csrf(token: str) -> str:
 
 
 class IdentityService:
-    def __init__(self, store: HostedStore) -> None:
+    def __init__(self, store: StateStore) -> None:
         self.store = store
 
-    def authenticate(self, token: str, *, conn: sqlite3.Connection | None = None) -> Session:
+    def authenticate(self, token: str, *, conn: SqlSession | None = None) -> Session:
         if not token or len(token) > 128:
             raise AuthenticationError("Session is invalid or expired.")
-        with nullcontext(conn) if conn is not None else self.store.transaction() as connection:
+
+        def _read(connection: SqlSession) -> Session:
             row = connection.execute(
                 "SELECT session_id, principal_id, expires_at FROM sessions WHERE token_hash = ?",
                 (hash_secret(token),),
-            ).fetchone()
+            ).one()
             if row is None or cast(float, row["expires_at"]) <= self.store.clock():
                 raise AuthenticationError("Session is invalid or expired.")
             return Session(
@@ -71,33 +70,32 @@ class IdentityService:
                 _csrf(token),
             )
 
-    def check_csrf(
-        self, token: str, csrf: str, *, conn: sqlite3.Connection | None = None
-    ) -> Session:
+        return _read(conn) if conn is not None else self.store.read(_read)
+
+    def check_csrf(self, token: str, csrf: str, *, conn: SqlSession | None = None) -> Session:
         session = self.authenticate(token, conn=conn)
         if not hmac.compare_digest(session.csrf_token.encode("utf-8"), csrf.encode("utf-8")):
             raise AuthenticationError("Invalid CSRF token.")
         return session
 
     def anonymous_session(self) -> SessionCredentials:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> SessionCredentials:
             return self._issue(conn, None)
+
+        return self.store.write(_write)
 
     def create_principal(
         self,
         anonymous_token: str,
         display_name: str,
         *,
-        conn: sqlite3.Connection | None = None,
+        conn: SqlSession | None = None,
     ) -> IdentityCredentials:
         name = display_name.strip()
         if not name or len(name) > 80 or any(ord(char) < 32 for char in name):
             raise ValueError("Display name must contain 1 to 80 printable characters.")
-        with (
-            nullcontext(conn)
-            if conn is not None
-            else self.store.transaction(write=True) as connection
-        ):
+
+        def _write(connection: SqlSession) -> IdentityCredentials:
             anonymous = self._anonymous(connection, anonymous_token)
             principal_id = uuid4().hex
             connection.execute(
@@ -107,25 +105,23 @@ class IdentityService:
             connection.execute("DELETE FROM sessions WHERE session_id = ?", (anonymous.session_id,))
             return self._credentials(connection, principal_id)
 
+        return _write(conn) if conn is not None else self.store.write(_write)
+
     def recover(
         self,
         anonymous_token: str,
         recovery_code: str,
         *,
-        conn: sqlite3.Connection | None = None,
+        conn: SqlSession | None = None,
     ) -> IdentityCredentials:
-        with (
-            nullcontext(conn)
-            if conn is not None
-            else self.store.transaction(write=True) as connection
-        ):
+        def _write(connection: SqlSession) -> IdentityCredentials:
             anonymous = self._anonymous(connection, anonymous_token)
             if not recovery_code or len(recovery_code) > 128:
                 raise AuthenticationError("Recovery code is invalid.")
             row = connection.execute(
                 "SELECT principal_id FROM recovery_credentials WHERE code_hash = ?",
                 (hash_secret(recovery_code),),
-            ).fetchone()
+            ).one()
             if row is None:
                 raise AuthenticationError("Recovery code is invalid.")
             principal_id = cast(str, row["principal_id"])
@@ -133,25 +129,31 @@ class IdentityService:
             connection.execute("DELETE FROM sessions WHERE session_id = ?", (anonymous.session_id,))
             return self._credentials(connection, principal_id)
 
+        return _write(conn) if conn is not None else self.store.write(_write)
+
     def revoke_session(self, token: str) -> None:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             conn.execute("DELETE FROM sessions WHERE token_hash = ?", (hash_secret(token),))
 
+        self.store.write(_write)
+
     def revoke_all(self, token: str) -> None:
-        with self.store.transaction(write=True) as conn:
+        def _write(conn: SqlSession) -> None:
             session = self.authenticate(token, conn=conn)
             if session.principal_id is None:
                 conn.execute("DELETE FROM sessions WHERE session_id = ?", (session.session_id,))
             else:
                 conn.execute("DELETE FROM sessions WHERE principal_id = ?", (session.principal_id,))
 
-    def _anonymous(self, conn: sqlite3.Connection, token: str) -> Session:
+        self.store.write(_write)
+
+    def _anonymous(self, conn: SqlSession, token: str) -> Session:
         session = self.authenticate(token, conn=conn)
         if session.principal_id is not None:
             raise AuthenticationError("A fresh anonymous session is required.")
         return session
 
-    def _credentials(self, conn: sqlite3.Connection, principal_id: str) -> IdentityCredentials:
+    def _credentials(self, conn: SqlSession, principal_id: str) -> IdentityCredentials:
         recovery_code = secrets.token_urlsafe(32)
         conn.execute(
             "INSERT INTO recovery_credentials VALUES (?, ?) "
@@ -160,7 +162,7 @@ class IdentityService:
         )
         return IdentityCredentials(self._issue(conn, principal_id), recovery_code)
 
-    def _issue(self, conn: sqlite3.Connection, principal_id: str | None) -> SessionCredentials:
+    def _issue(self, conn: SqlSession, principal_id: str | None) -> SessionCredentials:
         token = secrets.token_urlsafe(32)
         now = self.store.clock()
         session = Session(
