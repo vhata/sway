@@ -1,6 +1,6 @@
 {
   "name": "sway-recovery-drill",
-  "main": "worker.py",
+  "main": "src/worker.py",
   "compatibility_date": "2026-09-25",
   "compatibility_flags": ["python_workers"],
   "workers_dev": false,

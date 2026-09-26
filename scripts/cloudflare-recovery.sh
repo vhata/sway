@@ -23,8 +23,9 @@ name = os.environ.get('SWAY_RECOVERY_WORKER', 'sway-recovery-drill')
 if not re.fullmatch(r'sway-recovery-[a-z0-9][a-z0-9-]{0,45}', name):
     raise ValueError('SWAY_RECOVERY_WORKER must start with sway-recovery-')
 stage.mkdir(parents=True, exist_ok=True)
-for name_ in ('worker.py', 'controller.mjs'):
-    shutil.copy2(source / 'recovery' / name_, stage / name_)
+(stage / 'src').mkdir(exist_ok=True)
+shutil.copy2(source / 'recovery/worker.py', stage / 'src/worker.py')
+shutil.copy2(source / 'recovery/controller.mjs', stage / 'controller.mjs')
 config = json.loads((source / 'recovery/wrangler.jsonc').read_text())
 config['name'] = name
 account = os.environ.get('CLOUDFLARE_ACCOUNT_ID')
