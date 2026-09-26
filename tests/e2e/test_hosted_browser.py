@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import socket
 import ssl
 import subprocess
@@ -419,6 +420,26 @@ def test_revoked_session_poll_clears_private_board(
         expect(page.locator("#decision-form")).to_have_count(0)
 
 
+def assert_private_instance_absent(html: str, instance_id: str) -> None:
+    # A short instance ID can occur inside an unrelated random CSRF token.
+    # Keep checking the complete response, including attributes and script data.
+    assert re.search(rf"\b{re.escape(instance_id)}\b", html) is None
+
+
+def test_private_instance_assertion_ignores_token_collision_but_detects_leaks() -> None:
+    html = '<input name="csrf" value="76d8ebd9fa6ec4e46c628aadb89fb1534ac32e5102b7daf57e42ca960d16e7bb">'
+    assert "c32" in html  # The exact collision that made the original check flaky.
+    assert_private_instance_absent(html, "c32")
+    for leak in (
+        '<input name="choices" value="c32">',
+        '<li data-option="c32"></li>',
+        '<script type="application/json">{"hand": ["c32"]}</script>',
+        "<p>Private hand: c32</p>",
+    ):
+        with pytest.raises(AssertionError):
+            assert_private_instance_absent(html + leak, "c32")
+
+
 def test_reaction_is_private_to_target_and_survives_process_restart(
     browser: Browser, tmp_path: Path
 ) -> None:
@@ -501,7 +522,7 @@ def test_reaction_is_private_to_target_and_survives_process_restart(
             for observer in (pages[0], pages[2]):
                 assert "Protect yourself from this attack?" not in observer.content()
                 expect(observer.locator("#decision-form")).to_have_count(0)
-                assert protection.id not in observer.content()
+                assert_private_instance_absent(observer.content(), protection.id)
             port = int(server.url.rsplit(":", 1)[1])
         with serve(directory, port=port):
             for page in pages:
