@@ -12,6 +12,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 from urllib.error import URLError
 from urllib.parse import parse_qs
 from urllib.request import urlopen
@@ -130,6 +131,17 @@ def hosted_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[HostedS
         yield server
 
 
+@pytest.fixture(scope="module")
+def portable_ui_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[HostedServer]:
+    """Run identical browser contracts against self-hosting or an actual Worker."""
+    directory = tmp_path_factory.mktemp("portable-hosted-browser")
+    if url := os.environ.get("SWAY_E2E_HOSTED_URL"):
+        yield HostedServer(url.rstrip("/"), directory)
+    else:
+        with serve(directory) as server:
+            yield server
+
+
 def close_context(context: BrowserContext) -> None:
     if sys.exc_info()[0] is not None:
         artifacts = ROOT / "test-results"
@@ -219,8 +231,9 @@ def show_current(page: Page, server: HostedServer, table: TableView) -> None:
 
 @pytest.mark.parametrize("players", [2, 3, 4])
 def test_independent_players_join_fragment_links_ready_and_start(
-    browser: Browser, hosted_server: HostedServer, players: int
+    browser: Browser, portable_ui_server: HostedServer, players: int
 ) -> None:
+    hosted_server = portable_ui_server
     contexts: list[BrowserContext] = []
     pages: list[Page] = []
     try:
@@ -331,7 +344,7 @@ def test_lost_response_retries_identical_request_once(
         expect(page.get_by_role("button", name="Retry saved request")).to_have_count(0)
         expect(page.locator("#table")).to_have_attribute("data-revision", "1")
         assert len(payloads) == 2 and parse_qs(payloads[0]) == parse_qs(payloads[1])
-        with hosted_server.service.store.transaction() as conn:
+        with cast(HostedStore, hosted_server.service.store).transaction() as conn:
             assert (
                 conn.execute(
                     "SELECT count(*) FROM hosted_commands WHERE game_id=?", (table.game_id,)
@@ -455,7 +468,7 @@ def test_reaction_is_private_to_target_and_survives_process_restart(
             state.pending_effect = Effect("action", 0)
             reaction = advance(state, Command(state.pending.id, state.revision, (attack.id,))).state
             assert reaction.pending is not None and reaction.pending.player == 1
-            with service.store.transaction(write=True) as conn:
+            with cast(HostedStore, service.store).transaction(write=True) as conn:
                 conn.execute(
                     "UPDATE hosted_rooms SET revision=?,snapshot=? WHERE game_id=?",
                     (
