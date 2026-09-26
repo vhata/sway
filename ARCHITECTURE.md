@@ -1,6 +1,6 @@
 # Architecture contracts
 
-These boundaries guide implementation. The accepted release and unfinished capabilities are tracked in [SPEC.md](SPEC.md); implementation PRs establish the concrete typed interfaces.
+These boundaries guide implementation. [SPEC.md](SPEC.md) records the accepted local release; [the multiplayer contract](docs/MULTIPLAYER.md) covers the separate hosted extension, and [TODO.md](TODO.md) tracks remaining work. Implementation PRs establish the concrete typed interfaces.
 
 ## Rules and decisions
 
@@ -14,7 +14,7 @@ Bots receive the same filtered view and decision as a human, plus their own pers
 
 ## Presentation and privacy
 
-Use typed htpy functions accepting presentation data from a filtered player view. Rules, costs and effects never depend on visible text. HTMX submits completed decisions and requests fragments. Small JavaScript components maintain selection/order locally, preserve focus on refresh and reset when the decision ID changes.
+Use typed htpy functions accepting presentation data from a filtered player view. Rules, costs and effects never depend on visible text. Local play uses HTMX to submit decisions and request fragments; hosted play serializes polling and submissions through its fetch coordinator. Small JavaScript components maintain selection/order locally, preserve focus on refresh and reset when the decision ID changes.
 
 Filter structured events as well as state: discarded/revealed public cards and hidden draws have different visibility. Never send authoritative snapshots to templates or clients. Render pending choices only for their owner. The future API can expose the same player views and decisions without changing rules or bots.
 
@@ -32,13 +32,23 @@ The initial adapter uses standard-library `sqlite3`. Keep transactions short: lo
 
 Keep runtime data outside tracked files, isolate worktree data, and bind the development server to localhost. Reject cross-origin mutations. The local release does not promise remote identity/authentication.
 
-[The multiplayer proposal](docs/MULTIPLAYER.md) defines invite-only identity, private seats, reconnects and updates for a future implementation; it does not enable hosted access. [Development decisions](docs/DECISIONS.md) record the chosen defaults and their tradeoffs for review.
+[The multiplayer contract](docs/MULTIPLAYER.md) defines the implemented hosted identity, private seats, reconnects and updates. Its separate application and database follow the [hosted storage boundary](docs/HOSTED_STORAGE.md) and [hosting procedures](docs/HOSTING.md); local saves are never published automatically. [Development decisions](docs/DECISIONS.md) record the chosen defaults and their tradeoffs for review.
+
+## Hosted runtime adapters
+
+The hosted extension supports two deployment targets: self-hosting on a laptop or VM, and Cloudflare Python Workers. Both use the same engine, identity and multiplayer services, filtered HTTP routes, templates and browser coordinator. The separate local application remains a no-account game for one human against bots; changing hosted runtimes never exposes its saves.
+
+`StateStore.read(operation)` and `write(operation)` run synchronous callbacks with a typed `SqlSession`. Results are materialized values, not native database connections or cursors. Reads provide one consistent snapshot; writes commit all effects or roll back. Identity creation plus an invitation claim is one operation; session/membership revalidation plus a command receipt and snapshot is another. Compute engine transitions and bot choices outside these service callbacks, then recheck before committing. The public application operations remain `IdentityService` and `HostedService`; SQL sessions are an internal persistence boundary, not an HTTP API.
+
+The self-hosted adapter uses a private on-disk SQLite database and a bounded threaded bot dispatcher in one application process. The Cloudflare adapter uses SQLite storage in **one Durable Object per installation**, holding all identities, sessions, invitations, memberships and games together. That deliberately preserves cross-record atomicity instead of splitting identity and games across objects. Durable alarms drive bounded bot work without browser requests. Cloudflare additionally encloses each runtime operation and its alarm update in one outer transaction, so a pending marker cannot commit without a durable wakeup. This includes bounded computation within that object-level transaction; other requests share the object's execution capacity. Runtime adapters select operation execution and scheduling; application rules do not choose platforms.
+
+One installation object is also a capacity boundary: its requests and bot work share one object's execution and storage limits. This design does not claim automatic scaling across objects, and sharding requires a new authorization/transaction design. Review the current [Durable Object limits](https://developers.cloudflare.com/durable-objects/platform/limits/) before sizing a deployment. Self-hosted SQLite likewise remains limited to one application process on local disk.
 
 ## PostgreSQL transition
 
-**SQLite is the local-release adapter. PostgreSQL is the planned adapter before multiple application servers share persistent games.** Single-server public hosting alone does not require migration. Measured write contention, backup/failover needs or other deployment requirements can justify earlier migration.
+PostgreSQL remains an optional future adapter for a self-hosted deployment that needs multiple application servers or different recovery/availability guarantees. It is not required for the Cloudflare deployment, whose authoritative state and coordination live in a Durable Object. Measured contention, backup/failover needs or other deployment requirements can justify evaluating another adapter; player count alone does not select one.
 
-Both adapters use the same engine state format and storage operations. Backend-specific SQL and transaction handling stay inside adapters. No PostgreSQL dependency, service or ORM is required initially.
+Adapters preserve the same versioned engine snapshots and application operations. Driver-specific execution and transaction handling stay inside adapters; another database engine may also require different SQL. No PostgreSQL dependency, service or ORM is included.
 
 The deferred `postgresql-shared-game-storage` task must:
 
@@ -47,4 +57,4 @@ The deferred `postgresql-shared-game-storage` task must:
 3. Document backups and demonstrate restore before cutover. Stop writes during final transfer and verify the imported state before routing traffic.
 4. Define rollback both before new writes and after PostgreSQL accepts writes; do not point back at a stale SQLite file.
 
-Changing adapters is a real migration with operational verification. Keeping the interface small confines that work to storage and deployment.
+Selecting a hosting runtime does not transfer existing data. No automatic live migration between a self-hosted database and a Durable Object is included. A future export/import must preserve all identity, membership, snapshot and receipt records, quiesce writes, validate the destination and define rollback. Keeping the application boundary small confines that migration to persistence and deployment; it does not remove the operational checks.

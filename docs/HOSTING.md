@@ -1,13 +1,48 @@
 # Private multiplayer hosting
 
-Hosted Sway uses a separate application and database from the local game. The
-initial supported deployment is **one process, one worker, one SQLite database on
-local disk**, behind a TLS reverse proxy. Do not expose the local `sway.web:app`,
-share the database over a network filesystem, or run multiple application workers.
-Public matchmaking, account verification and distributed workers are outside this
-release. Review the complete multiplayer PR stack before deploying it.
+Hosted Sway uses a separate application and data store from the local game. The
+same multiplayer application has two deployment adapters:
 
-## Configuration and launch
+| Target | Persistent state | Background work |
+| --- | --- | --- |
+| Laptop or VM | Private SQLite database on local disk | Bounded dispatcher in one Python process |
+| Cloudflare Python Workers | SQLite storage in one Durable Object per installation | Durable alarms and bounded bot batches |
+
+The sections below describe the self-hosted adapter. Cloudflare setup and its
+platform-specific checks are in the [Cloudflare runtime guide](../deployment/cloudflare/README.md). Both targets keep identity
+and games together, use the same authorization and command contracts, and require
+a canonical HTTPS origin. Do not expose the no-account local `sway.web:app`.
+Review the complete multiplayer PR stack before deploying it; these changes do
+not publish an endpoint. Public matchmaking and account verification remain
+outside scope.
+
+The self-hosted deployment is **one process, one worker, one SQLite database on
+local disk**, behind a TLS reverse proxy. Do not share that database over a
+network filesystem or run multiple application workers. On a laptop, use the
+same hosted configuration and local TLS proxy for multiplayer, or retain
+`scripts/dev.sh` for the separate one-human, no-account game.
+
+## Cloudflare runtime
+
+Use [the Cloudflare guide](../deployment/cloudflare/README.md) for its pinned
+toolchain, bindings and local development command. It has a separate Python
+runtime/lockfile from the Python 3.12 self-hosted environment. The Worker routes
+the installation to one SQLite-backed Durable Object; its alarms drive bots.
+No local data directory, Uvicorn process, filesystem lock or SQLite backup CLI
+is used in that runtime.
+
+All identities and games share that object's transaction boundary and finite
+storage/throughput. Check [current platform limits](https://developers.cloudflare.com/durable-objects/platform/limits/)
+when sizing the installation. Configure its canonical HTTPS origin and rehearse
+platform-specific recovery before inviting players. Local runtime checks do not
+constitute a remote deployment or a production restore drill.
+
+Changing the launch target does not copy an installation. No cross-runtime
+export/import is provided; a future migration must preserve credentials,
+memberships, game revisions and receipts together, stop writes during cutover,
+and verify recovery and rollback before redirecting players.
+
+## Self-hosted configuration and launch
 
 Install the locked Python 3.12 environment with `uv sync --locked`. Run the server
 as a dedicated, unprivileged OS account. Create a private data directory outside
@@ -81,7 +116,7 @@ boards or snapshots. Invitation secrets belong in URL fragments, which browsers
 do not send to HTTP servers; never transform them into query strings or redirects.
 Recovery codes and backup copies need the same protection as live credentials.
 
-## Backup and restore
+## Self-hosted backup and restore
 
 Back up before deploying an application/schema update. Keep encrypted off-machine
 copies with a deliberate retention policy and restricted access. A backup includes
@@ -138,6 +173,8 @@ check that cross-origin mutations fail and no cookie or private response can be
 cached. Exercise join, recovery, independent browsers, concurrent choices and a
 restart at a human reaction. Confirm background bots resume without an open tab,
 and that revoking a session clears the private board on its next request. Monitor
-disk space and failed bot jobs without exporting private data. A second process
-must not be used to improve throughput: distributed ownership and the PostgreSQL
-transition require separate implementation and crash-recovery checks.
+disk space and failed bot jobs without exporting private data. A second self-hosted process
+must not be used to improve throughput: distributed ownership and another storage
+adapter require separate implementation and crash-recovery checks. Cloudflare
+uses its own coordination boundary; it does not make a shared local SQLite file
+safe for multiple processes.

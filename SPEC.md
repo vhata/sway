@@ -11,15 +11,15 @@ This is the accepted implementation target. Current capabilities and validation 
 - Two contrasting, complete data-only themes. Switching midgame updates labels, cards and history without changing mechanics, randomness or the pending decision.
 - Keyboard-operable cards and choices, visible focus, clear constraints, accessible names and reduced motion. Local selection and ordering require no network request until confirmation.
 
-The mechanics reference is the publisher's [second edition rulebook](https://www.riograndegames.com/wp-content/uploads/2016/09/Dominion2nd.pdf). Public hosting, human multiplayer, expansions, expert AI and elaborate animation are deferred. Retain the existing MIT licence. Original expression and a terminology mapping do not constitute legal clearance.
+The mechanics reference is the publisher's [second edition rulebook](https://www.riograndegames.com/wp-content/uploads/2016/09/Dominion2nd.pdf). This original local release excludes hosting, human multiplayer, expansions, expert AI and elaborate animation. Invite-only human play is now implemented as a separate [hosted extension](docs/MULTIPLAYER.md); actual deployment remains in [TODO.md](TODO.md). Retain the existing MIT licence. Original expression and a terminology mapping do not constitute legal clearance.
 
 ## Architecture commitments
 
-Python 3.12, uv, FastAPI, htpy, HTMX, small JavaScript modules, CSS and SQLite. Ruff handles Python formatting/lint; basedpyright checks strict types; pytest, Hypothesis and Playwright cover behaviour. Biome handles browser sources without a Node frontend build.
+The local release uses Python 3.12, uv, FastAPI, htpy, HTMX, small JavaScript modules, CSS and SQLite. Ruff handles Python formatting/lint; basedpyright checks strict types; pytest, Hypothesis and Playwright cover behaviour. Biome handles browser sources without a Node frontend build.
 
 Keep the rules engine independent of web, themes, bots and storage. Humans and bots answer the same structured decisions. Filter every player view before rendering or passing it to a bot. Serialize the effect stack, pending decisions and separate game/bot random streams.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) defines the storage boundary: SQLite initially, PostgreSQL before multiple application servers share games, with shared contract tests and an explicit migration task. Do not add PostgreSQL infrastructure to the local release.
+[ARCHITECTURE.md](ARCHITECTURE.md) defines the storage boundary. Local saves use SQLite. The separate hosted extension targets both laptop/VM self-hosting with SQLite and Cloudflare Python Workers with SQLite-backed Durable Objects, sharing application behaviour and transaction contracts. PostgreSQL is a deferred option for a different self-hosted scaling requirement, not a prerequisite for Cloudflare. Hosting does not expand this local release's one-human scope or automatically migrate its saves.
 
 ## Delivery
 
