@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import fcntl
-import ipaddress
 import os
-import re
 import stat
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
+
+from sway.hosting.runtime import WebConfig
 
 
 def _local_directory() -> Path:
@@ -32,40 +32,7 @@ class HostedConfig:
     trusted_proxy_ips: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        try:
-            parsed = urlsplit(self.origin)
-            host, port = parsed.hostname, parsed.port
-        except ValueError as exc:
-            raise ValueError("SWAY_HOSTED_ORIGIN must be a canonical HTTPS origin") from exc
-        if (
-            parsed.scheme != "https"
-            or not host
-            or parsed.username is not None
-            or parsed.password is not None
-            or parsed.path
-            or parsed.query
-            or parsed.fragment
-            or not self.origin.isascii()
-            or any(character.isspace() for character in self.origin)
-        ):
-            raise ValueError("SWAY_HOSTED_ORIGIN must be a canonical HTTPS origin without a path")
-        try:
-            address = ipaddress.ip_address(host)
-        except ValueError:
-            if len(host) > 253 or not all(
-                re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label)
-                for label in host.split(".")
-            ):
-                raise ValueError("SWAY_HOSTED_ORIGIN has an invalid host") from None
-            authority = host
-        else:
-            authority = f"[{address.compressed}]" if address.version == 6 else str(address)
-        if port is not None and port != 443:
-            if port == 0:
-                raise ValueError("SWAY_HOSTED_ORIGIN has an invalid port")
-            authority += f":{port}"
-        if self.origin != f"https://{authority}":
-            raise ValueError("SWAY_HOSTED_ORIGIN must use its canonical spelling (no default port)")
+        self.web_config()
         hosted, local = (
             self.data_dir.expanduser().resolve(),
             self.local_data_dir.expanduser().resolve(),
@@ -76,17 +43,17 @@ class HostedConfig:
             )
         object.__setattr__(self, "data_dir", hosted)
         object.__setattr__(self, "local_data_dir", local)
-        for name in (
-            "max_request_bytes",
-            "mutation_requests_per_minute",
-            "credential_requests_per_minute",
-            "max_rate_limit_keys",
-        ):
-            value = getattr(self, name)
-            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-                raise ValueError(f"{name} must be a positive integer")
         if self.trusted_proxy_ips:
             raise ValueError("Forwarded headers are unsupported; preserve Host at the TLS proxy")
+
+    def web_config(self) -> WebConfig:
+        return WebConfig(
+            origin=self.origin,
+            max_request_bytes=self.max_request_bytes,
+            mutation_requests_per_minute=self.mutation_requests_per_minute,
+            credential_requests_per_minute=self.credential_requests_per_minute,
+            max_rate_limit_keys=self.max_rate_limit_keys,
+        )
 
     @property
     def canonical_host(self) -> str:
