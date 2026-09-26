@@ -3,6 +3,7 @@
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -170,7 +171,7 @@ def test_restored_multiplayer_database_keeps_sessions_seats_and_command_receipts
     accepted = service.submit(actor.session.token, table.game_id, "first-choice", command)
     bob_view = service.view(bob.session.token, table.game_id)
     backup, restored = tmp_path / "backup.sqlite3", tmp_path / "restored.sqlite3"
-    _ = copy_database(service.store.path, backup)
+    _ = copy_database(cast(HostedStore, service.store).path, backup)
     _ = copy_database(backup, restored)
     recovered = HostedService(HostedStore(restored))
     assert recovered.identity.authenticate(alice.session.token) == alice.session.session
