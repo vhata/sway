@@ -24,9 +24,15 @@ mechanism with synthetic data; **the deployed application's `Installation` was
 not restored**. Whole-database restoration deliberately restores historical
 credential validity, including formerly revoked sessions. Baseline, changed and
 undo bookmarks remain outside the object in atomic, flushed mode-0600 files;
-credentials and bookmark contents are not published. The private recovery Worker
-and synthetic namespace remain retained; their permanent deletion requires
-explicit operator approval.
+credentials and bookmark contents are not published.
+
+On 2026-09-28, after explicit operator approval and fresh target verification,
+only `sway-recovery-20260926` and its `RecoveryDrill` namespace were permanently
+retired. Cloudflare's API confirmed the namespace absent and returned 404 for the
+Worker. The application's deployment, settings and `Installation` namespace were
+unchanged; its endpoint returned HTTP 200 with certificate verification enabled.
+Both protected recovery checkpoints retained their original contents and mode
+`0600`. The drill's remote recovery history was deleted with its namespace.
 
 The seven-group HTTP probe cancelled its two synthetic tables. Browser-created
 human-only tables remain in the pilot; those scenarios do not include cleanup or
