@@ -140,18 +140,34 @@ def main() -> None:
             "Workers: alarm delivery, background bot progress, persisted state after restart, "
             "unreadable-table isolation passed"
         )
-        if "--browser" in sys.argv[1:]:
+        if {"--browser", "--capacity"}.intersection(sys.argv[1:]):
             app_directory = directory / "application"
             app_directory.mkdir()
             with server(app_directory, application=True):
                 environment = dict(os.environ)
                 environment["SWAY_E2E_HOSTED_URL"] = f"https://localhost:{PORT + 2}"
-                subprocess.run(
-                    ["scripts/e2e.sh", "-k", "independent_players"],
-                    cwd=ROOT,
-                    env=environment,
-                    check=True,
-                )
+                if "--browser" in sys.argv[1:]:
+                    subprocess.run(
+                        [
+                            "scripts/e2e.sh",
+                            "-s",
+                            "-k",
+                            "independent_players or complete_hosted_game",
+                        ],
+                        cwd=ROOT,
+                        env=environment,
+                        check=True,
+                    )
+                if "--capacity" in sys.argv[1:]:
+                    subprocess.run(
+                        [
+                            sys.executable,
+                            "scripts/hosted-capacity.py",
+                            environment["SWAY_E2E_HOSTED_URL"],
+                        ],
+                        cwd=ROOT,
+                        check=True,
+                    )
 
 
 if __name__ == "__main__":

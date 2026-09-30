@@ -17,7 +17,7 @@ from pathlib import Path
 from threading import Event, Thread, Timer
 from typing import cast
 from urllib.error import URLError
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 from uuid import uuid4
 
@@ -157,7 +157,9 @@ def close_context(context: BrowserContext) -> None:
 def player_browser(
     browser: Browser, server: HostedServer, credentials: IdentityCredentials | None = None
 ) -> Generator[tuple[BrowserContext, Page]]:
-    context = browser.new_context(ignore_https_errors=True)
+    context = browser.new_context(
+        ignore_https_errors=urlsplit(server.url).hostname in {"localhost", "127.0.0.1"}
+    )
     context.tracing.start(screenshots=True, snapshots=True)
     try:
         if credentials:
@@ -869,3 +871,79 @@ def test_save_queued_behind_a_lobby_refresh_keeps_edits_after_conflict(
         expect(page.get_by_text("Seat 3:", exact=False)).to_be_visible()
         saved = service.view(host.session.token, table.game_id)
         assert [seat.controller for seat in saved.seats] == ["human", "human", "economy"]
+
+
+def test_complete_hosted_game_reaches_scoring_and_saved_result(
+    browser: Browser, portable_ui_server: HostedServer
+) -> None:
+    """Finish through public UI only, including on a certificate-verified live host."""
+    server = portable_ui_server
+    remote = urlsplit(server.url).hostname not in {"localhost", "127.0.0.1"}
+    # Keep live mutations below the unchanged 60/minute installation limit.
+    pause = 1.5 if remote else 0
+    started = time.monotonic()
+    with player_browser(browser, server) as (_, page):
+        create_player(page, server, f"Acceptance {uuid4().hex[:8]}")
+        page.locator('select[name="controller1"]').select_option("economy")
+        page.get_by_role("button", name="Create table", exact=True).click()
+        table_url = page.url
+        completed = False
+        decisions = 0
+        try:
+            page.get_by_role("button", name="I'm ready", exact=True).click()
+            page.get_by_role("button", name="Start game", exact=True).click()
+            for _ in range(400):
+                page.wait_for_selector("#decision-form, .finished", timeout=30000)
+                if page.locator(".finished").count():
+                    break
+                form = page.locator("#decision-form")
+                choices = form.locator('input[name="choices"]')
+                values = [choice.input_value() for choice in choices.all()]
+                # Buy only money and victory cards; handle bot attacks with the
+                # minimum legal selection. Read no database or opponent state.
+                priority = (
+                    "end-actions",
+                    "play-treasures",
+                    "victory3",
+                    "treasure3",
+                    "treasure2",
+                    "end-turn",
+                )
+                selected = next((value for value in priority if value in values), None)
+                minimum = int(form.get_attribute("data-minimum") or "0")
+                selections = [selected] if selected else values[:minimum]
+                for value in selections:
+                    control = form.locator(f'input[name="choices"][value="{value}"]')
+                    if control.get_attribute("type") != "hidden":
+                        control.check()
+                revision = page.locator("#table").get_attribute("data-revision")
+                page.wait_for_timeout(pause * 1000)
+                page.get_by_role("button", name="Confirm choice").click()
+                expect(page.locator("#table")).not_to_have_attribute(
+                    "data-revision", revision or "", timeout=15000
+                )
+                decisions += 1
+            else:
+                pytest.fail("Hosted game did not finish within 400 human decisions")
+            result = page.locator(".finished")
+            expect(result).to_contain_text("points")
+            scores = result.inner_text()
+            revision = page.locator("#table").get_attribute("data-revision")
+            page.reload()
+            expect(result).to_have_text(scores, use_inner_text=True)
+            expect(page.locator("#table")).to_have_attribute("data-revision", revision or "")
+            completed = True
+            print(
+                f"Hosted full game: {decisions} human decisions, revision {revision}, "
+                f"{time.monotonic() - started:.2f}s; scoring survives reload"
+            )
+        finally:
+            if not completed:
+                # Cancel only this run's table, never another saved game. A
+                # finished game remains as inert evidence; no deletion API exists.
+                page.goto(table_url)
+                cancel = page.get_by_role("button", name="Cancel table", exact=True)
+                if cancel.count():
+                    page.get_by_text("Table controls", exact=True).click()
+                    page.wait_for_timeout(pause * 1000)
+                    cancel.click()
