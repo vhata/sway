@@ -11,7 +11,9 @@ This is the accepted implementation target. Current capabilities and validation 
 - Two contrasting, complete data-only themes. Switching midgame updates labels, cards and history without changing mechanics, randomness or the pending decision.
 - Keyboard-operable cards and choices, visible focus, clear constraints, accessible names and reduced motion. Local selection and ordering require no network request until confirmation.
 
-The mechanics reference is the publisher's [second edition rulebook](https://www.riograndegames.com/wp-content/uploads/2016/09/Dominion2nd.pdf). This original local release excludes hosting, human multiplayer, expansions, expert AI and elaborate animation. Invite-only human play is now implemented as a separate [hosted extension](docs/MULTIPLAYER.md); actual deployment remains in [TODO.md](TODO.md). Retain the existing MIT licence. Original expression and a terminology mapping do not constitute legal clearance.
+The mechanics reference is the publisher's [second edition rulebook](https://www.riograndegames.com/wp-content/uploads/2016/09/Dominion2nd.pdf). This original local release excludes hosting, human multiplayer, expansions, expert AI and elaborate animation. Invite-only human play is now implemented as a separate [hosted extension](docs/MULTIPLAYER.md), with a deployed Cloudflare pilot recorded in [hosted acceptance](docs/HOSTED_ACCEPTANCE.md). Remaining operational work lives in [TODO.md](TODO.md). Retain the existing MIT licence. Original expression and a terminology mapping do not constitute legal clearance.
+
+The next work is hosted playthrough verification, installation recovery and capacity assessment, plus validation and documentation cleanup. Manual playtesting will inform later feature choices. Expansions and expert bot strategies are future directions, not additions to the accepted release or scheduled implementation. Cross-runtime transfer is low priority; PostgreSQL is a distant, conditional scaling option.
 
 ## Architecture commitments
 

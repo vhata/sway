@@ -12,6 +12,11 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
 
 ### P3 Low
 
+- [PLATFORM] `portable-hosted-data-transfer` — **Move an existing hosted installation between SQLite and Cloudflare.** Selecting a runtime does not transfer its players, credentials or games. Low priority; current work focuses on hosted verification and recovery.
+  - Starting point: Define a versioned whole-installation export/import with validation, downtime/cutover and rollback; preserve credential revocations, memberships, snapshots, revisions and receipts. Do not merge installations or copy local single-human saves into hosted mode.
+  - Source: dual-hosting adapter implementation, 2026-09-25; user priority, 2026-09-30
+  - Related: `hosted-installation-operations`
+
 ### Unprioritized
 
 - [PLATFORM] `hosted-installation-operations` — **Finish installation recovery and capacity acceptance.** The Cloudflare pilot has verified TLS/origin, HTTP/browser behaviour and isolated synthetic PITR; the deployed Installation still needs its own operational recovery rehearsal and capacity bounds.
@@ -19,11 +24,6 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
   - Source: hosted multiplayer implementation, 2026-09-24
   - Remaining from: `hosted-deployment-cutover`
   - Related: `postgresql-shared-game-storage`
-
-- [PLATFORM] `portable-hosted-data-transfer` — **Move an existing hosted installation between SQLite and Cloudflare.** Selecting a runtime does not transfer its players, credentials or games.
-  - Starting point: Define a versioned whole-installation export/import with validation, downtime/cutover and rollback; preserve credential revocations, memberships, snapshots, revisions and receipts. Do not merge installations or copy local single-human saves into hosted mode.
-  - Source: dual-hosting adapter implementation, 2026-09-25
-  - Related: `hosted-installation-operations`
 
 ## Needs proof of concept
 
@@ -47,9 +47,9 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
 
 ### P3 Low
 
-### Unprioritized
-
-- [BACKEND] `postgresql-shared-game-storage` — **Add PostgreSQL if multiple self-hosted servers must share games.** A server database is a future self-hosting adapter; the Cloudflare installation already uses its own durable state boundary.
+- [BACKEND] `postgresql-shared-game-storage` — **Add PostgreSQL if multiple self-hosted servers must share games.** A distant, conditional scaling option, behind cross-runtime transfer; the Cloudflare installation already uses its own durable state boundary.
   - Starting point: Implement an adapter preserving the complete identity/game transaction contracts, run shared and cross-process concurrency tests, and execute the verified transfer/backup/cutover/rollback requirements in ARCHITECTURE.md. Preserve game IDs, revisions, snapshots and history; add infrastructure only when deployment calls for it.
-  - Source: accepted Sway persistence plan, 2026-09-22
+  - Source: accepted Sway persistence plan, 2026-09-22; user priority, 2026-09-30
   - Related: `hosted-installation-operations`
+
+### Unprioritized
