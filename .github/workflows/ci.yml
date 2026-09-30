@@ -34,5 +34,6 @@ jobs:
           name: failure-evidence
           path: |
             test-results/
+            browser-evidence/
             coverage.xml
           if-no-files-found: ignore
