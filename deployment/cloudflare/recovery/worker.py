@@ -177,3 +177,15 @@ class Default(WorkerEntrypoint):
 
     async def replay(self, run_id, proof):
         return await self._object(run_id).replay(proof)
+
+
+class InstallationOperator(WorkerEntrypoint):
+    """Drill-only adapter for exercising the unmodified production operator client."""
+
+    async def recovery(self, operation, expected_id="", bookmark=""):
+        run_id = getattr(self.env, "SWAY_RECOVERY_OPERATOR_RUN_ID", "")
+        if not re.fullmatch(r"[a-f0-9]{32}", run_id):
+            raise ValueError("An explicit synthetic operator run ID is required")
+        return await self.env.RECOVERY.getByName("synthetic-" + run_id).recovery(
+            operation, expected_id, bookmark
+        )

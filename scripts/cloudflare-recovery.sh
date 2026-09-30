@@ -28,6 +28,11 @@ shutil.copy2(source / 'recovery/worker.py', stage / 'src/worker.py')
 shutil.copy2(source / 'recovery/controller.mjs', stage / 'controller.mjs')
 config = json.loads((source / 'recovery/wrangler.jsonc').read_text())
 config['name'] = name
+operator_run = os.environ.get('SWAY_RECOVERY_OPERATOR_RUN_ID')
+if operator_run:
+    if not re.fullmatch(r'[a-f0-9]{32}', operator_run):
+        raise ValueError('Invalid SWAY_RECOVERY_OPERATOR_RUN_ID')
+    config['vars']['SWAY_RECOVERY_OPERATOR_RUN_ID'] = operator_run
 account = os.environ.get('CLOUDFLARE_ACCOUNT_ID')
 if account:
     if not re.fullmatch(r'[a-f0-9]{32}', account):

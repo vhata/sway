@@ -12,7 +12,8 @@ const resumePath = resumeIndex === -1 ? null : process.argv[resumeIndex + 1];
 assert.ok(resumeIndex === -1 || resumePath, "--resume requires a checkpoint path");
 assert.ok(!local || !resumePath, "Resume is only supported for remote recovery");
 const saved = resumePath ? JSON.parse(await readFile(resumePath, "utf8")) : null;
-const runId = saved?.runId ?? randomBytes(16).toString("hex");
+const runId =
+  saved?.runId ?? process.env.SWAY_RECOVERY_OPERATOR_RUN_ID ?? randomBytes(16).toString("hex");
 assert.match(runId, /^[a-f0-9]{32}$/);
 const checkpoint = resumePath
   ? path.resolve(resumePath)
