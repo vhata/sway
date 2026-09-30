@@ -103,7 +103,10 @@ The [acceptance record](../../docs/HOSTED_ACCEPTANCE.md) includes the verified
 Cloudflare pilot and an isolated remote PITR drill. The
 [private recovery harness](recovery/README.md) restores synthetic data in its own
 namespace; it does not restore the deployed application's `Installation`.
-Actual installation recovery procedures, capacity and self-hosted deployment
+The [installation recovery runbook](recovery/INSTALLATION.md) supplies private,
+maintenance-gated capture/restore/undo for the actual application object. A
+production maintenance window and restore remain operator-controlled acceptance.
+Capacity and self-hosted deployment
 acceptance remain operator work.
 
 Sources: [Python Workers](https://developers.cloudflare.com/workers/languages/python/),

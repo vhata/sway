@@ -5,7 +5,7 @@ import json
 import re
 from dataclasses import asdict
 
-from recovery_runtime import Runtime
+from recovery_runtime import Installation, Runtime
 from workers import DurableObject, WorkerEntrypoint
 
 from sway.bots import BotState, choose
@@ -122,14 +122,16 @@ class RecoveryDrill(DurableObject):
         }
 
     async def bookmark(self):
-        await self.ctx.storage.sync()
-        return await self.ctx.storage.getCurrentBookmark()
+        return await Installation.recovery(self, "bookmark", str(self.ctx.id))
 
     async def prepare_restore(self, bookmark):
-        return await self.ctx.storage.onNextSessionRestoreBookmark(bookmark)
+        return await Installation.recovery(self, "restore", str(self.ctx.id), bookmark)
 
     async def restart(self):
-        self.ctx.abort("Synthetic recovery drill restart")
+        return await Installation.recovery(self, "restart", str(self.ctx.id))
+
+    async def recovery(self, operation, expected_id="", bookmark=""):
+        return await Installation.recovery(self, operation, expected_id, bookmark)
 
     async def replay(self, proof):
         saved = proof["command"]
@@ -147,6 +149,9 @@ class RecoveryDrill(DurableObject):
 
 
 class Default(WorkerEntrypoint):
+    async def recovery(self, run_id, operation, expected_id="", bookmark=""):
+        return await self._object(run_id).recovery(operation, expected_id, bookmark)
+
     def _object(self, run_id):
         if not re.fullmatch(r"[a-f0-9]{32}", run_id):
             raise ValueError("Expected a unique drill run identifier")

@@ -86,6 +86,11 @@ try {
     const proof = snapshot(await service.seed(runId));
     evidence.proof = proof;
     const baseline = await inspect(proof);
+    const installation = snapshot(await service.recovery(runId, "inspect"));
+    assert.match(installation.objectId, /^[a-f0-9]{64}$/);
+    assert.equal(installation.counts.principals, 2);
+    await assert.rejects(service.recovery(runId, "bookmark", "wrong-object"));
+    evidence.installation = installation;
     assert.equal(baseline.revision, 1);
     assert.equal(baseline.status, "active");
     assert.deepEqual(baseline.receipts, ["baseline"]);
@@ -124,6 +129,9 @@ try {
     await save();
     const restored = await restartAndInspect(proof, newToken);
     assert.deepEqual(restored, baseline);
+    if (evidence.installation) {
+      assert.deepEqual(snapshot(await service.recovery(runId, "inspect")), evidence.installation);
+    }
     assert.equal(await service.replay(runId, proof), 1);
     assert.deepEqual(await inspect(proof, newToken), baseline);
     evidence.restored = restored;

@@ -1,5 +1,8 @@
 # Private Cloudflare recovery drill
 
+For an actual application installation, use the [installation runbook](INSTALLATION.md).
+This drill exercises the same Installation recovery methods in isolation.
+
 This operator tool deploys a separate RPC-only Worker and a separate SQLite
 Durable Object namespace. It reuses Sway's actual hosted runtime and domain
 services. It never binds to the application's `Installation` namespace, and

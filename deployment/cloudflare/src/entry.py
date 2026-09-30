@@ -1,5 +1,7 @@
 """Cloudflare owns transport and lifecycle; shared Sway owns application behaviour."""
 
+import hashlib
+import json
 import time
 from contextlib import asynccontextmanager
 
@@ -125,6 +127,12 @@ class Installation(DurableObject):
         self.app = create_application(self.settings, self.runtime)
 
     async def fetch(self, request):
+        if getattr(self.env, "SWAY_RECOVERY_MAINTENANCE", "false") == "true":
+            return Response(
+                "Installation maintenance. Please try again later.",
+                status=503,
+                headers={"Cache-Control": "no-store", "Retry-After": "60"},
+            )
         # This header is overwritten by Default using Cloudflare's trusted peer.
         peer = request.headers.get("x-sway-peer") or "unknown"
 
@@ -136,6 +144,10 @@ class Installation(DurableObject):
         return await asgi.fetch(application, request, self.env)
 
     async def alarm(self):
+        if getattr(self.env, "SWAY_RECOVERY_MAINTENANCE", "false") == "true":
+            # Keep the wake-up alive across maintenance without advancing a game.
+            await self.ctx.storage.setAlarm(int(time.time() * 1000) + 60000)
+            return
         # Bound work per invocation. At-least-once delivery is safe because the
         # service commits each bot decision with its expected revision.
         for game_id in self.runtime.service.pending_bot_games()[:4]:
@@ -143,9 +155,58 @@ class Installation(DurableObject):
         if self.runtime.service.pending_bot_games():
             await self.ctx.storage.setAlarm(int(time.time() * 1000) + 100)
 
+    async def recovery(self, operation, expected_id="", bookmark=""):
+        """Private RPC, deliberately unavailable until deployment enters maintenance."""
+        if getattr(self.env, "SWAY_RECOVERY_MAINTENANCE", "false") != "true":
+            raise ValueError("Recovery requires deployment maintenance")
+        object_id = str(self.ctx.id)
+        if operation != "inspect" and expected_id != object_id:
+            raise ValueError("Recovery object ID does not match")
+        if operation == "inspect":
+            digest = hashlib.sha256()
+            counts = {}
+            schema = self.ctx.storage.sql.exec(
+                "SELECT type,name,sql FROM sqlite_master "
+                "WHERE name NOT GLOB '_cf_*' ORDER BY type,name"
+            ).toArray()
+            digest.update(json.dumps(schema, sort_keys=True).encode())
+            for table in schema:
+                if table["type"] != "table":
+                    continue
+                name = table["name"]
+                quoted = name.replace('"', '""')
+                rows = self.ctx.storage.sql.exec(f'SELECT * FROM "{quoted}"').toArray()
+                encoded = sorted(json.dumps(row, sort_keys=True) for row in rows)
+                digest.update(json.dumps([table, encoded], sort_keys=True).encode())
+                counts[name] = len(rows)
+            return {"objectId": object_id, "digest": digest.hexdigest(), "counts": counts}
+        if operation == "bookmark":
+            await self.ctx.storage.sync()
+            return await self.ctx.storage.getCurrentBookmark()
+        if operation == "restore":
+            if not bookmark:
+                raise ValueError("A recovery bookmark is required")
+            return await self.ctx.storage.onNextSessionRestoreBookmark(bookmark)
+        if operation == "restart":
+            self.ctx.abort("Operator recovery restart")
+        raise ValueError("Unknown recovery operation")
+
 
 class Default(WorkerEntrypoint):
+    async def recovery(self, operation, expected_id="", bookmark=""):
+        if getattr(self.env, "SWAY_RECOVERY_MAINTENANCE", "false") != "true":
+            raise ValueError("Recovery requires deployment maintenance")
+        return await self.env.INSTALLATION.getByName("installation").recovery(
+            operation, expected_id, bookmark
+        )
+
     async def fetch(self, request):
+        if getattr(self.env, "SWAY_RECOVERY_MAINTENANCE", "false") == "true":
+            return Response(
+                "Installation maintenance. Please try again later.",
+                status=503,
+                headers={"Cache-Control": "no-store", "Retry-After": "60"},
+            )
         from js import Request
 
         forwarded = Request.new(request.js_object)
