@@ -167,7 +167,7 @@ class Installation(DurableObject):
             counts = {}
             schema = self.ctx.storage.sql.exec(
                 "SELECT type,name,sql FROM sqlite_master "
-                "WHERE name NOT GLOB '_cf_*' ORDER BY type,name"
+                "WHERE name NOT GLOB '_cf_*' AND name NOT GLOB '__cf_*' ORDER BY type,name"
             ).toArray()
             digest.update(json.dumps(schema, sort_keys=True).encode())
             for table in schema:

@@ -89,7 +89,7 @@ try {
     const installation = snapshot(await service.recovery(runId, "inspect"));
     assert.match(installation.objectId, /^[a-f0-9]{64}$/);
     assert.equal(installation.counts.principals, 2);
-    await assert.rejects(service.recovery(runId, "bookmark", "wrong-object"));
+    await assert.rejects(async () => await service.recovery(runId, "bookmark", "wrong-object"));
     evidence.installation = installation;
     assert.equal(baseline.revision, 1);
     assert.equal(baseline.status, "active");
