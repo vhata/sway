@@ -20,6 +20,7 @@ build/
 playwright-report/
 test-results/
 browser-evidence/
+daily-evidence/
 .DS_Store
 .env
 .env.*

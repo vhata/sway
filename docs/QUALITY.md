@@ -37,6 +37,57 @@ The paths stay outside pytest-playwright's default `test-results/`, which even
 non-browser pytest sessions clear at startup. CI uploads both directories when a
 check fails.
 
+## Daily verification
+
+The **Daily verification** workflow runs on `main` at **11:23 UTC every day**
+(04:23 Pacific daylight time / 03:23 Pacific standard time). GitHub schedules are
+best-effort and can be delayed; the off-hour minute avoids the busiest scheduling
+boundary. The schedule becomes active when the workflow lands on the default
+branch. Use Actions → Daily verification → Run workflow to run it manually on
+the selected ref. Every lane checks out the same event commit. PRs changing the
+daily workflow or its dedicated gates also run it before landing.
+
+Seven independent jobs collect results even if another job fails:
+
+- Full formatting, lint, strict types, unit/integration tests, both coverage
+  thresholds, source/wheel builds and installed-wheel smoke. The invariant
+  property runs 300 examples instead of the normal 30; the Actions run ID seeds
+  Hypothesis so a rerun reproduces the corpus.
+- The complete native Chromium suite, including hosted browser acceptance.
+- Real local Workers contracts, pending-alarm restart and 2/3/4-player browser
+  checks, then package build/install with the generated Workers tree present.
+- Private local recovery RPC against synthetic state, including identity,
+  game/receipt changes and credential revocation. The ordinary unit suite also
+  checks maintenance gating and the operator controller's lost-response recovery.
+- Three simulation jobs for 2/3/4 players, each running 600 games: 25 fixed seeds
+  and 25 rotating seeds across preset/random kingdoms, all three homogeneous
+  bot profiles and three mixed seat rotations. Unfinished games fail the job;
+  later successful batches cannot hide a failure.
+
+The daily concurrency group is separate from push/PR quality checks and does not
+cancel an in-progress daily run. There are no automatic test retries. Artifacts
+are uploaded on success and failure for 14 days: logs, coverage/JUnit output,
+simulation JSON with seeds/configurations, and each browser run's evidence.
+Recovery proof files remain outside uploads. These tests use local synthetic
+state and no deployment credentials; local workerd does not support PITR, so
+this workflow does not establish live production restore or capacity evidence.
+
+To reproduce the extended gates locally, use the same scripts and recorded seeds:
+
+```sh
+SWAY_PROPERTY_EXAMPLES=300 scripts/check.sh --hypothesis-seed <run-id> --hypothesis-show-statistics
+scripts/daily-simulations.sh 2 <run-id> # Repeat for 3 and 4 players.
+scripts/cloudflare-recovery-check.sh
+scripts/cloudflare-check.sh --browser
+scripts/build.sh && scripts/install-smoke.sh
+```
+
+Simulation output is under `daily-evidence/simulations-<players>/`; recovery logs
+are under `daily-evidence/recovery/`. Browser evidence uses the per-run directories
+described above. GitHub's [schedule documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+describes delay and inactivity-disable behaviour; a missing scheduled run is not
+a passing check.
+
 ## PR evidence
 
 Include checks actually run, outcomes and any limits. For a behaviour change, include a concise reproducible scenario. Use an independent sub-agent review before presenting implementation PRs. See [review guidance](CODE_REVIEW_GUIDE.md) for findings and immutable review ledgers.
