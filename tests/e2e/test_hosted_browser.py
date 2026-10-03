@@ -145,8 +145,8 @@ def portable_ui_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[Ho
 
 def close_context(context: BrowserContext) -> None:
     if sys.exc_info()[0] is not None:
-        artifacts = ROOT / "test-results"
-        artifacts.mkdir(exist_ok=True)
+        artifacts = Path(os.environ.get("SWAY_E2E_ARTIFACT_DIR", ROOT / "test-results"))
+        artifacts.mkdir(parents=True, exist_ok=True)
         context.tracing.stop(path=str(artifacts / f"hosted-{uuid4().hex}.zip"))
     context.close()
 

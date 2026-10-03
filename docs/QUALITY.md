@@ -26,6 +26,17 @@ Do not claim tests passed when no tests were collected or a suite was skipped. F
 
 Use tests that fail for a meaningful regression, not assertions copying implementation details. Documentation-only work needs link/claim checks, not invented tests. Run the relevant checks once, then repeat or broaden only to investigate a concrete failure, code change or remaining concern.
 
+`scripts/e2e.sh` prints a unique `browser-evidence/run-*` directory for each invocation,
+including reruns. It retains the commit, pytest arguments/output/exit status,
+failed Playwright and hosted-context traces, and the temporary server databases
+and logs. The script owns pytest's `--output` and `--basetemp` paths; use the
+printed directory to inspect evidence. Existing runs remain untouched. These
+ignored directories can contain private sessions and game state: retain a failed
+run before cleaning local artifacts and share only the relevant sanitized evidence.
+The paths stay outside pytest-playwright's default `test-results/`, which even
+non-browser pytest sessions clear at startup. CI uploads both directories when a
+check fails.
+
 ## PR evidence
 
 Include checks actually run, outcomes and any limits. For a behaviour change, include a concise reproducible scenario. Use an independent sub-agent review before presenting implementation PRs. See [review guidance](CODE_REVIEW_GUIDE.md) for findings and immutable review ledgers.
