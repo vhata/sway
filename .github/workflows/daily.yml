@@ -1,0 +1,157 @@
+name: Daily verification
+on:
+  schedule:
+    - cron: '23 11 * * *'
+  workflow_dispatch:
+  # Exercise the complete daily workflow before changes to its gates land.
+  pull_request:
+    paths:
+      - '.github/workflows/daily.yml'
+      - 'scripts/daily-*'
+      - 'scripts/cloudflare-recovery-check*'
+      - 'tests/test_daily_*'
+      - 'tests/test_engine_rules.py'
+permissions:
+  contents: read
+concurrency:
+  group: daily-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  quality:
+    name: Full quality and extended invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version-file: pyproject.toml
+          enable-cache: true
+      - run: scripts/setup.sh
+      - name: Full gates with 10x property examples
+        env:
+          SWAY_PROPERTY_EXAMPLES: '300'
+          PROPERTY_SEED: ${{ github.run_id }}
+        run: |
+          mkdir -p daily-evidence
+          git rev-parse HEAD | tee daily-evidence/commit.txt
+          echo "Hypothesis seed: $PROPERTY_SEED" | tee daily-evidence/property-seed.txt
+          scripts/check.sh --hypothesis-seed "$PROPERTY_SEED" --hypothesis-show-statistics \
+            --junitxml=daily-evidence/unit.xml 2>&1 | tee daily-evidence/quality.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-quality-${{ github.run_attempt }}
+          retention-days: 14
+          path: |
+            daily-evidence/
+            coverage.xml
+            coverage.json
+          if-no-files-found: warn
+  browser:
+    name: Full native browser suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version-file: pyproject.toml
+          enable-cache: true
+      - run: scripts/setup.sh
+      - run: scripts/install-browsers.sh --with-deps
+      - run: scripts/e2e.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-browser-${{ github.run_attempt }}
+          retention-days: 14
+          path: browser-evidence/
+          if-no-files-found: warn
+  workers:
+    name: Workers contracts, browser and packaging
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version-file: pyproject.toml
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: scripts/setup.sh
+      - run: scripts/install-browsers.sh --with-deps
+      - name: Real local Workers contracts, restart and multiplayer
+        run: |
+          mkdir -p daily-evidence
+          git rev-parse HEAD > daily-evidence/commit.txt
+          scripts/cloudflare-check.sh --browser 2>&1 | tee daily-evidence/workers.log
+      - name: Build and install after Workers staging
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p daily-evidence
+          scripts/build.sh 2>&1 | tee daily-evidence/build.log
+          scripts/install-smoke.sh 2>&1 | tee daily-evidence/install.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-workers-${{ github.run_attempt }}
+          retention-days: 14
+          path: |
+            daily-evidence/
+            browser-evidence/
+          if-no-files-found: warn
+  recovery:
+    name: Private local recovery RPC
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version-file: pyproject.toml
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: scripts/setup.sh
+      - run: scripts/cloudflare-recovery-check.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-recovery-${{ github.run_attempt }}
+          retention-days: 14
+          path: daily-evidence/recovery/
+          if-no-files-found: warn
+  simulations:
+    name: Seeded games (${{ matrix.players }} players)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        players: [2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version-file: pyproject.toml
+          enable-cache: true
+      - run: scripts/setup.sh
+      - name: Fixed and rotating seeds across profiles and kingdoms
+        env:
+          PLAYERS: ${{ matrix.players }}
+          SIMULATION_SEED: ${{ github.run_id }}
+        run: scripts/daily-simulations.sh "$PLAYERS" "$SIMULATION_SEED"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-simulations-${{ matrix.players }}-${{ github.run_attempt }}
+          retention-days: 14
+          path: daily-evidence/
+          if-no-files-found: warn
