@@ -1,5 +1,8 @@
 # Private Cloudflare recovery drill
 
+For an actual application installation, use the [installation runbook](INSTALLATION.md).
+This drill exercises the same Installation recovery methods in isolation.
+
 This operator tool deploys a separate RPC-only Worker and a separate SQLite
 Durable Object namespace. It reuses Sway's actual hosted runtime and domain
 services. It never binds to the application's `Installation` namespace, and
@@ -81,3 +84,30 @@ Sources: [PITR API](https://developers.cloudflare.com/durable-objects/api/sqlite
 [private service bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/rpc/),
 [remote binding gateway](https://developers.cloudflare.com/workers/local-development/),
 [class deletion](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/).
+
+## Exercise the installation operator client
+
+For a fresh disposable Worker, set `SWAY_RECOVERY_OPERATOR_RUN_ID` to a fresh
+32-character lowercase hex identifier before both `deploy` and `run`. The private
+`InstallationOperator` entrypoint then targets that exact synthetic object and
+implements the production client RPC signature. It exists only in this drill
+Worker and never binds an application namespace.
+
+After `run` verifies its baseline restore and changed-state undo, prepare a client
+file following [the installation runbook](INSTALLATION.md), selecting this drill
+Worker and adding `"entrypoint": "InstallationOperator"` to its service binding.
+Set `SWAY_RECOVERY_TARGET` to the drill Worker. Create a mode-0600 baseline file
+from the drill proof with this mapping:
+
+```text
+target.account <- proof.accountId
+target.worker  <- proof.worker
+state          <- proof.installation
+bookmark       <- proof.bookmark
+```
+
+Run the actual `scripts/cloudflare-installation.sh capture`, `restore` and `undo`
+commands against that client. Capture records the changed state; restore must
+match the baseline fingerprint; undo must match the original changed-state
+fingerprint. Preserve all protected checkpoints. Use a new run identifier for
+another fresh drill; attempting to seed an existing object is rejected.

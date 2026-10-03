@@ -12,7 +12,8 @@ const resumePath = resumeIndex === -1 ? null : process.argv[resumeIndex + 1];
 assert.ok(resumeIndex === -1 || resumePath, "--resume requires a checkpoint path");
 assert.ok(!local || !resumePath, "Resume is only supported for remote recovery");
 const saved = resumePath ? JSON.parse(await readFile(resumePath, "utf8")) : null;
-const runId = saved?.runId ?? randomBytes(16).toString("hex");
+const runId =
+  saved?.runId ?? process.env.SWAY_RECOVERY_OPERATOR_RUN_ID ?? randomBytes(16).toString("hex");
 assert.match(runId, /^[a-f0-9]{32}$/);
 const checkpoint = resumePath
   ? path.resolve(resumePath)
@@ -86,6 +87,11 @@ try {
     const proof = snapshot(await service.seed(runId));
     evidence.proof = proof;
     const baseline = await inspect(proof);
+    const installation = snapshot(await service.recovery(runId, "inspect"));
+    assert.match(installation.objectId, /^[a-f0-9]{64}$/);
+    assert.equal(installation.counts.principals, 2);
+    await assert.rejects(async () => await service.recovery(runId, "bookmark", "wrong-object"));
+    evidence.installation = installation;
     assert.equal(baseline.revision, 1);
     assert.equal(baseline.status, "active");
     assert.deepEqual(baseline.receipts, ["baseline"]);
@@ -124,6 +130,9 @@ try {
     await save();
     const restored = await restartAndInspect(proof, newToken);
     assert.deepEqual(restored, baseline);
+    if (evidence.installation) {
+      assert.deepEqual(snapshot(await service.recovery(runId, "inspect")), evidence.installation);
+    }
     assert.equal(await service.replay(runId, proof), 1);
     assert.deepEqual(await inspect(proof, newToken), baseline);
     evidence.restored = restored;

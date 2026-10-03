@@ -33,6 +33,18 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/sway"]
 
+# Hatch does not apply the nested Workers .gitignore when building an sdist.
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/deployment/cloudflare/.venv-workers",
+  "/deployment/cloudflare/python_modules",
+  "/deployment/cloudflare/node_modules",
+  "/deployment/cloudflare/.wrangler",
+  "/deployment/cloudflare/public",
+  "/deployment/cloudflare/src/sway",
+  "/deployment/cloudflare/.dev.vars",
+]
+
 [tool.uv]
 required-version = "==0.12.17"
 
