@@ -12,7 +12,9 @@ import time
 from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Event, Thread, Timer
 from typing import cast
 from urllib.error import URLError
 from urllib.parse import parse_qs
@@ -192,7 +194,55 @@ def capture(page: Page, name: str) -> None:
 
 
 def assert_no_overflow(page: Page) -> None:
+    # Navigation can expose visible text before its stylesheet finishes loading.
+    # Measure the loaded layout, while still failing immediately on real overflow.
+    page.wait_for_load_state("load")
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+
+@pytest.mark.parametrize("stylesheet_fits", [True, False])
+def test_overflow_check_waits_for_stylesheet_and_rejects_real_overflow(
+    page: Page, stylesheet_fits: bool
+) -> None:
+    release_stylesheet = Event()
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            if self.path == "/style.css":
+                release_stylesheet.wait(10)
+                content_type = "text/css"
+                body = b"#code { overflow-wrap: anywhere }" if stylesheet_fits else b""
+            else:
+                content_type = "text/html"
+                body = (
+                    '<link rel="stylesheet" href="/style.css"><p id="code">'
+                    + "recoverycode" * 20
+                    + "</p>"
+                ).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.end_headers()
+            self.wfile.write(body)
+
+    with ThreadingHTTPServer(("127.0.0.1", 0), Handler) as server:
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        delayed_response = Timer(0.2, release_stylesheet.set)
+        try:
+            page.set_viewport_size({"width": 320, "height": 900})
+            page.goto(f"http://127.0.0.1:{server.server_port}", wait_until="domcontentloaded")
+            assert page.evaluate("document.documentElement.scrollWidth > innerWidth")
+            delayed_response.start()
+            if stylesheet_fits:
+                assert_no_overflow(page)
+            else:
+                with pytest.raises(AssertionError):
+                    assert_no_overflow(page)
+        finally:
+            release_stylesheet.set()
+            delayed_response.cancel()
+            server.shutdown()
+            thread.join(timeout=10)
 
 
 def create_player(page: Page, server: HostedServer, name: str) -> None:
