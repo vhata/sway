@@ -10,6 +10,7 @@ on:
       - 'scripts/daily-*'
       - 'scripts/cloudflare-recovery-check*'
       - 'tests/test_daily_*'
+      - 'tests/test_cloudflare_recovery_check.py'
       - 'tests/test_engine_rules.py'
 permissions:
   contents: read
