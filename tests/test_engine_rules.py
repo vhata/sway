@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import Counter
 from dataclasses import asdict, replace
 
@@ -594,7 +595,7 @@ def test_invalid_stale_and_duplicate_commands_do_not_mutate_input() -> None:
         advance(updated, command)
 
 
-@settings(max_examples=30, deadline=None)
+@settings(max_examples=int(os.environ.get("SWAY_PROPERTY_EXAMPLES", "30")), deadline=None)
 @given(
     seed=st.integers(min_value=0, max_value=2**64 - 1),
     choices=st.lists(st.integers(min_value=0, max_value=1000), min_size=10, max_size=60),

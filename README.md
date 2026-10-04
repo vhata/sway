@@ -1,5 +1,7 @@
 # Sway
 
+[![Daily verification](https://github.com/vhata/sway/actions/workflows/daily.yml/badge.svg?branch=main&event=schedule)](https://github.com/vhata/sway/actions/workflows/daily.yml?query=event%3Aschedule+branch%3Amain)
+
 A local deck-building game with original themes, a deterministic Python rules engine and configurable computer opponents. The rules implement all 26 Kingdom cards and seven basic card types from Dominion second edition; no official art or copied card descriptions are bundled. See [terminology and rule references](docs/TERMINOLOGY.md).
 
 ## Development
@@ -41,8 +43,12 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | `scripts/build.sh` | Locked-environment wheel and source distribution |
 | `scripts/install-smoke.sh` | Install the wheel into an isolated uv environment and probe packaged assets |
 | `scripts/check.sh` | Formatting, lint, types, coverage tests, build and installed-wheel smoke |
+| `scripts/daily-simulations.sh <2\|3\|4> [seed]` | 600 bounded bot games for one player count, with fixed and rotating seeds |
+| `scripts/cloudflare-recovery-check.sh` | Own a private local Workers process and verify synthetic recovery RPC state |
 
-CI runs `check.sh`, the native browser suite and `cloudflare-check.sh --browser`. For dependencies, use `uv add` or `uv add --dev` and commit both `pyproject.toml` and `uv.lock`. Change `.uv-version` and the matching `tool.uv.required-version` together; Biome upgrades also update `.biome-version`, configuration schema and `scripts/biome.sha256`.
+CI runs `check.sh`, the native browser suite and `cloudflare-check.sh --browser`. [Daily verification](docs/QUALITY.md#daily-verification) adds extended invariant testing, 1,800 seeded bot games, local recovery RPC and packaging checks after Workers staging every day on `main`.
+
+For dependencies, use `uv add` or `uv add --dev` and commit both `pyproject.toml` and `uv.lock`. Change `.uv-version` and the matching `tool.uv.required-version` together; Biome upgrades also update `.biome-version`, configuration schema and `scripts/biome.sha256`.
 
 ## Private multiplayer
 
