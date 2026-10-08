@@ -6,7 +6,7 @@ The `economy`, `engine` and `attack` profiles implement the same decision interf
 - **Engine:** favours drawing, extra actions, deck improvement and reusable action chains.
 - **Attack:** values disruption while still buying income and victory cards.
 
-All profiles switch toward points as the main victory pile runs out. Shared decision handling selects useful cards, protects a minimum purchasing economy of five known treasure coins when trashing, buys Copper to restore that minimum after attacks or trashing take treasure away, orders draws, handles optional reactions and respects the engine's current option constraints.
+All profiles switch toward points as the main victory pile runs out. Shared decision handling selects useful cards, keeps a minimum purchasing economy of five known treasure coins when Chapel or Sentry trashes Copper, buys Copper to restore that minimum after attacks or trashing take treasure away, orders draws, handles optional reactions and respects the engine's current option constraints.
 
 `STRATEGY_REGISTRY` maps names to strategies ranking legal gains. `choose(view, decision, BotState)` returns `BotChoice(command, state)` without modifying the view or old bot memory. A saved bot state contains its profile, strategy version, independent seed and decision count. Random tie breaks use that private stream; they never consume gameplay randomness. Strategies derive known ownership from initial cards and public gain/trash events.
 
