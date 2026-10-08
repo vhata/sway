@@ -1,12 +1,16 @@
 # Code review
 
-PR review checks a change; whole-codebase review checks accumulated interactions and maintains historical findings. Use independent sub-agent review for implementation PRs. Confirm any reported claim against the actual source and tests before treating it as evidence.
+PR review checks a change; whole-codebase review checks accumulated interactions and maintains historical findings. Use independent sub-agent review for implementation PRs. Confirm any reported claim against the actual source and tests before treating it as evidence. Before marking a PR ready, record a `## Review` section naming the independent reviewer, exact reviewed commit, findings and verified dispositions; review subsequent changes as well.
 
 ## Scope and artifacts
 
 Read relevant architecture/specification sections, the diff and necessary surrounding code. Focus on correctness, private information, serializable effects, deterministic replay, duplicate commands, recovery and accessible decision workflows. Report actionable findings with a failure scenario, location, severity and evidence. Do not invent findings to fill a review.
 
 [review/README.md](../review/README.md) indexes reviews newest first with type, reviewed commit and open count. [review/BACKLOG.md](../review/BACKLOG.md) is the mutable promoted-work queue. Snapshots use `review/YYYY-MM-DD-HHMM-full.md` or `-incremental.md` in UTC. Once merged they are immutable except for factual corrections. Fix PRs do not edit them to claim closure.
+
+Record a reviewed commit reachable from `main`. If a pre-landing review is necessary, preserve its exact tree and record the corresponding landed revision only after verifying tree equality. A retrievable branch commit outside main is not a valid ancestry baseline, and a merge-base estimate does not establish complete review coverage. Do not silently substitute a different tree in the index or rewrite historical snapshots.
+
+When a finding fix lands, add its finding slug, fix PR/commit, independent reviewer and verification evidence to the index's **Pending reconciliation** list. The next incremental review verifies closure and clears the corresponding pending item.
 
 Every review snapshot contains:
 
