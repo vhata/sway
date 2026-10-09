@@ -10,7 +10,7 @@ Pre-commit uses pre-commit's staged-file handling, including temporary unstaged-
 
 `scripts/check.sh` runs formatting, lint, type checking, unit/integration tests with both the existing 90% combined-coverage gate and a separate 90% engine branch gate, package builds and an installed-wheel smoke check. The branch gate prints statement and branch percentages separately from coverage JSON; high statement coverage cannot compensate for missing branches. The wheel check installs locked runtime dependencies and the wheel into a disposable uv environment, changes away from the checkout, disables Python path injection, and checks the homepage and packaged theme/browser assets. CI adds `scripts/e2e.sh` using Chromium; local browser changes require that suite as well.
 
-The normal path to `main` requires a PR with zero approving reviews (independent agent review is recorded in `## Review`), the `Required quality checks` check, and linear history. Since 2026-10-07 branches need not be up to date with `main` before merging and conversation resolution is not required; force pushes and deletions on `main` are allowed for the owner and never used by agents. The rule is not enforced for administrators, which permits the direct-to-main exceptions in the [agent contract](../AGENTS.md#workflow), each with its proportionate check. Local setup installs hooks; it does not change GitHub protection settings.
+The normal path to `main` requires a PR with zero approving reviews (independent agent review is recorded in `## Review`), the `Required quality checks` check, and linear history. The `Queue and PR hygiene` job runs alongside it and is not a required check. Since 2026-10-07 branches need not be up to date with `main` before merging and conversation resolution is not required; force pushes and deletions on `main` are allowed for the owner and never used by agents. The rule is not enforced for administrators, which permits the direct-to-main exceptions in the [agent contract](../AGENTS.md#workflow), each with its proportionate check. Local setup installs hooks; it does not change GitHub protection settings.
 
 Do not claim tests passed when no tests were collected or a suite was skipped. Foundation scaffolding has no fabricated application tests. Unit/coverage scripts explicitly report a foundation-only skip only while both the engine directory and all Python test files are absent. The browser script reports a pending-implementation skip only while both the web module and Python browser tests are absent. Once the relevant code or tests exist, missing suites and empty collection fail normally; dependent implementation PRs supply real acceptance coverage. Report network, sandbox or missing-browser boundaries separately from application failures. Never silently disable a failing gate or lower coverage to finish a PR.
 
@@ -28,7 +28,11 @@ Do not claim tests passed when no tests were collected or a suite was skipped. F
 | `cleanup-landed.sh [--apply]` | Remove worktrees and branches whose PR merged; dry run by default |
 | `review-due.sh --paths 'src tests'` | Drift since the newest reviewed commit; a report, never a gate |
 
-Run the queue and link checks before committing queue or documentation edits and the marker check on a PR body before marking it ready. CI does not run these checks yet; wiring them into the Quality and daily workflows is the remaining part of TODO `workflow-gate-automation`.
+Run the queue and link checks before committing queue or documentation edits and the marker check on a PR body before marking it ready. The Quality workflow's `Queue and PR hygiene` job runs the queue and link checks on every PR and push to `main`, and the marker check against the PR body on pull requests. The daily quality lane runs `review-due.sh` and keeps its report with the lane's evidence.
+
+## Red main
+
+Quality cancels only superseded pull request runs; a run on `main` is never cancelled, so every merge keeps its own validation evidence. When a push run or a daily run on `main` fails, the same day either revert the change or file a P1 `TODO.md` entry (P0 if it blocks a release) with the run link and the evidence artifact. A green fix branch is not recovery; recovery is the next run on `main` going green, and the entry stays open until it does. A missing scheduled run is not a pass.
 
 ## Meaningful tests
 
@@ -80,8 +84,9 @@ Seven independent jobs collect results even if another job fails:
   bot profiles and three mixed seat rotations. Unfinished games fail the job;
   later successful batches cannot hide a failure.
 
-The daily concurrency group is separate from push/PR quality checks and does not
-cancel an in-progress daily run. There are no automatic test retries. Artifacts
+The quality lane also records `scripts/workflow/review-due.sh` so review drift is
+visible without a local checkout. The daily concurrency group is separate from
+push/PR quality checks and does not cancel an in-progress daily run. There are no automatic test retries. Artifacts
 are uploaded on success and failure for 14 days: logs, coverage/JUnit output,
 simulation JSON with seeds/configurations, and each browser run's evidence.
 Recovery proof files remain outside uploads. These tests use local synthetic

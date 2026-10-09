@@ -5,9 +5,12 @@ on:
     branches: [main]
 permissions:
   contents: read
+  pull-requests: read
 concurrency:
   group: quality-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs on PR branches only. Cancelling runs on main hides
+  # red builds when several PRs merge in quick succession.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   quality:
     name: Required quality checks
@@ -37,3 +40,23 @@ jobs:
             browser-evidence/
             coverage.xml
           if-no-files-found: ignore
+  workflow:
+    name: Queue and PR hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash scripts/workflow/check-queues.sh --strict
+      - run: bash scripts/workflow/check-links.sh
+      - name: Validate PR markers against the queues
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          gh pr view "$PR" --json body -q .body > "$RUNNER_TEMP/pr-body.md"
+          bash scripts/workflow/check-pr-markers.sh --body "$RUNNER_TEMP/pr-body.md" --base "origin/$BASE" --head HEAD --branch "$HEAD_BRANCH"

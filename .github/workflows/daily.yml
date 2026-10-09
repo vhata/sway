@@ -12,6 +12,7 @@ on:
       - 'tests/test_daily_*'
       - 'tests/test_cloudflare_recovery_check.py'
       - 'tests/test_engine_rules.py'
+      - 'scripts/workflow/review-due.sh'
 permissions:
   contents: read
 concurrency:
@@ -27,6 +28,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # review-due.sh measures history since the reviewed commit
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           version-file: pyproject.toml
@@ -42,6 +45,9 @@ jobs:
           echo "Hypothesis seed: $PROPERTY_SEED" | tee daily-evidence/property-seed.txt
           scripts/check.sh --hypothesis-seed "$PROPERTY_SEED" --hypothesis-show-statistics \
             --junitxml=daily-evidence/unit.xml 2>&1 | tee daily-evidence/quality.log
+      - name: Review cadence
+        if: ${{ !cancelled() }}
+        run: bash scripts/workflow/review-due.sh --paths 'src tests' | tee daily-evidence/review-due.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
