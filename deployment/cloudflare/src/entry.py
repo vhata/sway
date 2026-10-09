@@ -83,9 +83,11 @@ class Runtime:
         async def transaction(_txn):
             try:
                 result[:] = [operation(*args, **kwargs)]
-                if self.service.pending_bot_games():
-                    # SQL pending marker and its wake-up commit together, including
-                    # an existing alarm: no crash window between the two writes.
+                # A SQL-only check: loading snapshots here would let one unreadable
+                # table fail every request. SQL pending marker and its wake-up
+                # commit together, including an existing alarm: no crash window
+                # between the two writes.
+                if self.service.pending_bot_games(limit=1):
                     if await self.ctx.storage.getAlarm() is None:
                         await self.ctx.storage.setAlarm(int(self.clock() * 1000) + 100)
             except BaseException as exc:
@@ -149,10 +151,11 @@ class Installation(DurableObject):
             await self.ctx.storage.setAlarm(int(time.time() * 1000) + 60000)
             return
         # Bound work per invocation. At-least-once delivery is safe because the
-        # service commits each bot decision with its expected revision.
-        for game_id in self.runtime.service.pending_bot_games()[:4]:
+        # service commits each bot decision with its expected revision. A table
+        # whose snapshot cannot be loaded is paused by step_bots, not retried.
+        for game_id in self.runtime.service.pending_bot_games(limit=4):
             await self.runtime.execute(self.runtime.service.step_bots, game_id)
-        if self.runtime.service.pending_bot_games():
+        if self.runtime.service.pending_bot_games(limit=1):
             await self.ctx.storage.setAlarm(int(time.time() * 1000) + 100)
 
     async def recovery(self, operation, expected_id="", bookmark=""):
