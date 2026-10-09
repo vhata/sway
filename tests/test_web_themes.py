@@ -10,7 +10,7 @@ from xml.etree import ElementTree
 
 import pytest
 
-from sway.engine import GameConfig, new_game, view_for
+from sway.engine import Card, Command, GameConfig, GameState, advance, new_game, view_for
 from sway.engine.catalog import CATALOG, OFFICIAL_NAMES
 from sway.engine.models import Decision, Option
 from sway.presentation.components import BoardContext, board, card_face, choice_form, event_text
@@ -146,18 +146,64 @@ def test_malicious_style_token_is_rejected(tmp_path: Path) -> None:
         load_theme(path, frozenset(CATALOG))
 
 
+# Kingdom cards outside the default supply, so no other board zone names them.
+OFF_SUPPLY = ("k02", "k03", "k05", "k07", "k10", "k17", "k18", "k20", "k22", "k23")
+
+
+def off_supply_cards(state: GameState, definitions: tuple[str, ...]) -> list[Card]:
+    assert not set(definitions) & set(state.config.kingdom)
+    result = [
+        Card(f"c{state.next_instance_id + index}", key) for index, key in enumerate(definitions)
+    ]
+    state.next_instance_id += len(result)
+    return result
+
+
 def test_html_escapes_names_and_contains_only_the_filtered_view() -> None:
     state = new_game(GameConfig(player_names=("<script>unsafe()</script>", "Opponent")), 13)
+    state.players[1].hand = off_supply_cards(state, OFF_SUPPLY[:5])
+    state.players[1].deck = off_supply_cards(state, OFF_SUPPLY[5:])
+    hidden = state.players[1].hand + state.players[1].deck
     view = view_for(state, 0)
     themes = load_themes(frozenset(CATALOG))
-    ctx = BoardContext("game", "token", themes["common-ground"], tuple(themes.values()))
-    rendered = str(board(view, ctx))
-    assert "<script>unsafe()" not in rendered
-    assert "&lt;script&gt;unsafe()&lt;/script&gt;" in rendered
-    for card in state.players[1].hand + state.players[1].deck:
-        assert f'"{card.id}"' not in rendered
-    assert "rng_state" not in rendered
-    assert "None in" not in rendered
+    for theme in themes.values():
+        ctx = BoardContext("game", "token", theme, tuple(themes.values()))
+        rendered = str(board(view, ctx))
+        assert "<script>unsafe()" not in rendered
+        assert "&lt;script&gt;unsafe()&lt;/script&gt;" in rendered
+        for card in hidden:
+            assert theme.cards[card.definition].name not in rendered, card
+        assert "rng_state" not in rendered
+        assert "None in" not in rendered
+        # The same cards are detectable once a view legitimately shows them.
+        shown = replace(view.players[1], in_play=tuple(hidden))
+        exposed = str(board(replace(view, players=(view.players[0], shown)), ctx))
+        assert all(theme.cards[card.definition].name in exposed for card in hidden)
+
+
+def test_rendered_history_omits_an_opponents_private_redraw() -> None:
+    state = new_game(GameConfig(player_names=("You", "Opponent")), 5)
+    assert state.pending is not None and state.pending.player == 1
+    redraw = off_supply_cards(state, OFF_SUPPLY[:5])
+    state.players[1].deck = list(redraw)
+    while state.pending is not None and state.pending.player == 1:
+        choice = next(
+            option.id
+            for option in state.pending.options
+            if option.id in {"end-actions", "end-turn"}
+        )
+        state = advance(state, Command(state.pending.id, state.revision, (choice,))).state
+    assert set(state.players[1].hand) == set(redraw)
+    themes = load_themes(frozenset(CATALOG))
+    for theme in themes.values():
+        ctx = BoardContext("game", "token", theme, tuple(themes.values()))
+        names = [theme.cards[card.definition].name for card in redraw]
+        observer = str(board(view_for(state, 0), ctx))
+        assert not [name for name in names if name in observer]
+        owner = view_for(state, 1)
+        history = [event_text(event, owner, theme) for event in owner.events]
+        assert f"Opponent drew {', '.join(names[::-1])}." in history
+        assert all(name in str(board(owner, ctx)) for name in names)
 
 
 def test_theme_switch_rerenders_history_without_changing_rules() -> None:
