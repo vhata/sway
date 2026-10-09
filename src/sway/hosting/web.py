@@ -13,13 +13,20 @@ from starlette.datastructures import FormData
 from sway.engine import Command, GameConfig, InvalidCommand
 from sway.engine.catalog import CATALOG, KINGDOM_IDS
 from sway.hosting.http import HostedBoundary
-from sway.hosting.identity import AuthenticationError, Session, SessionCredentials
+from sway.hosting.identity import (
+    AuthenticationError,
+    InvalidRecoveryCode,
+    Session,
+    SessionCredentials,
+    issued_csrf,
+)
 from sway.hosting.presentation import (
     SetupEntries,
     account,
     home,
     hosted_page,
     invitation,
+    invitation_declined,
     table_content,
 )
 from sway.hosting.runtime import HostedRuntime, WebConfig
@@ -40,8 +47,16 @@ def _field(data: FormData, key: str, default: str = "") -> str:
     return value
 
 
+def _number(data: FormData, key: str, default: str = "") -> int:
+    """A non-negative decimal small enough for every SQLite integer column."""
+    value = _field(data, key, default)
+    if not value.isascii() or not value.isdigit() or len(value) > 18:
+        raise ValueError("Choose valid form values.")
+    return int(value)
+
+
 def _setup(data: FormData) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    count = int(_field(data, "players", "2"))
+    count = _number(data, "players", "2")
     if count not in {2, 3, 4}:
         raise ValueError("Choose two to four players.")
     controllers = ("human",) + tuple(
@@ -90,6 +105,9 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
         return await runtime.execute(identity.authenticate, token(request))
 
     def cookie(response: Response, credentials: SessionCredentials) -> Response:
+        # An anonymous cookie lasts until the browser closes, beyond its 30-minute session,
+        # so a join form left open still reaches the server bound to its original cookie.
+        anonymous = credentials.session.principal_id is None
         response.set_cookie(
             COOKIE,
             credentials.token,
@@ -97,7 +115,9 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
             httponly=True,
             samesite="lax",
             path="/",
-            max_age=max(1, int(credentials.session.expires_at - runtime.clock())),
+            max_age=None
+            if anonymous
+            else max(1, int(credentials.session.expires_at - runtime.clock())),
         )
         return response
 
@@ -119,11 +139,13 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
         )
         return HTMLResponse(str(node), status_code=status)
 
-    async def mutation(request: Request) -> FormData:
-        data = await request.form(max_fields=100)
-        current = await session(request)
+    def verify(current: Session, data: FormData) -> None:
         if not secrets.compare_digest(current.csrf_token.encode(), _field(data, "csrf").encode()):
             raise PermissionError("This form expired. Reload before trying again.")
+
+    async def mutation(request: Request) -> FormData:
+        data = await request.form(max_fields=100)
+        verify(await session(request), data)
         return data
 
     @application.exception_handler(PermissionError)
@@ -229,9 +251,16 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
     @application.post("/recover", response_model=None)
     async def recover(request: Request) -> Response:
         data = await mutation(request)
-        credentials = await runtime.execute(
-            identity.recover, token(request), _field(data, "recovery_code")
-        )
+        try:
+            credentials = await runtime.execute(
+                identity.recover, token(request), _field(data, "recovery_code")
+            )
+        except InvalidRecoveryCode:
+            # The anonymous session and its form remain valid, so the player can retry.
+            message = "That recovery code is not valid. Check it and try again."
+            return HTMLResponse(
+                str(account(_field(data, "csrf"), False, error=message)), status_code=401
+            )
         return cookie(
             HTMLResponse(
                 str(
@@ -299,7 +328,7 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     bearer,
                     game_id,
                     _field(data, "request_id"),
-                    Command(_field(data, "decision"), int(_field(data, "revision")), choices),
+                    Command(_field(data, "decision"), _number(data, "revision"), choices),
                 )
                 table = result.table
             elif action == "theme":
@@ -311,19 +340,19 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     bearer,
                     game_id,
                     theme,
-                    int(_field(data, "preference_version")),
+                    _number(data, "preference_version"),
                 )
             elif action == "ready":
                 table = await runtime.execute(
                     service.ready,
                     bearer,
                     game_id,
-                    int(_field(data, "lobby_revision")),
+                    _number(data, "lobby_revision"),
                     _field(data, "ready") == "true",
                 )
             elif action == "start":
                 table = await runtime.execute(
-                    service.start, bearer, game_id, int(_field(data, "lobby_revision"))
+                    service.start, bearer, game_id, _number(data, "lobby_revision")
                 )
             elif action == "configure":
                 controllers, kingdom = _setup(data)
@@ -331,7 +360,7 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     service.configure,
                     bearer,
                     game_id,
-                    int(_field(data, "lobby_revision")),
+                    _number(data, "lobby_revision"),
                     controllers,
                     kingdom,
                 )
@@ -340,21 +369,19 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     service.remove,
                     bearer,
                     game_id,
-                    int(_field(data, "seat")),
-                    int(_field(data, "lobby_revision")),
+                    _number(data, "seat"),
+                    _number(data, "lobby_revision"),
                 )
             elif action == "cancel":
                 table = await runtime.execute(service.cancel, bearer, game_id)
             elif action == "retry":
                 table = await runtime.execute(service.retry_bots, bearer, game_id)
             elif action == "revoke-invite":
-                await runtime.execute(
-                    service.revoke_invite, bearer, game_id, int(_field(data, "seat"))
-                )
+                await runtime.execute(service.revoke_invite, bearer, game_id, _number(data, "seat"))
                 table = await runtime.execute(service.view, bearer, game_id)
             elif action == "invite":
                 invite = await runtime.execute(
-                    service.invite, bearer, game_id, int(_field(data, "seat"))
+                    service.invite, bearer, game_id, _number(data, "seat")
                 )
                 link = f"{settings.origin}/join/{invite.invitation_id}#{invite.secret}"
                 return HTMLResponse(
@@ -399,12 +426,24 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
 
     @application.post("/join/{invitation_id}", response_model=None)
     async def join(request: Request, invitation_id: str) -> Response:
-        data = await mutation(request)
-        current = await session(request)
+        data = await request.form(max_fields=100)
+        bearer = token(request)
+        try:
+            current = await session(request)
+        except AuthenticationError:
+            # The invitee's anonymous visit lapsed while the page was open, and the page has
+            # already removed the secret from its address. A guest form issued to this
+            # browser's cookie continues as a fresh anonymous visit instead.
+            if "display_name" not in data or not issued_csrf(bearer, _field(data, "csrf")):
+                raise
+            renewed = await runtime.execute(identity.anonymous_session)
+            current, bearer = renewed.session, renewed.token
+        else:
+            verify(current, data)
         if current.principal_id is None:
             credentials, table = await runtime.execute(
                 service.join_guest,
-                token(request),
+                bearer,
                 invitation_id,
                 _field(data, "secret"),
                 _field(data, "display_name"),
@@ -423,9 +462,12 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                 )
             )
             return cookie(response, credentials.session)
-        table = await runtime.execute(
-            service.join, token(request), invitation_id, _field(data, "secret")
-        )
+        try:
+            table = await runtime.execute(
+                service.join, bearer, invitation_id, _field(data, "secret")
+            )
+        except StorageConflict as exc:
+            return HTMLResponse(str(invitation_declined(str(exc))), status_code=409)
         return RedirectResponse(f"/games/{table.game_id}", status_code=303)
 
     return application

@@ -81,8 +81,13 @@ def _response(request: Request, node: h.Node, token: str, status: int = 200) -> 
 
 def _check_mutation(request: Request, data: FormData) -> None:
     cookie = request.cookies.get(COOKIE, "")
-    token = _field(data, "csrf")
-    if not cookie or not secrets.compare_digest(cookie, token):
+    token = data.get("csrf", "")
+    # Any malformed token, including uploads and non-ASCII text, is an expired form.
+    if (
+        not cookie
+        or not isinstance(token, str)
+        or not secrets.compare_digest(cookie.encode(), token.encode())
+    ):
         raise PermissionError("This form expired. Reload the page and try again.")
     origin = request.headers.get("origin")
     if origin:
