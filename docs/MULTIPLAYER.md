@@ -26,7 +26,7 @@ Join, recovery and first-time table creation begin with a short-lived anonymous 
 | Record | Contract |
 | --- | --- |
 | Principal | Stable opaque ID. At most one human membership per game. Display-name edits cannot change ownership. |
-| Session | Independent random 256-bit bearer token per browser, stored hashed server-side and delivered in a `Secure`, `HttpOnly`, `SameSite=Lax`, host-only cookie with path `/`. Fixed 30-day lifetime; revocable individually or for the whole principal. |
+| Session | Independent random 256-bit bearer token per browser, stored hashed server-side and delivered in a `Secure`, `HttpOnly`, `SameSite=Lax`, host-only cookie with path `/`. Fixed 30-day lifetime for a principal's session; an anonymous session lasts 30 minutes on the server and its cookie until the browser closes. Revocable individually or for the whole principal. |
 | Recovery code | Separate random 256-bit credential, shown once for the player to save and stored only as a hash. Redeeming it restores the same principal, rotates the code and revokes all prior sessions atomically. A normal reload with a valid session needs no recovery code. |
 | Invitation | Random 256-bit secret bound to one unoccupied human seat, stored hashed, single-use, expiring after 24 hours. Host can revoke/reissue before play. Possession authorizes the first claim; forwarding an invitation delegates that access. |
 
