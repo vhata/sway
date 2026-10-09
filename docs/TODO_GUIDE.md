@@ -38,7 +38,7 @@ Claims review backlog: <slug>
 Claims review finding: <finding-slug>
 ```
 
-Use only markers relevant to the selected queue. A review batch claims its backlog slug plus each finding actually in scope. Explicitly assigned raw-finding work without a backlog entry uses only the finding marker and explains the exception. `bash scripts/workflow/check-pr-markers.sh --body <file>` validates every marker against the queues at `origin/main` and `HEAD`; a body with no markers passes, so directly requested work needs none.
+Use only markers relevant to the selected queue. A review batch claims its backlog slug plus each finding actually in scope. Explicitly assigned raw-finding work without a backlog entry uses only the finding marker and explains the exception. `bash scripts/workflow/check-pr-markers.sh --body <file>` validates every marker against the queues at `origin/main` and `HEAD`; a body with no markers passes on a branch outside the `todo/`, `review/` and `roadmap/` prefixes, so directly requested work needs none; a branch with one of those prefixes must carry a marker for its slug.
 
 ## Resolution
 
