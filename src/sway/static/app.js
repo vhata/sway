@@ -43,56 +43,57 @@
     const matches = sameKey(previous.key);
     return matches[previous.index] ?? matches[0] ?? null;
   }
-  // A keyed form keeps the fields its user changed but has not submitted.
-  // Unchanged fields, hidden revisions and CSRF tokens come from the refresh,
-  // so saving applies only those changes to the latest server state.
-  function unsavedEdits() {
+  // A keyed form keeps the fields its user changed. Unchanged fields, hidden
+  // revisions and CSRF tokens come from the refresh, so saving applies only
+  // those changes to the latest server state. A checkbox or radio group is one
+  // field: any change keeps the user's whole selection. The form whose
+  // submission succeeded shows the server's result instead; a rejected or
+  // conflicting submission keeps the edits for another attempt.
+  function unsavedEdits(saved) {
     const edits = [];
     for (const form of document.querySelectorAll("form[data-key]")) {
-      if (form.dataset.submitted) continue;
+      if (saved && form.dataset.key === saved) continue;
+      const groups = new Map();
       for (const control of form.querySelectorAll("input[name], select[name], textarea[name]")) {
-        if (["hidden", "submit", "button", "reset"].includes(control.type)) continue;
+        if (["hidden", "submit", "button", "reset", "file"].includes(control.type)) continue;
         const edit = { form: form.dataset.key, name: control.name };
         if (["checkbox", "radio"].includes(control.type)) {
-          if (control.checked !== control.defaultChecked) {
-            edits.push({ ...edit, value: control.value, checked: control.checked });
-          }
+          const group = groups.get(control.name) ?? { ...edit, checked: [], changed: false };
+          if (control.checked) group.checked.push(control.value);
+          group.changed ||= control.checked !== control.defaultChecked;
+          groups.set(control.name, group);
         } else if (control.tagName === "SELECT") {
-          const options = [...control.options];
           const initial = Math.max(
             0,
-            options.findIndex((option) => option.defaultSelected),
+            [...control.options].findIndex((option) => option.defaultSelected),
           );
           if (control.selectedIndex !== initial) edits.push({ ...edit, value: control.value });
         } else if (control.value !== control.defaultValue) {
           edits.push({ ...edit, value: control.value });
         }
       }
+      edits.push(...[...groups.values()].filter((group) => group.changed));
     }
     return edits;
   }
   function restoreEdits(edits) {
     for (const edit of edits) {
       const form = document.querySelector(`form[data-key="${CSS.escape(edit.form)}"]`);
-      const control = [...(form?.elements ?? [])].find(
-        (element) =>
-          element.name === edit.name &&
-          (edit.checked === undefined || element.value === edit.value),
-      );
-      if (!control) continue;
-      if (edit.checked !== undefined) control.checked = edit.checked;
-      else if (
-        control.tagName !== "SELECT" ||
-        [...control.options].some((option) => option.value === edit.value)
+      const controls = [...(form?.elements ?? [])].filter((element) => element.name === edit.name);
+      if (edit.checked) {
+        for (const control of controls) control.checked = edit.checked.includes(control.value);
+        continue;
+      }
+      const control = controls[0];
+      if (
+        control &&
+        (control.tagName !== "SELECT" ||
+          [...control.options].some((option) => option.value === edit.value))
       ) {
         control.value = edit.value;
       }
     }
   }
-  // A submitted form shows the server's result, not the values that were sent.
-  document.addEventListener("submit", (event) => {
-    event.target.dataset.submitted = "true";
-  });
   function decisionIdentity() {
     return (
       document.querySelector("#decision-form")?.dataset.decision ??
@@ -203,7 +204,9 @@
         panel.open,
       ]),
     );
-    editsBeforeSwap = unsavedEdits();
+    const source = event.detail.requestConfig?.elt ?? event.detail.source;
+    const status = event.detail.xhr?.status ?? event.detail.status;
+    editsBeforeSwap = unsavedEdits(status >= 200 && status < 300 ? source?.dataset?.key : null);
     decisionBeforeSwap = decisionIdentity();
     positionBeforeSwap = { left: window.scrollX, top: window.scrollY };
     const form = document.querySelector("#decision-form");

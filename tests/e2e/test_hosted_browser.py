@@ -690,3 +690,140 @@ def test_board_refresh_keeps_open_panel_and_focus(
         )
         expect(opponent.locator("details")).to_have_attribute("open", "")
         expect(opponent.locator("summary")).to_be_focused()
+
+
+def lobby_table(
+    server: HostedServer, names: tuple[str, ...]
+) -> tuple[list[IdentityCredentials], TableView]:
+    service = server.service
+    users = [
+        service.identity.create_principal(service.identity.anonymous_session().token, name)
+        for name in names
+    ]
+    return users, service.create(users[0].session.token, ("human", "human"))
+
+
+def test_saved_setup_shows_the_server_result_not_the_sent_values(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    (host,), table = lobby_table(hosted_server, ("Alice",))
+    with player_browser(browser, hosted_server, host) as (_, page):
+        page.goto(f"{hosted_server.url}/games/{table.game_id}")
+        setup = page.locator("details", has=page.locator("summary", has_text="Change table setup"))
+        setup.locator("summary").click()
+        page.locator("#supply-mode").select_option("random")
+        setup.get_by_role("button", name="Save setup").click()
+        expect(page.locator("#table")).to_have_attribute(
+            "data-lobby-revision", str(table.lobby_revision + 1)
+        )
+        # The server draws the random cards; the form must show that kingdom.
+        expect(setup).to_have_attribute("open", "")
+        expect(page.locator("#supply-mode")).to_have_value("manual")
+        saved = hosted_server.service.view(host.session.token, table.game_id)
+        checked = setup.locator('input[name="kingdom"]:checked')
+        expect(checked).to_have_count(10)
+        values = checked.evaluate_all("inputs => inputs.map(input => input.value)")
+        assert sorted(values) == sorted(saved.kingdom)
+
+
+def test_lobby_refresh_and_conflict_keep_the_whole_kingdom_choice(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    from sway.engine import GameConfig
+
+    service = hosted_server.service
+    (host, guest), table = lobby_table(hosted_server, ("Alice", "Bob"))
+    default = GameConfig().kingdom
+    chosen = sorted({*default} - {"k04"} | {"k01"})
+    with player_browser(browser, hosted_server, host) as (_, page):
+        page.goto(f"{hosted_server.url}/games/{table.game_id}")
+        setup = page.locator("details", has=page.locator("summary", has_text="Change table setup"))
+        setup.locator("summary").click()
+        setup.locator('input[name="kingdom"][value="k04"]').uncheck()
+        setup.locator('input[name="kingdom"][value="k01"]').check()
+        checked = setup.locator('input[name="kingdom"]:checked')
+
+        def kingdom() -> list[str]:
+            return sorted(checked.evaluate_all("inputs => inputs.map(input => input.value)"))
+
+        # Another tab of the host saves a different kingdom; this tab refreshes by polling.
+        other = (*(card for card in default if card != "k12"), "k02")
+        changed = service.configure(
+            host.session.token, table.game_id, table.lobby_revision, ("human", "human"), other
+        )
+        expect(page.locator("#table")).to_have_attribute(
+            "data-lobby-revision", str(changed.lobby_revision), timeout=10000
+        )
+        expect(checked).to_have_count(10)
+        assert kingdom() == chosen
+        # A join this tab has not yet seen makes the save conflict; the choice survives it.
+        blocked: list[str] = []
+
+        def unchanged(route: Route) -> None:
+            blocked.append(route.request.url)
+            route.fulfill(status=204)
+
+        page.route("**/updates?*", unchanged)
+        # Any poll that started before the route was installed has now finished.
+        for _ in range(100):
+            if blocked:
+                break
+            page.wait_for_timeout(50)
+        assert blocked
+        invitation = service.invite(host.session.token, table.game_id, 1)
+        joined = service.join(guest.session.token, invitation.invitation_id, invitation.secret)
+        setup.get_by_role("button", name="Save setup").click()
+        expect(page.locator("#table [role=alert]")).to_be_visible()
+        expect(page.locator("#table")).to_have_attribute(
+            "data-lobby-revision", str(joined.lobby_revision)
+        )
+        expect(checked).to_have_count(10)
+        assert kingdom() == chosen
+        page.unroute("**/updates?*")
+        setup.get_by_role("button", name="Save setup").click()
+        expect(page.locator("#table [role=alert]")).to_have_count(0)
+        expect(page.locator("#table")).to_have_attribute(
+            "data-lobby-revision", str(joined.lobby_revision + 1)
+        )
+        saved = service.view(host.session.token, table.game_id)
+        assert sorted(saved.kingdom) == chosen
+        assert saved.seats[1].display_name == "Bob"
+
+
+def test_save_queued_behind_a_lobby_refresh_keeps_edits_after_conflict(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    service = hosted_server.service
+    (host, guest), table = lobby_table(hosted_server, ("Alice", "Bob"))
+    invitation = service.invite(host.session.token, table.game_id, 1)
+    with player_browser(browser, hosted_server, host) as (_, page):
+        page.goto(f"{hosted_server.url}/games/{table.game_id}")
+        setup = page.locator("details", has=page.locator("summary", has_text="Change table setup"))
+        setup.locator("summary").click()
+        page.locator("#players").select_option("3")
+        opponent = setup.locator('select[name="controller2"]')
+        opponent.select_option("economy")
+        waiting: list[Route] = []
+        page.route("**/updates?*", lambda route: waiting.append(route))
+        for _ in range(100):
+            if waiting:
+                break
+            page.wait_for_timeout(50)
+        assert len(waiting) == 1
+        # The save waits behind a poll that will report a join, so it conflicts.
+        setup.get_by_role("button", name="Save setup").click()
+        joined = service.join(guest.session.token, invitation.invitation_id, invitation.secret)
+        waiting.pop().continue_()
+        page.unroute("**/updates?*")
+        expect(page.locator("#table [role=alert]")).to_be_visible()
+        expect(page.locator("#table")).to_have_attribute(
+            "data-lobby-revision", str(joined.lobby_revision)
+        )
+        expect(page.get_by_text("Seat 2: Bob", exact=False)).to_be_visible()
+        expect(page.locator("#players")).to_have_value("3")
+        expect(opponent).to_have_value("economy")
+        setup.get_by_role("button", name="Save setup").click()
+        expect(page.locator("#table [role=alert]")).to_have_count(0)
+        expect(page.get_by_text("Seat 3:", exact=False)).to_be_visible()
+        saved = service.view(host.session.token, table.game_id)
+        assert [seat.controller for seat in saved.seats] == ["human", "human", "economy"]
