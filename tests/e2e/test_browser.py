@@ -575,6 +575,8 @@ def test_bot_steps_keep_open_panels_and_focus(
         page.wait_for_timeout(50)
     assert len(held) == 1
     opponent = page.locator(".opponent").nth(1)
+    # An unapplied theme choice is an unsaved edit and must survive the refresh too.
+    page.get_by_role("combobox", name="Theme", exact=True).select_option("orbital")
     page.locator(".history summary").click()
     opponent.locator("summary").click()
     if focus_target == "unnamed button":
@@ -591,6 +593,8 @@ def test_bot_steps_keep_open_panels_and_focus(
     expect(page.locator("#decision-form")).to_have_count(0)
     expect(page.locator(".opponent").nth(1).locator("details")).to_have_attribute("open", "")
     expect(page.locator(".history details")).to_have_attribute("open", "")
+    expect(page.get_by_role("combobox", name="Theme", exact=True)).to_have_value("orbital")
+    expect(page.locator("#board")).to_have_attribute("data-theme", "common-ground")
     expect(target).to_be_focused()
     expect(page.locator("#opponent-heading")).not_to_be_focused()
     page.unroute_all(behavior="ignoreErrors")
