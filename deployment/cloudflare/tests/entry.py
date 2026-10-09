@@ -122,7 +122,8 @@ class Contracts(DurableObject):
             table.game_id,
         )
         self.ctx.storage.kv.put("unreadable_game", table.game_id)
-        # Unrelated operations still commit and keep the bot wake-up armed.
+        # Unrelated operations still commit and arm the bot wake-up themselves.
+        await self.ctx.storage.deleteAlarm()
         await self.runtime.execute(identity.anonymous_session)
         await self.runtime.execute(identity.authenticate, token)
         assert await self.ctx.storage.getAlarm() is not None
