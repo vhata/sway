@@ -368,6 +368,9 @@ def test_invitee_whose_visit_lapsed_can_still_join(config: HostedConfig, lapse: 
     join_url, secret = invitation_link(host, path)
     preview = guest.get(join_url)
     stale = guest.cookies[COOKIE]
+    # A browser keeps a cookie without a lifetime past the 30-minute anonymous session.
+    issued = preview.headers["set-cookie"].lower()
+    assert "max-age" not in issued and "expires" not in issued
     with HostedStore(config.database_path).transaction(write=True) as conn:
         if lapse == "expired":
             conn.execute("UPDATE sessions SET expires_at=0 WHERE principal_id IS NULL")
@@ -376,6 +379,7 @@ def test_invitee_whose_visit_lapsed_can_still_join(config: HostedConfig, lapse: 
     joined = post(guest, join_url, {"secret": secret, "display_name": "Bea"}, source=preview)
     assert joined.status_code == 200, joined.text
     assert "recovery-code" in joined.text
+    assert "max-age=" in joined.headers["set-cookie"].lower()
     assert guest.cookies[COOKIE] != stale
     table = HostedService(HostedStore(config.database_path)).view(
         guest.cookies[COOKIE], path.split("/")[-1]

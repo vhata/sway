@@ -105,6 +105,9 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
         return await runtime.execute(identity.authenticate, token(request))
 
     def cookie(response: Response, credentials: SessionCredentials) -> Response:
+        # An anonymous cookie lasts until the browser closes, beyond its 30-minute session,
+        # so a join form left open still reaches the server bound to its original cookie.
+        anonymous = credentials.session.principal_id is None
         response.set_cookie(
             COOKIE,
             credentials.token,
@@ -112,7 +115,9 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
             httponly=True,
             samesite="lax",
             path="/",
-            max_age=max(1, int(credentials.session.expires_at - runtime.clock())),
+            max_age=None
+            if anonymous
+            else max(1, int(credentials.session.expires_at - runtime.clock())),
         )
         return response
 
