@@ -18,7 +18,7 @@ Use typed htpy functions accepting presentation data from a filtered player view
 
 Filter structured events as well as state: discarded/revealed public cards and hidden draws have different visibility. Never send authoritative snapshots to templates or clients. Render pending choices only for their owner. The future API can expose the same player views and decisions without changing rules or bots.
 
-Bot progress is bounded per server step; stop for a human reaction. Failures are recoverable and visible. A stale browser re-renders current state after a rejected revision; it never overwrites it.
+Bot progress is bounded per server step; stop for a human reaction. Failures are recoverable and visible, and isolated per table: a bot failure or an unloadable snapshot pauses only that table, and scheduling scans never load snapshots. A stale browser re-renders current state after a rejected revision; it never overwrites it.
 
 Theme packs contain versioned data for stable IDs: names, independently written descriptions, terminology, accessibility labels, local asset references and design tokens. Validate coverage and asset references before activation; no scripts, executable rules or trusted HTML. Keep the active theme when validation fails. Resolve history at render time, so switching themes changes history labels as well as cards. Theme preference is not mechanical state.
 

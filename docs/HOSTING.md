@@ -173,7 +173,12 @@ check that cross-origin mutations fail and no cookie or private response can be
 cached. Exercise join, recovery, independent browsers, concurrent choices and a
 restart at a human reaction. Confirm background bots resume without an open tab,
 and that revoking a session clears the private board on its next request. Monitor
-disk space and failed bot jobs without exporting private data. A second self-hosted process
+disk space and failed bot jobs without exporting private data. When bot work
+reaches a table whose saved game the running version cannot load (for example
+after a save or bot version change), that table alone is paused with
+`hosted_rooms.bot_paused = 'snapshot_unreadable'` and its snapshot is left
+unchanged; other tables keep their bots. The log records only the error type,
+so find affected tables by that pause reason. A second self-hosted process
 must not be used to improve throughput: distributed ownership and another storage
 adapter require separate implementation and crash-recovery checks. Cloudflare
 uses its own coordination boundary; it does not make a shared local SQLite file
