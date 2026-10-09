@@ -332,3 +332,15 @@ def invitation(csrf: str, invitation_id: str, authenticated: bool) -> h.Element:
             h.noscript["JavaScript is needed to read the private invitation from this link."],
         ],
     )
+
+
+def invitation_declined(message: str) -> h.Element:
+    """The invitation page after a join the service refused; it offers no join form."""
+    return hosted_page(
+        "Join a table",
+        h.main(id="main", class_="home")[
+            h.h1["You're invited"],
+            h.p(class_="notice error", role="alert")[message],
+            h.a(href="/")["Your tables"],
+        ],
+    )

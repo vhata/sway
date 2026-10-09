@@ -20,6 +20,7 @@ from sway.hosting.presentation import (
     home,
     hosted_page,
     invitation,
+    invitation_declined,
     table_content,
 )
 from sway.hosting.runtime import HostedRuntime, WebConfig
@@ -429,9 +430,12 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                 )
             )
             return cookie(response, credentials.session)
-        table = await runtime.execute(
-            service.join, token(request), invitation_id, _field(data, "secret")
-        )
+        try:
+            table = await runtime.execute(
+                service.join, token(request), invitation_id, _field(data, "secret")
+            )
+        except StorageConflict as exc:
+            return HTMLResponse(str(invitation_declined(str(exc))), status_code=409)
         return RedirectResponse(f"/games/{table.game_id}", status_code=303)
 
     return application

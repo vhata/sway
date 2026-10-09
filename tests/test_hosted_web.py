@@ -316,6 +316,31 @@ def test_public_assets_do_not_consume_private_page_rate_budget(config: HostedCon
     assert client.get("/static/hosted.js").status_code == 200
 
 
+def invitation_link(host: Client, path: str, seat: int = 1) -> tuple[str, str]:
+    invited = post(host, f"{path}/invite", {"seat": str(seat)})
+    link = re.search(r'id="invitation-link"[^>]*value="([^"]+)"', invited.text)
+    assert link is not None, invited.text
+    join_url, secret = link[1].split("#")
+    return join_url, secret
+
+
+def test_seated_player_opening_another_invitation_sees_conflict(config: HostedConfig) -> None:
+    app = create_app(config)
+    host: Client = make_client(app)
+    guest: Client = make_client(app)
+    player(host, "Alice")
+    path = post(host, "/games", {"players": "2"}).url.path
+    join_url, secret = invitation_link(host, path)
+    preview = host.get(join_url)
+    result = post(host, join_url, {"secret": secret}, source=preview)
+    assert result.status_code == 409, result.text
+    assert "You already occupy a seat at this table." in result.text
+    assert 'id="join-form"' not in result.text
+    preview = guest.get(join_url)
+    joined = post(guest, join_url, {"secret": secret, "display_name": "Bea"}, source=preview)
+    assert joined.status_code == 200, joined.text
+
+
 def test_oversized_and_malformed_integer_fields_are_rejected(config: HostedConfig) -> None:
     client: Client = make_client(create_app(config))
     player(client, "Alice")
