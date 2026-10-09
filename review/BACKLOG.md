@@ -19,11 +19,6 @@ The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
   - Findings: `pending-bot-scan-undecodable-room`
 
-- [BACKEND] `request-error-responses` — **Map invalid hosted and local form input to clear 4xx responses.** Several reachable inputs return 500 or misreport an invalid recovery code as an ended session.
-  - Starting point: Handle `StorageConflict` on `POST /join`, separate invalid recovery codes and expired anonymous sessions from the session-ended handler while keeping the invitation recoverable, bound integer form fields, and treat malformed local CSRF values as expired forms.
-  - Source: review/2026-10-08-0723-full.md, 2026-10-08
-  - Findings: `join-seated-conflict-500`, `recovery-error-ends-session`, `hosted-seat-integer-overflow-500`, `local-malformed-csrf-500`
-
 - [BACKEND] `anonymous-session-retention` — **Purge expired hosted sessions.** Every cookieless page load stores an anonymous session row that is never deleted, so storage grows without bound in one installation database or Durable Object.
   - Starting point: Delete expired sessions in bounded batches on an existing write path or bot alarm. Verify that row counts stay bounded under repeated cookieless requests on both runtimes.
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
