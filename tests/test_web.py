@@ -75,12 +75,12 @@ def test_setup_resume_and_theme_change_preserve_state(client: Client, tmp_path: 
 def test_csrf_origin_and_host_checks(client: Client) -> None:
     token = csrf(client)
     assert client.post("/games", data={"players": "2"}).status_code == 403
-    assert (
-        client.post(
-            "/games", data={"csrf": token}, headers={"Origin": "https://untrusted.invalid"}
-        ).status_code
-        == 403
-    )
+    # The test server is http://testserver: reject a foreign scheme and a foreign host.
+    for origin in ("https://untrusted.invalid", "http://untrusted.invalid"):
+        assert (
+            client.post("/games", data={"csrf": token}, headers={"Origin": origin}).status_code
+            == 403
+        )
     assert (
         client.post(
             "/games", data={"csrf": token}, headers={"Sec-Fetch-Site": "cross-site"}
@@ -95,6 +95,7 @@ FORGERIES: dict[str, tuple[str, dict[str, str]]] = {
     "missing-token": ("omitted", {}),
     "wrong-token": ("forged", {}),
     "foreign-origin": ("valid", {"Origin": "https://untrusted.invalid"}),
+    "same-scheme-foreign-origin": ("valid", {"Origin": "http://untrusted.invalid"}),
     "cross-site-fetch": ("valid", {"Sec-Fetch-Site": "cross-site"}),
 }
 
