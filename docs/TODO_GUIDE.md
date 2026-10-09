@@ -21,13 +21,13 @@ TODO entries have stages: **Needs triage** (outcome/dependencies unclear), **Nee
   - Related: `optional-related-slug`
 ```
 
-Each entry has exactly one area: `[UI]`, `[GAMEPLAY]`, `[AUDIO]`, `[BACKEND]`, `[PLATFORM]`, `[TOOLING]` or `[DOCS]`. Slugs are unique and never change when an item moves. `Source` is required. Review backlog entries also require `Findings: <raw-finding-slugs>`; each finding maps to at most one backlog entry.
+Each entry has exactly one area: `[UI]`, `[GAMEPLAY]`, `[AUDIO]`, `[BACKEND]`, `[PLATFORM]`, `[TOOLING]` or `[DOCS]`. Slugs are unique and never change when an item moves. `Source` is required. Review backlog entries also require `Findings: <raw-finding-slugs>`; each finding maps to at most one backlog entry. `bash scripts/workflow/check-queues.sh --strict` validates both queues; run it before committing queue edits.
 
 ## Claiming
 
 1. Follow the user's selection; otherwise prefer the highest-priority suitable unclaimed ready entry in the selected queue. Do not start triage/prototype work merely because no implementation item is ready.
-2. Search open PRs, branch names and active worktrees for the exact slug/title. For review batches also check every raw finding and any mapped backlog slug. A matching worktree is a provisional claim.
-3. Assign a dedicated worktree and branch containing the exact slug. Recheck concurrent claims. The coordinator can resolve overlapping assignments already authorized within the active task; otherwise clarify before duplication.
+2. Run `bash scripts/workflow/claim-check.sh <slug>`, which searches open and merged PRs, branch names and active worktrees for the exact slug and follows every finding a backlog entry maps. A matching worktree is a provisional claim.
+3. Create the branch and worktree with `bash scripts/workflow/start-work.sh <queue> <slug>` (`todo` or `review`), which names the branch `<queue>/<slug>` under `.worktrees/`; any branch name containing the exact slug is an equivalent claim. Recheck concurrent claims. The coordinator can resolve overlapping assignments already authorized within the active task; otherwise clarify before duplication.
 4. After the first meaningful commit, open a draft PR. Keep the source item while work is underway. If draft creation fails, report that the claim is not globally visible and preserve the entry. Close abandoned draft PRs.
 
 Every tracked-work PR begins with `## Why`, explaining the need, impact and resulting capability without requiring readers to open the queue. Use these exact markers after that section:
@@ -38,7 +38,7 @@ Claims review backlog: <slug>
 Claims review finding: <finding-slug>
 ```
 
-Use only markers relevant to the selected queue. A review batch claims its backlog slug plus each finding actually in scope. Explicitly assigned raw-finding work without a backlog entry uses only the finding marker and explains the exception.
+Use only markers relevant to the selected queue. A review batch claims its backlog slug plus each finding actually in scope. Explicitly assigned raw-finding work without a backlog entry uses only the finding marker and explains the exception. `bash scripts/workflow/check-pr-markers.sh --body <file>` validates every marker against the queues at `origin/main` and `HEAD`; a body with no markers passes on a branch outside the `todo/`, `review/` and `roadmap/` prefixes, so directly requested work needs none; a branch with one of those prefixes must carry a marker for its slug.
 
 ## Resolution
 

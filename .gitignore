@@ -29,3 +29,8 @@ coverage.json
 
 # Each development worktree keeps its own saved games.
 .runtime/
+
+# Agent workflow: per-task worktrees and unattended-run records.
+.worktrees/
+.feral/
+AUDIT.md
