@@ -57,7 +57,3 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
   - Related: `hosted-live-operational-acceptance`
 
 ### Unprioritized
-
-- [TOOLING] `main-codebase-review-baseline` — **Establish a full codebase-review baseline on main.** Historical snapshots predate major hosting/recovery additions and their reviewed commits are outside main's ancestry.
-  - Starting point: Follow docs/CODE_REVIEW_GUIDE.md; review current main, retain historical snapshots, verify standing findings and record actual checks and limits. This workflow audit is not a product codebase review.
-  - Source: repo-workflow audit at f93f650, 2026-10-07
