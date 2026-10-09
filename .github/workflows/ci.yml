@@ -7,9 +7,11 @@ permissions:
   contents: read
   pull-requests: read
 concurrency:
-  group: quality-${{ github.ref }}
-  # Cancel superseded runs on PR branches only. Cancelling runs on main hides
-  # red builds when several PRs merge in quick succession.
+  # Pull requests share one group per branch so a newer push cancels the
+  # superseded run. Pushes to main get a group per commit so no merge's run is
+  # cancelled or replaced while queued; cancelling main runs hides red builds
+  # when several PRs merge in quick succession.
+  group: quality-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   quality:

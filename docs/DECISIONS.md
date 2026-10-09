@@ -48,7 +48,7 @@ The recovery policy and frozen seats deliberately limit takeover and substitutio
 
 | Decision | Reason and tradeoff |
 | --- | --- |
-| Quality cancels superseded pull request runs only; runs on `main` always complete. | Two merges a minute apart on 2026-10-09 cancelled the first merge's validation. Each merge now keeps its own evidence at the cost of occasional overlapping runners. |
+| Quality cancels superseded pull request runs only; each push to `main` runs in its own concurrency group. | Two merges a minute apart on 2026-10-09 cancelled the first merge's validation. A per-commit group means a queued main run cannot be replaced by a later merge either. Each merge keeps its own evidence at the cost of occasional overlapping runners. |
 | Queue, link and PR-marker validation run in CI as a separate, non-required job. | The checks are cheap and make malformed queue entries and markers visible on the PR. Making the job required is a protection change left to the owner. |
 | A failed run on `main` is answered the same day by a revert or a P1 queue entry, and stays open until `main` is green again. | The 2026-10-05 and 2026-10-06 daily failures had no queue record for a day. The policy costs a same-day look at the run; it does not add retries or weaken any gate. |
-| Review drift is reported by the daily quality lane and never fails it. | The report needs history that pull request checks do not fetch; the daily lane already fetches evidence. A due review is a request to the user, not a broken build. |
+| Review drift is reported by the daily quality lane and never fails it. | A due review is a request to the user, not a broken build, and the daily lane already keeps evidence. |

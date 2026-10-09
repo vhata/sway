@@ -32,7 +32,7 @@ Run the queue and link checks before committing queue or documentation edits and
 
 ## Red main
 
-Quality cancels only superseded pull request runs; a run on `main` is never cancelled, so every merge keeps its own validation evidence. When a push run or a daily run on `main` fails, the same day either revert the change or file a P1 `TODO.md` entry (P0 if it blocks a release) with the run link and the evidence artifact. A green fix branch is not recovery; recovery is the next run on `main` going green, and the entry stays open until it does. A missing scheduled run is not a pass.
+Quality cancels only superseded pull request runs; each push to `main` runs in its own concurrency group, so no merge's run is cancelled or replaced and every merge keeps its own validation evidence. When a push run or a daily run on `main` fails, the same day either revert the change or file a P1 `TODO.md` entry (P0 if it blocks a release) with the run link and the evidence artifact. A green fix branch is not recovery; recovery is the next run on `main` going green, and the entry stays open until it does. A missing scheduled run is not a pass.
 
 ## Meaningful tests
 

@@ -47,7 +47,9 @@ jobs:
             --junitxml=daily-evidence/unit.xml 2>&1 | tee daily-evidence/quality.log
       - name: Review cadence
         if: ${{ !cancelled() }}
-        run: bash scripts/workflow/review-due.sh --paths 'src tests' | tee daily-evidence/review-due.txt
+        run: |
+          mkdir -p daily-evidence
+          bash scripts/workflow/review-due.sh --paths 'src tests' | tee daily-evidence/review-due.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
