@@ -30,11 +30,14 @@ def hidden(name: str, value: str | int) -> h.VoidElement:
     return h.input(type="hidden", name=name, value=str(value))
 
 
-def account(csrf: str, authenticated: bool, recovery: str | None = None) -> h.Element:
+def account(
+    csrf: str, authenticated: bool, recovery: str | None = None, error: str | None = None
+) -> h.Element:
     return hosted_page(
         "Your player",
         h.main(id="main", class_="home")[
             h.h1["Your place at the table"],
+            h.p(class_="notice error", role="alert")[error] if error else None,
             h.section(class_="panel")[
                 h.h2["Save your recovery code"],
                 h.p[

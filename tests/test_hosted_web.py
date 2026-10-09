@@ -341,6 +341,68 @@ def test_seated_player_opening_another_invitation_sees_conflict(config: HostedCo
     assert joined.status_code == 200, joined.text
 
 
+def test_mistyped_recovery_code_keeps_session_and_allows_retry(config: HostedConfig) -> None:
+    app = create_app(config)
+    code = player(make_client(app), "Alice")
+    client: Client = make_client(app)
+    page = client.get("/account")
+    bearer = client.cookies[COOKIE]
+    typo = post(client, "/recover", {"recovery_code": "typo"}, source=page)
+    assert typo.status_code == 401, typo.text
+    assert "That recovery code is not valid." in typo.text
+    assert "Your session has ended" not in typo.text
+    assert "set-cookie" not in typo.headers
+    assert client.cookies[COOKIE] == bearer
+    retried = post(client, "/recover", {"recovery_code": code}, source=typo)
+    assert retried.status_code == 200, retried.text
+    assert "Continue to your tables" in retried.text
+
+
+@pytest.mark.parametrize("lapse", ("expired", "purged"))
+def test_invitee_whose_visit_lapsed_can_still_join(config: HostedConfig, lapse: str) -> None:
+    app = create_app(config)
+    host: Client = make_client(app)
+    guest: Client = make_client(app)
+    player(host, "Alice")
+    path = post(host, "/games", {"players": "2"}).url.path
+    join_url, secret = invitation_link(host, path)
+    preview = guest.get(join_url)
+    stale = guest.cookies[COOKIE]
+    with HostedStore(config.database_path).transaction(write=True) as conn:
+        if lapse == "expired":
+            conn.execute("UPDATE sessions SET expires_at=0 WHERE principal_id IS NULL")
+        else:
+            conn.execute("DELETE FROM sessions WHERE principal_id IS NULL")
+    joined = post(guest, join_url, {"secret": secret, "display_name": "Bea"}, source=preview)
+    assert joined.status_code == 200, joined.text
+    assert "recovery-code" in joined.text
+    assert guest.cookies[COOKIE] != stale
+    table = HostedService(HostedStore(config.database_path)).view(
+        guest.cookies[COOKIE], path.split("/")[-1]
+    )
+    assert table.seats[1].occupied
+
+
+def test_lapsed_visit_without_matching_form_is_not_renewed(config: HostedConfig) -> None:
+    app = create_app(config)
+    host: Client = make_client(app)
+    guest: Client = make_client(app)
+    player(host, "Alice")
+    path = post(host, "/games", {"players": "2"}).url.path
+    join_url, secret = invitation_link(host, path)
+    guest.get(join_url)
+    with HostedStore(config.database_path).transaction(write=True) as conn:
+        conn.execute("UPDATE sessions SET expires_at=0 WHERE principal_id IS NULL")
+    forged = guest.post(
+        join_url,
+        data={"csrf": "forged", "secret": secret, "display_name": "Bea"},
+        headers={"Origin": ORIGIN},
+    )
+    assert forged.status_code == 401
+    with HostedStore(config.database_path).transaction() as conn:
+        assert conn.execute("SELECT count(*) FROM principals").fetchone()[0] == 1
+
+
 def test_oversized_and_malformed_integer_fields_are_rejected(config: HostedConfig) -> None:
     client: Client = make_client(create_app(config))
     player(client, "Alice")
