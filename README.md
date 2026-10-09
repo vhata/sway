@@ -45,6 +45,7 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | `scripts/check.sh` | Formatting, lint, types, coverage tests, build and installed-wheel smoke |
 | `scripts/daily-simulations.sh <2\|3\|4> [seed]` | 600 bounded bot games for one player count, with fixed and rotating seeds |
 | `scripts/cloudflare-recovery-check.sh` | Own a private local Workers process and verify synthetic recovery RPC state |
+| `scripts/workflow/*.sh` | Queue, link, PR-marker, claim, worktree and review-drift tooling ([workflow checks](docs/QUALITY.md#workflow-checks)) |
 
 CI runs `check.sh`, the native browser suite and `cloudflare-check.sh --browser`. [Daily verification](docs/QUALITY.md#daily-verification) adds extended invariant testing, 1,800 seeded bot games, local recovery RPC and packaging checks after Workers staging every day on `main`.
 

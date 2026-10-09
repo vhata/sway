@@ -1,10 +1,45 @@
-# Workflow audit — 2026-10-07
+# Workflow audits
+
+Newest first. Each audit compares written policy, actual enforcement, the records that prove what happened, and what could not be seen, at a named revision of `main`. An audit is not a codebase review or a production acceptance.
+
+## 2026-10-09
+
+Audit of `main` at `3358143292fa0ac9f1048bce33789e8e3f22476e`, after PRs #27, #28 and #29 landed, using the installed repo-workflow skill and its bundled validators. Every statement below was checked against current files, `git`, or the live GitHub API on 2026-10-09.
+
+### Policy, enforcement, records and limits
+
+| Area | Written policy | Actual enforcement | Current records and limits |
+| --- | --- | --- | --- |
+| Ownership and claims | [Contract](../AGENTS.md) requires claim checks, focused branches, worktrees, draft PRs and independent review. | Until this PR, no claim tooling existed in the repository; agents without the skill searched by hand. `scripts/workflow/` now carries the validators. | No open PRs. Two local branches without a PR or queue claim remain: `codex/hosted-browser-load-readiness` (one commit, 2026-10-03, hosted browser test additions) and `codex/hosted-playthrough-capacity` (two commits, 2026-09-30, a capacity script and tests). Ownership is unknown; they are preserved for the user's decision. The landed `fix/repository-workflow-audit` worktree and branch (PR #27) were removed locally; their only untracked content was caches and an earlier draft of the PR #27 body. |
+| Queues | [Guide](TODO_GUIDE.md) defines stages, priorities, exact slugs, markers and remainders. | Strict queue validation passes: 11 entries, no errors; every slug is unclaimed. Validation is still manual until CI runs it. | `postgresql-shared-game-storage` remains in Ready although its own text places it behind `portable-hosted-data-transfer` and a deployment condition. The 2026-10-07 audit left the Ready definition to the user; no decision is recorded, so the entry is unchanged. |
+| Hooks | [Quality](QUALITY.md) specifies staged format/lint on commit and types/tests on push. | `core.hooksPath` is `.githooks`; wrappers call the tracked scripts. The pre-push stage declared in `.pre-commit-config.yaml` never runs, which the 2026-10-08 review recorded as `dead-pre-push-hook-config`. | Hooks were exercised by this PR's own commits and push. |
+| PR and main CI | Required `Required quality checks` on PRs and pushes to `main`. | [Quality](../.github/workflows/ci.yml) uses `cancel-in-progress: true` for every ref. Confirmed live: [run 37906492443](https://github.com/vhata/sway/actions/runs/37906492443) for `c552cce` (PR #28 merge) was cancelled by [run 37906630732](https://github.com/vhata/sway/actions/runs/37906630732) for `3358143` (PR #29 merge) one minute later. No queue, link or marker validation runs in CI. | `c552cce` therefore has no push validation of its own; the later run covers the combined state. The fix is in the stacked CI pull request, which needs the user's authorization. |
+| Scheduled checks | Daily seven-lane verification with retained evidence. | [Daily](../.github/workflows/daily.yml) passed on 2026-10-07 at `f93f650` and 2026-10-08 at `5a321ca`. There is no review-drift step and no written red-main response policy. | The 2026-10-05 and 2026-10-06 failures were only filed as queue work on 2026-10-07, by the previous audit, and fixed by PR #28. A same-day policy is proposed in the CI pull request. |
+| Hosting protection | [Quality](QUALITY.md#toolchain-and-gates) records the 2026-10-07 settings. | Live protection matches: required `Required quality checks`, `strict` off, zero approving reviews, administrator enforcement off, linear history, force pushes and deletions allowed, conversation resolution off, no rulesets. Repository merges are squash only with PR title and body, deleting the head branch. | No change is proposed now. Once a queue-and-marker job exists in CI, adding it to the required checks is the user's call. |
+| Review ledger | Snapshots immutable; incremental reviews start from the newest reviewed commit reachable from `main`. | `review-due.sh --paths 'src tests'`: latest full review `5a321ca` on 2026-10-08 is an ancestor of `main`; 3 commits, 9 files, 49 inserted source lines since; verdict no review due. | 25 open findings, none P0 or P1; 18 mapped to 7 backlog entries, 7 inventory only. Pending reconciliation is empty. The 2026-10-07 baseline-lost condition is resolved. |
+| Rules outside the repository | The contract is the only home a cold agent reads. | The user's global instructions forbid AI attribution trailers in commits and PR bodies; repository history complies but nothing in the repository said so. The contract now records it. | The Python interpreter conflict noted on 2026-10-07 (shared interpreter in session instructions, per-worktree uv in the contract) stands; the repository rule governs repository work. |
+
+### Findings and dispositions
+
+1. **Main validation runs cancel each other.** Confirmed with the two merges on 2026-10-09. Repair: `cancel-in-progress: ${{ github.event_name == 'pull_request' }}`, proposed in the stacked CI pull request because CI changes need explicit authorization.
+2. **Workflow validators were absent from the repository.** Repaired here: the seven repo-workflow scripts are installed under `scripts/workflow/`, documented in [QUALITY.md](QUALITY.md#workflow-checks), and referenced from the contract and guides. Running them in CI is the remaining part of `workflow-gate-automation`.
+3. **`.worktrees/` was ignored only through the local exclude file.** Repaired here in `.gitignore`, together with `.feral/` and `AUDIT.md`, which the contract names for unattended runs.
+4. **No red-main policy and no review cadence check.** Proposed in the CI pull request: same-day revert or P1 entry with the run link, recovery meaning a green run on `main`, and `review-due.sh` in the daily quality lane.
+5. **A landed worktree and two orphan branches.** The landed one was removed with `cleanup-landed.sh --apply --discard-ignored` after confirming its saved PR body was superseded by PR #27. The `codex/*` branches are reported, not touched: open a draft PR claiming `hosted-live-operational-acceptance` for each that is still wanted, or delete them.
+6. **Ready semantics for `postgresql-shared-game-storage`.** Still the user's decision; the entry is unchanged.
+7. **The contract was edited directly on `main`** in `c5a7265`. The contract as now written routes changes to itself through a PR. Recorded, not repaired.
+
+### Checks and evidence
+
+At `3358143` before changes, from the skill's copies: `check-queues.sh --strict` passed with 11 entries; `check-links.sh` passed; `claim-check.sh` found no claims for any of the 11 slugs or their 18 findings; `review-due.sh` reported no review due with a valid baseline; `check-pr-markers.sh` validated the landed bodies of PRs #27, #28 and #29 against their base and merge commits; `cleanup-landed.sh` dry run identified the landed audit worktree. Live GitHub: branch protection, rulesets, merge settings, the fifteen most recent Actions runs and the open and merged PR lists. No product suite was run for this documentation and tooling change beyond the hooks that fire on commit and push.
+
+## 2026-10-07
 
 Sway has substantial product validation and compatible queue/review conventions, but availability, review baselines and workflow enforcement need attention. This is a workflow audit of main `f93f650007f2cda27488b7fa78a2477a58407971`, not a full codebase review or production acceptance.
 
 The audit used the installed repo-workflow skill, its setup/queue/quality/review references, repository instructions and two independent read-only agents: `audit_queues` and `audit_gates`. Historical comparison notes guided what to recheck; all findings below were checked against current files or live GitHub records.
 
-## Policy, enforcement, records and limits
+### Policy, enforcement, records and limits
 
 | Area | Written policy | Actual enforcement | Current records and limits |
 | --- | --- | --- | --- |
@@ -19,7 +54,7 @@ The audit used the installed repo-workflow skill, its setup/queue/quality/review
 | Review baseline | Immutable snapshots; incremental reviews start at newest reviewed revision. | No scheduled drift check. | Both recorded hashes exist but are outside main ancestry. Latest tree differs from landed quality revision in 21 files; substitution would be inaccurate. Exact latest-review-to-main delta: 174 files, +13,772/-523 lines. |
 | Failure response | No explicit red-main response policy. | Failing daily simulations propagate failure; later successes cannot swallow it. | No existing TODO captured October 6 failures. Today's green rotating corpus is different. Audit files a reproducible triage entry. Same-day response policy requires an explicit decision. |
 
-## Findings and dispositions
+### Findings and dispositions
 
 1. **Workflow availability is misleading.** `postgresql-shared-game-storage` is not presently available under the skill's Ready definition. Proposed repair: Ready means understood and unblocked; move PostgreSQL to Needs triage with `Depends on: portable-hosted-data-transfer` plus the deployment condition. The existing definition is preserved pending choice; no product scope is expanded.
 2. **Review baselines cannot support ancestry-based coverage.** Both `00ede93` and `55c3052` are off main. Bundled `review-due.sh` reports **BASELINE LOST**; its 25-commit/+21,965-line/full-due figures are merge-base approximations, not exact reviewed coverage. A fresh full review is queued. The index now explains the limitation; snapshots remain unchanged. New guidance requires main-reachable baselines or preserved branch trees with verified landed correspondence.
@@ -30,7 +65,7 @@ The audit used the installed repo-workflow skill, its setup/queue/quality/review
 
 Two smaller alignment opportunities remain: no `CLAUDE.md` import exists, and daily determinism checks do not include a dedicated repeated-seed comparison lane. Neither invalidates current Codex operation or existing ordinary determinism tests. Establish a concrete need before adding harness files or another expensive lane.
 
-## Repairs and proposals
+### Repairs and proposals
 
 This branch contains the audit, explicit PR-review evidence requirements, review-baseline guidance/limitations, pending-reconciliation scaffolding and three sourced queue entries. It does not modify CI, hooks policy, GitHub settings, historical snapshots, existing hosted branches/worktrees or product code.
 
@@ -38,7 +73,7 @@ Proposed CI diff: replace Quality `cancel-in-progress: true` with `${{ github.ev
 
 GitHub settings already match Sway's documented policy. Keep strict quality, linear history, conversation resolution and squash title/body conventions. The owner may choose approving-review/admin requirements; agent review is presently evidenced in PR bodies rather than forge approvals. No hosting setting was applied.
 
-## Checks and evidence limits
+### Checks and evidence limits
 
 At audited main:
 

@@ -44,6 +44,8 @@ A PR link alone is insufficient. Use `git show <reviewed-commit>:<path>` to insp
 
 ## Full and incremental reviews
 
+`bash scripts/workflow/review-due.sh --paths 'src tests'` reports commits, changed files and source churn since the newest reviewed commit and says whether an incremental or full review is due; it is a report, not a gate, and reports a lost baseline when the reviewed commit is not reachable from `main`.
+
 Record the reviewed commit first. Run `scripts/check.sh` and `scripts/e2e.sh`; record exact results and environmental gaps. A full review reads all maintained source, tests and relevant configuration, delegating independent areas when useful. Reproduce serious failures where practical.
 
 Incremental review starts from the newest snapshot's reviewed commit:

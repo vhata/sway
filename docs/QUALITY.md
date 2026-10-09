@@ -14,6 +14,22 @@ The normal path to `main` requires a PR with zero approving reviews (independent
 
 Do not claim tests passed when no tests were collected or a suite was skipped. Foundation scaffolding has no fabricated application tests. Unit/coverage scripts explicitly report a foundation-only skip only while both the engine directory and all Python test files are absent. The browser script reports a pending-implementation skip only while both the web module and Python browser tests are absent. Once the relevant code or tests exist, missing suites and empty collection fail normally; dependent implementation PRs supply real acceptance coverage. Report network, sandbox or missing-browser boundaries separately from application failures. Never silently disable a failing gate or lower coverage to finish a PR.
 
+## Workflow checks
+
+`scripts/workflow/` holds the repo-workflow validators, copied from the skill so that hooks, CI and agents without the skill run the same tools. They need bash 3.2 and git, plus `gh` for pull request lookups.
+
+| Script | Purpose |
+| --- | --- |
+| `check-queues.sh --strict` | Entry format, unique slugs, `Source` lines, resolvable `Related`/`Depends on`, one finding per backlog entry, in `TODO.md` and `review/BACKLOG.md` |
+| `check-links.sh` | Every relative Markdown link resolves |
+| `check-pr-markers.sh --body FILE` | `## Why` first; every Claims/Resolves/Files marker matches the queues at `origin/main` and `HEAD` |
+| `claim-check.sh <slug>` | Existing claims across open and merged PRs, branches and worktrees |
+| `start-work.sh <queue> <slug>` | Claim check, then branch and worktree under `.worktrees/` |
+| `cleanup-landed.sh [--apply]` | Remove worktrees and branches whose PR merged; dry run by default |
+| `review-due.sh --paths 'src tests'` | Drift since the newest reviewed commit; a report, never a gate |
+
+Run the queue and link checks before committing queue or documentation edits and the marker check on a PR body before marking it ready. CI does not run these checks yet; wiring them into the Quality and daily workflows is the remaining part of TODO `workflow-gate-automation`.
+
 ## Meaningful tests
 
 - Rules: independently specified expected outcomes for all cards, nested effects, reaction timing, empty supply, cleanup, scoring and ties. Test invalid choices before effects occur.
