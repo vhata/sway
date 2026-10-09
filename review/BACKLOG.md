@@ -29,11 +29,6 @@ The [2026-10-24 full review](2026-10-24-0250-full.md) retains the seven entries 
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
   - Findings: `anonymous-sessions-never-purged`
 
-- [TOOLING] `privacy-and-csrf-regression-tests` — **Make privacy and CSRF tests fail on real regressions.** Making hidden draws public or removing CSRF checks from three local routes leaves the suite green.
-  - Starting point: Assert event audiences per kind (draw, Library keep, Sentry order, Artisan topdeck) and rendered history by card name; cover CSRF/Origin rejection on every local mutating route; replace the instance-ID HTML assertion. Demonstrate each new test against the corresponding mutation.
-  - Source: review/2026-10-08-0723-full.md, 2026-10-08
-  - Findings: `private-event-audience-untested`, `local-mutation-csrf-untested`, `html-privacy-assertion-vacuous`
-
 - [TOOLING] `daily-and-ci-evidence-fidelity` — **Make daily seeds, PR triggers and failure evidence behave as documented.** The daily Hypothesis seed is ignored on Actions, recovery-worker changes skip the daily PR run, and Quality may omit evidence on timeout.
   - Starting point: Disable Hypothesis derandomization for the daily lane or correct QUALITY.md, add `deployment/cloudflare/recovery/**` to the daily PR paths, and upload Quality evidence on any non-success. Obtain explicit authorization for CI changes first.
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
