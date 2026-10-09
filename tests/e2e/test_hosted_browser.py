@@ -618,3 +618,33 @@ def test_server_startup_discovers_bot_work_without_an_open_tab(
     revision = table.revision
     with serve(directory):
         assert service.view(host.session.token, table.game_id).revision == revision
+
+
+def test_board_refresh_keeps_open_panel_and_focus(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    from sway.engine import Command
+
+    users, table = active_table(hosted_server)
+    assert table.pending_player is not None
+    actor, observer = users[table.pending_player], users[1 - table.pending_player]
+    with player_browser(browser, hosted_server, observer) as (_, page):
+        page.goto(f"{hosted_server.url}/games/{table.game_id}")
+        expect(page.locator("#opponent-heading")).to_be_visible()
+        opponent = page.locator(".opponent").nth(table.pending_player)
+        opponent.locator("summary").click()
+        expect(opponent.locator("summary")).to_be_focused()
+        current = hosted_server.service.view(actor.session.token, table.game_id)
+        assert current.view is not None and current.view.pending is not None
+        pending = current.view.pending
+        hosted_server.service.submit(
+            actor.session.token,
+            table.game_id,
+            uuid4().hex,
+            Command(pending.id, current.revision, (pending.options[0].id,)),
+        )
+        expect(page.locator("#table")).to_have_attribute(
+            "data-revision", str(current.revision + 1), timeout=10000
+        )
+        expect(opponent.locator("details")).to_have_attribute("open", "")
+        expect(opponent.locator("summary")).to_be_focused()

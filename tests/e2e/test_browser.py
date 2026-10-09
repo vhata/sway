@@ -16,7 +16,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 import pytest
-from playwright.sync_api import Page, Request, expect
+from playwright.sync_api import Page, Request, Route, expect
 
 from sway.bots import BotState, choose
 from sway.engine import GameConfig, new_game, state_to_json, view_for
@@ -541,3 +541,56 @@ def test_stale_tab_shows_current_game_without_repeating_move(
         assert service.load(identifier) == accepted
     finally:
         stale.close()
+
+
+def bot_turn_game(service: GameService, scratch: GameService) -> str:
+    """Create a four-player game whose opponents still move after one advance."""
+    strategies = ("economy", "economy", "economy")
+    for seed in range(1, 200):
+        probe = scratch.create(GameConfig(player_count=4), seed, strategies)
+        assert probe.state.pending is not None
+        if probe.state.pending.player == 0:
+            continue
+        advanced = scratch.advance_bots(probe.game_id, probe.revision, 8)
+        if advanced.state.pending is not None and advanced.state.pending.player != 0:
+            record = service.create(GameConfig(player_count=4), seed, strategies)
+            return record.game_id
+    pytest.fail("No seed keeps the opponents moving after one automatic advance")
+
+
+@pytest.mark.parametrize("focus_target", ["panel summary", "unnamed button"])
+def test_bot_steps_keep_open_panels_and_focus(
+    page: Page, server_url: str, server_data: Path, tmp_path: Path, focus_target: str
+) -> None:
+    """Automatic opponent steps must not close disclosure panels or move focus."""
+    service = GameService(SQLiteStore(server_data / "games.sqlite3"))
+    identifier = bot_turn_game(service, GameService(SQLiteStore(tmp_path / "probe.sqlite3")))
+    held: list[Route] = []
+    page.route("**/advance", lambda route: held.append(route))
+    page.goto(f"{server_url}/games/{identifier}")
+    page.wait_for_function("() => document.querySelector('#bot-progress')")
+    for _ in range(100):
+        if held:
+            break
+        page.wait_for_timeout(50)
+    assert len(held) == 1
+    opponent = page.locator(".opponent").nth(1)
+    page.locator(".history summary").click()
+    opponent.locator("summary").click()
+    if focus_target == "unnamed button":
+        target = page.get_by_role("button", name="Continue opponents")
+        target.focus()
+    else:
+        target = opponent.locator("summary")
+    expect(target).to_be_focused()
+    revision = page.locator("#board").get_attribute("data-revision")
+    held.pop().continue_()
+    expect(page.locator("#board")).not_to_have_attribute("data-revision", revision or "")
+    # The opponents are still moving, so this is an automatic refresh, not a new decision.
+    expect(page.locator("#bot-progress")).to_be_visible()
+    expect(page.locator("#decision-form")).to_have_count(0)
+    expect(page.locator(".opponent").nth(1).locator("details")).to_have_attribute("open", "")
+    expect(page.locator(".history details")).to_have_attribute("open", "")
+    expect(target).to_be_focused()
+    expect(page.locator("#opponent-heading")).not_to_be_focused()
+    page.unroute_all(behavior="ignoreErrors")

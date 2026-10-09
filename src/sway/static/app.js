@@ -4,6 +4,44 @@
   let selectionBeforeSwap = null;
   let decisionBeforeSwap = null;
   let positionBeforeSwap = null;
+  let panelsBeforeSwap = null;
+  const focusable = "a[href], button, input, select, textarea, summary";
+  // Refreshes replace the whole board or table. A control without an ID is
+  // matched by its nearest keyed or identified container and by attributes
+  // that stay the same between renders, never by its visible text.
+  function focusKey(element) {
+    const scope = element.parentElement?.closest("[data-key], [id]");
+    if (!scope) return null;
+    return [
+      scope.dataset.key ?? `#${scope.id}`,
+      element.tagName,
+      element.getAttribute("type"),
+      element.getAttribute("name"),
+      ["checkbox", "radio"].includes(element.type) ? element.value : null,
+      element.dataset.move,
+      element.closest("[data-option]")?.dataset.option,
+      element.getAttribute("href"),
+    ].join("|");
+  }
+  function sameKey(key) {
+    return [...document.querySelectorAll(focusable)].filter((control) => focusKey(control) === key);
+  }
+  function describeFocus() {
+    const element = document.activeElement;
+    if (!element || element === document.body) return null;
+    if (element.id) return { element, id: element.id };
+    const key = focusKey(element);
+    return key ? { element, key, index: sameKey(key).indexOf(element) } : { element };
+  }
+  function findFocus(previous) {
+    if (!previous) return null;
+    // Focus outside the replaced region is unaffected by the swap.
+    if (previous.element.isConnected) return previous.element;
+    if (previous.id) return document.getElementById(previous.id);
+    if (!previous.key) return null;
+    const matches = sameKey(previous.key);
+    return matches[previous.index] ?? matches[0] ?? null;
+  }
   function decisionIdentity() {
     return (
       document.querySelector("#decision-form")?.dataset.decision ??
@@ -80,8 +118,13 @@
       }
     }
     selectionBeforeSwap = null;
+    for (const panel of document.querySelectorAll("details[data-key]")) {
+      const open = panelsBeforeSwap?.get(panel.dataset.key);
+      if (open !== undefined) panel.open = open;
+    }
+    panelsBeforeSwap = null;
     setup(document);
-    const previous = focusedBeforeSwap ? document.getElementById(focusedBeforeSwap) : null;
+    const previous = findFocus(focusedBeforeSwap);
     const changed = decisionBeforeSwap !== decisionIdentity();
     const heading = document.querySelector("#decision-heading, #result-heading, #opponent-heading");
     const target = changed ? heading : previous && !previous.disabled ? previous : heading;
@@ -100,7 +143,13 @@
   document.addEventListener("htmx:afterSwap", afterSwap);
   document.addEventListener("sway:afterSwap", afterSwap);
   function beforeSwap(event) {
-    focusedBeforeSwap = document.activeElement?.id;
+    focusedBeforeSwap = describeFocus();
+    panelsBeforeSwap = new Map(
+      [...document.querySelectorAll("details[data-key]")].map((panel) => [
+        panel.dataset.key,
+        panel.open,
+      ]),
+    );
     decisionBeforeSwap = decisionIdentity();
     positionBeforeSwap = { left: window.scrollX, top: window.scrollY };
     const form = document.querySelector("#decision-form");
