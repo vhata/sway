@@ -43,7 +43,6 @@ The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below
   - Starting point: Disable Hypothesis derandomization for the daily lane or correct QUALITY.md, add `deployment/cloudflare/recovery/**` to the daily PR paths, and upload Quality evidence on any non-success. Obtain explicit authorization for CI changes first.
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
   - Findings: `daily-hypothesis-seed-ignored`, `daily-pr-filter-misses-recovery-sources`, `quality-evidence-skipped-on-timeout`
-  - Related: `workflow-gate-automation`
 
 - [TOOLING] `quality-gate-configuration` — **Align lint, smoke-test, hook and type-check configuration with QUALITY.md.** Biome lint has no rules enabled, the wheel smoke guard can skip silently, a declared pre-push hook never runs and Workers Python is outside strict typing without explanation.
   - Starting point: Choose and enable a Biome rule set (fix or justify current hits), align the install-smoke guard with the other foundation guards, remove or wire the dead hook declaration, and document or narrow the type-check scope.

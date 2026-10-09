@@ -43,3 +43,12 @@ The recovery policy and frozen seats deliberately limit takeover and substitutio
 - Select background execution through the runtime adapter: the existing self-hosted dispatcher or durable object alarms. Both operate on persisted pending work and bounded bot decisions without requiring an open browser.
 - Keep Python 3.12 and its locked environment for ordinary development/self-hosting. Cloudflare has its own pinned toolchain and lockfiles for the Python version selected by its compatibility date; do not copy that runtime requirement into the local release.
 - Keep runtime selection separate from migration. No automatic data transfer, export/import or merging of installations is included; existing local saves stay local. Deployment and recovery drills remain explicit work, and preparing the adapters does not authorize publication.
+
+## 2026-10-09: workflow gates
+
+| Decision | Reason and tradeoff |
+| --- | --- |
+| Quality cancels superseded pull request runs only; each push to `main` runs in its own concurrency group. | Two merges a minute apart on 2026-10-09 cancelled the first merge's validation. A per-commit group means a queued main run cannot be replaced by a later merge either. Each merge keeps its own evidence at the cost of occasional overlapping runners. |
+| Queue, link and PR-marker validation run in CI as a separate, non-required job. | The checks are cheap and make malformed queue entries and markers visible on the PR. Making the job required is a protection change left to the owner. |
+| A failed run on `main` is answered the same day by a revert or a P1 queue entry, and stays open until `main` is green again. | The 2026-10-05 and 2026-10-06 daily failures had no queue record for a day. The policy costs a same-day look at the run; it does not add retries or weaken any gate. |
+| Review drift is reported by the daily quality lane and never fails it. | A due review is a request to the user, not a broken build, and the daily lane already keeps evidence. |

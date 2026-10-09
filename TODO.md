@@ -25,10 +25,6 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
   - Remaining from: `hosted-installation-operations`
   - Related: `postgresql-shared-game-storage`
 
-- [TOOLING] `workflow-gate-automation` — **Validate workflow records and preserve every main validation run.** Queue/claim/link checks and review-drift reporting are absent from CI, and Quality currently cancels earlier main runs.
-  - Starting point: Obtain explicit authorization for CI/hook policy changes, then adapt the repo-workflow validators to Sway's guides; cancel only superseded PR runs. Decide and document red-main response and review cadence without weakening existing gates.
-  - Source: repo-workflow audit at f93f650, 2026-10-07
-
 ## Needs proof of concept
 
 ### P0 Critical
