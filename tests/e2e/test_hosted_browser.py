@@ -620,6 +620,48 @@ def test_server_startup_discovers_bot_work_without_an_open_tab(
         assert service.view(host.session.token, table.game_id).revision == revision
 
 
+def test_lobby_refresh_keeps_unsaved_setup_panel_and_focus(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    service = hosted_server.service
+    host, guest = (
+        service.identity.create_principal(service.identity.anonymous_session().token, name)
+        for name in ("Alice", "Bob")
+    )
+    table = service.create(host.session.token, ("human", "human"))
+    invitation = service.invite(host.session.token, table.game_id, 1)
+    with player_browser(browser, hosted_server, host) as (_, page):
+        page.goto(f"{hosted_server.url}/games/{table.game_id}")
+        expect(page.get_by_role("heading", name="Gather around")).to_be_visible()
+        setup = page.locator("details", has=page.locator("summary", has_text="Change table setup"))
+        setup.locator("summary").click()
+        page.locator("#players").select_option("3")
+        opponent = setup.locator('select[name="controller2"]')
+        opponent.select_option("economy")
+        opponent.focus()
+        expect(opponent).to_be_focused()
+        before = page.locator("#table").get_attribute("data-lobby-revision")
+        joined = service.join(guest.session.token, invitation.invitation_id, invitation.secret)
+        assert str(joined.lobby_revision) != before
+        expect(page.locator("#table")).to_have_attribute(
+            "data-lobby-revision", str(joined.lobby_revision), timeout=10000
+        )
+        expect(page.get_by_text("Seat 2: Bob", exact=False)).to_be_visible()
+        expect(setup).to_have_attribute("open", "")
+        expect(page.locator("#players")).to_have_value("3")
+        expect(opponent).to_have_value("economy")
+        expect(opponent).to_be_visible()
+        expect(opponent).to_be_focused()
+        expect(setup.locator('input[name="lobby_revision"]')).to_have_value(
+            str(joined.lobby_revision)
+        )
+        setup.get_by_role("button", name="Save setup").click()
+        expect(page.get_by_text("Seat 3:", exact=False)).to_be_visible()
+        saved = service.view(host.session.token, table.game_id)
+        assert [seat.controller for seat in saved.seats] == ["human", "human", "economy"]
+        assert saved.seats[1].display_name == "Bob"
+
+
 def test_board_refresh_keeps_open_panel_and_focus(
     browser: Browser, hosted_server: HostedServer
 ) -> None:

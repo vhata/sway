@@ -14,7 +14,7 @@ Bots receive the same filtered view and decision as a human, plus their own pers
 
 ## Presentation and privacy
 
-Use typed htpy functions accepting presentation data from a filtered player view. Rules, costs and effects never depend on visible text. Local play uses HTMX to submit decisions and request fragments; hosted play serializes polling and submissions through its fetch coordinator. Small JavaScript components maintain selection/order locally, preserve focus on refresh and reset when the decision ID changes.
+Use typed htpy functions accepting presentation data from a filtered player view. Rules, costs and effects never depend on visible text. Local play uses HTMX to submit decisions and request fragments; hosted play serializes polling and submissions through its fetch coordinator. Small JavaScript components maintain selection/order locally and reset it when the decision ID changes. Refreshes keep open `data-key` panels, unsaved changes in keyed forms other than the one just submitted, and focus: by ID, or for a control without one by its nearest keyed or identified container. Focus moves to the new heading when the decision changes.
 
 Filter structured events as well as state: discarded/revealed public cards and hidden draws have different visibility. Never send authoritative snapshots to templates or clients. Render pending choices only for their owner. The future API can expose the same player views and decisions without changing rules or bots.
 

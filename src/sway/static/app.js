@@ -5,6 +5,7 @@
   let decisionBeforeSwap = null;
   let positionBeforeSwap = null;
   let panelsBeforeSwap = null;
+  let editsBeforeSwap = [];
   const focusable = "a[href], button, input, select, textarea, summary";
   // Refreshes replace the whole board or table. A control without an ID is
   // matched by its nearest keyed or identified container and by attributes
@@ -42,6 +43,56 @@
     const matches = sameKey(previous.key);
     return matches[previous.index] ?? matches[0] ?? null;
   }
+  // A keyed form keeps the fields its user changed but has not submitted.
+  // Unchanged fields, hidden revisions and CSRF tokens come from the refresh,
+  // so saving applies only those changes to the latest server state.
+  function unsavedEdits() {
+    const edits = [];
+    for (const form of document.querySelectorAll("form[data-key]")) {
+      if (form.dataset.submitted) continue;
+      for (const control of form.querySelectorAll("input[name], select[name], textarea[name]")) {
+        if (["hidden", "submit", "button", "reset"].includes(control.type)) continue;
+        const edit = { form: form.dataset.key, name: control.name };
+        if (["checkbox", "radio"].includes(control.type)) {
+          if (control.checked !== control.defaultChecked) {
+            edits.push({ ...edit, value: control.value, checked: control.checked });
+          }
+        } else if (control.tagName === "SELECT") {
+          const options = [...control.options];
+          const initial = Math.max(
+            0,
+            options.findIndex((option) => option.defaultSelected),
+          );
+          if (control.selectedIndex !== initial) edits.push({ ...edit, value: control.value });
+        } else if (control.value !== control.defaultValue) {
+          edits.push({ ...edit, value: control.value });
+        }
+      }
+    }
+    return edits;
+  }
+  function restoreEdits(edits) {
+    for (const edit of edits) {
+      const form = document.querySelector(`form[data-key="${CSS.escape(edit.form)}"]`);
+      const control = [...(form?.elements ?? [])].find(
+        (element) =>
+          element.name === edit.name &&
+          (edit.checked === undefined || element.value === edit.value),
+      );
+      if (!control) continue;
+      if (edit.checked !== undefined) control.checked = edit.checked;
+      else if (
+        control.tagName !== "SELECT" ||
+        [...control.options].some((option) => option.value === edit.value)
+      ) {
+        control.value = edit.value;
+      }
+    }
+  }
+  // A submitted form shows the server's result, not the values that were sent.
+  document.addEventListener("submit", (event) => {
+    event.target.dataset.submitted = "true";
+  });
   function decisionIdentity() {
     return (
       document.querySelector("#decision-form")?.dataset.decision ??
@@ -123,6 +174,8 @@
       if (open !== undefined) panel.open = open;
     }
     panelsBeforeSwap = null;
+    restoreEdits(editsBeforeSwap);
+    editsBeforeSwap = [];
     setup(document);
     const previous = findFocus(focusedBeforeSwap);
     const changed = decisionBeforeSwap !== decisionIdentity();
@@ -150,6 +203,7 @@
         panel.open,
       ]),
     );
+    editsBeforeSwap = unsavedEdits();
     decisionBeforeSwap = decisionIdentity();
     positionBeforeSwap = { left: window.scrollX, top: window.scrollY };
     const form = document.querySelector("#decision-form");
