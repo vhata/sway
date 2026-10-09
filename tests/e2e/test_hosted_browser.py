@@ -490,10 +490,50 @@ def test_private_instance_assertion_ignores_token_collision_but_detects_leaks() 
             assert_private_instance_absent(html + leak, "c32")
 
 
+def assert_private_cards_hidden(page: Page, owner: str, names: tuple[str, ...]) -> None:
+    # Card faces and history entries render themed names, never instance IDs.
+    # Pass names of cards no public event or zone has shown yet. text_content
+    # includes collapsed public-card panels; the supply legitimately names every pile.
+    history = page.locator(".history").text_content() or ""
+    players = page.locator(".opponent-row").text_content() or ""
+    for private_entry in (f"{owner} drew", f"{owner} returned to their deck"):
+        assert private_entry not in history
+    for name in names:
+        assert name not in history
+        assert name not in players
+
+
+def test_private_card_assertion_ignores_the_supply_but_detects_named_leaks(
+    browser: Browser,
+) -> None:
+    board = (
+        '<section class="opponent-row"><article>{players}</article></section>'
+        '<section class="supply-section">Breakwater</section>'
+        '<aside class="history"><ol><li>Alice drew Copper.</li>{history}</ol></aside>'
+    )
+    page = browser.new_page()
+    try:
+        page.set_content(board.format(players="", history=""))
+        assert_private_cards_hidden(page, "Bob", ("Breakwater",))
+        for players, history in (
+            ("", "<li>Bob drew Copper, Estate.</li>"),
+            ("", "<li>Bob returned to their deck Estate.</li>"),
+            ("", "<li>Bob revealed Breakwater.</li>"),
+            ("<details><summary>Public cards</summary>Breakwater</details>", ""),
+        ):
+            page.set_content(board.format(players=players, history=history))
+            with pytest.raises(AssertionError):
+                assert_private_cards_hidden(page, "Bob", ("Breakwater",))
+    finally:
+        page.close()
+
+
 def test_reaction_is_private_to_target_and_survives_process_restart(
     browser: Browser, tmp_path: Path
 ) -> None:
     from sway.engine import Card, Command, Decision, Effect, GameConfig, Option, advance, new_game
+    from sway.engine.catalog import CATALOG
+    from sway.presentation.themes import load_themes
     from sway.service import serialize_game
 
     directory = tmp_path / "reaction-server"
@@ -521,6 +561,7 @@ def test_reaction_is_private_to_target_and_survives_process_restart(
             )
             attack = Card(f"c{state.next_instance_id}", "k14")
             protection = Card(f"c{state.next_instance_id + 1}", "k16")
+            protection_name = load_themes(frozenset(CATALOG))["common-ground"].cards["k16"].name
             state.next_instance_id += 2
             state.supply["k14"] -= 1
             state.supply["k16"] -= 1
@@ -573,6 +614,7 @@ def test_reaction_is_private_to_target_and_survives_process_restart(
                 assert "Protect yourself from this attack?" not in observer.content()
                 expect(observer.locator("#decision-form")).to_have_count(0)
                 assert_private_instance_absent(observer.content(), protection.id)
+                assert_private_cards_hidden(observer, "Bob", (protection_name,))
             port = int(server.url.rsplit(":", 1)[1])
         with serve(directory, port=port):
             for page in pages:
