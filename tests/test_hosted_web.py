@@ -314,3 +314,34 @@ def test_public_assets_do_not_consume_private_page_rate_budget(config: HostedCon
         client.get("/account")
     assert client.get("/account").status_code == 429
     assert client.get("/static/hosted.js").status_code == 200
+
+
+def test_oversized_and_malformed_integer_fields_are_rejected(config: HostedConfig) -> None:
+    client: Client = make_client(create_app(config))
+    player(client, "Alice")
+    path = post(client, "/games", {"players": "2"}).url.path
+    service = HostedService(HostedStore(config.database_path))
+    game_id = path.split("/")[-1]
+    huge = "9" * 30
+    lobby = str(service.view(client.cookies[COOKIE], game_id).lobby_revision)
+    for action, fields in (
+        ("invite", {"seat": huge}),
+        ("revoke-invite", {"seat": huge}),
+        ("remove", {"seat": huge, "lobby_revision": lobby}),
+        ("remove", {"seat": "1", "lobby_revision": huge}),
+        ("invite", {"seat": "7"}),
+        ("revoke-invite", {"seat": "-1"}),
+        ("ready", {"lobby_revision": "1_0", "ready": "true"}),
+    ):
+        result = post(client, f"{path}/{action}", fields)
+        assert result.status_code == 422, (action, fields, result.text)
+        assert 'id="table"' in result.text
+    bearer = client.cookies[COOKIE]
+    for operation in (
+        lambda: service.invite(bearer, game_id, 10**30),
+        lambda: service.revoke_invite(bearer, game_id, -(10**30)),
+        lambda: service.remove(bearer, game_id, 10**30, int(lobby)),
+    ):
+        with pytest.raises(ValueError, match="Choose an available seat"):
+            operation()
+    assert service.view(bearer, game_id).lobby_revision == int(lobby)

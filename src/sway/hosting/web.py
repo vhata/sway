@@ -40,8 +40,16 @@ def _field(data: FormData, key: str, default: str = "") -> str:
     return value
 
 
+def _number(data: FormData, key: str, default: str = "") -> int:
+    """A non-negative decimal small enough for every SQLite integer column."""
+    value = _field(data, key, default)
+    if not value.isascii() or not value.isdigit() or len(value) > 18:
+        raise ValueError("Choose valid form values.")
+    return int(value)
+
+
 def _setup(data: FormData) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    count = int(_field(data, "players", "2"))
+    count = _number(data, "players", "2")
     if count not in {2, 3, 4}:
         raise ValueError("Choose two to four players.")
     controllers = ("human",) + tuple(
@@ -299,7 +307,7 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     bearer,
                     game_id,
                     _field(data, "request_id"),
-                    Command(_field(data, "decision"), int(_field(data, "revision")), choices),
+                    Command(_field(data, "decision"), _number(data, "revision"), choices),
                 )
                 table = result.table
             elif action == "theme":
@@ -311,19 +319,19 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     bearer,
                     game_id,
                     theme,
-                    int(_field(data, "preference_version")),
+                    _number(data, "preference_version"),
                 )
             elif action == "ready":
                 table = await runtime.execute(
                     service.ready,
                     bearer,
                     game_id,
-                    int(_field(data, "lobby_revision")),
+                    _number(data, "lobby_revision"),
                     _field(data, "ready") == "true",
                 )
             elif action == "start":
                 table = await runtime.execute(
-                    service.start, bearer, game_id, int(_field(data, "lobby_revision"))
+                    service.start, bearer, game_id, _number(data, "lobby_revision")
                 )
             elif action == "configure":
                 controllers, kingdom = _setup(data)
@@ -331,7 +339,7 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     service.configure,
                     bearer,
                     game_id,
-                    int(_field(data, "lobby_revision")),
+                    _number(data, "lobby_revision"),
                     controllers,
                     kingdom,
                 )
@@ -340,21 +348,19 @@ def create_application(settings: WebConfig, runtime: HostedRuntime) -> FastAPI:
                     service.remove,
                     bearer,
                     game_id,
-                    int(_field(data, "seat")),
-                    int(_field(data, "lobby_revision")),
+                    _number(data, "seat"),
+                    _number(data, "lobby_revision"),
                 )
             elif action == "cancel":
                 table = await runtime.execute(service.cancel, bearer, game_id)
             elif action == "retry":
                 table = await runtime.execute(service.retry_bots, bearer, game_id)
             elif action == "revoke-invite":
-                await runtime.execute(
-                    service.revoke_invite, bearer, game_id, int(_field(data, "seat"))
-                )
+                await runtime.execute(service.revoke_invite, bearer, game_id, _number(data, "seat"))
                 table = await runtime.execute(service.view, bearer, game_id)
             elif action == "invite":
                 invite = await runtime.execute(
-                    service.invite, bearer, game_id, int(_field(data, "seat"))
+                    service.invite, bearer, game_id, _number(data, "seat")
                 )
                 link = f"{settings.origin}/join/{invite.invitation_id}#{invite.secret}"
                 return HTMLResponse(
