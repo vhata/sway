@@ -13,6 +13,7 @@ from sway.engine import (
     KINGDOM_IDS,
     Card,
     Decision,
+    Event,
     GameConfig,
     Option,
     PlayerView,
@@ -105,6 +106,41 @@ def test_play_treasures_before_buying_and_never_buy_free_junk() -> None:
     assert choose(visible(decision), decision, BotState("economy", 0)).command.selections == (
         "end-turn",
     )
+
+
+@pytest.mark.parametrize("profile", STRATEGIES)
+def test_rebuilds_economy_with_copper_after_losing_treasure(profile: str) -> None:
+    # Six coppers left through public trashing; one known coin cannot afford
+    # anything useful, so passing every turn would stall the game forever.
+    decision = Decision(
+        "buy",
+        0,
+        "menu",
+        "buy",
+        (Option("treasure1", "treasure1"), Option("curse", "curse"), Option("end-turn")),
+        1,
+        1,
+    )
+    view = visible(decision)
+    trashed = tuple(Card(str(index), "treasure1") for index in range(6))
+    view = replace(view, events=(*view.events, Event("trash", 0, trashed, len(trashed))))
+    assert choose(view, decision, BotState(profile, 4)).command.selections == ("treasure1",)
+    gained = tuple(Event("gain", 0, (Card(f"g{index}", "treasure1"),)) for index in range(4))
+    view = replace(view, events=(*view.events, *gained))
+    assert choose(view, decision, BotState(profile, 4)).command.selections == ("end-turn",)
+
+
+@pytest.mark.parametrize(
+    "players,seed",
+    # Daily run 37502405129: Bandit/Chapel trashed every treasure and the bots
+    # stopped buying, exhausting the decision budget without ending the game.
+    ((3, 37502405135), (4, 37502405136)),
+)
+def test_attack_bots_recover_from_trashed_economies(players: int, seed: int) -> None:
+    kingdom = tuple(Random(seed).sample(KINGDOM_IDS, 10))
+    result = simulate_game(GameConfig(players, kingdom), seed, ("attack",) * players)
+    assert result.finished, result
+    assert result.winners
 
 
 def test_chapel_trashes_junk_but_preserves_a_buying_economy() -> None:

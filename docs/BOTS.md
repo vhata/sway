@@ -6,7 +6,7 @@ The `economy`, `engine` and `attack` profiles implement the same decision interf
 - **Engine:** favours drawing, extra actions, deck improvement and reusable action chains.
 - **Attack:** values disruption while still buying income and victory cards.
 
-All profiles switch toward points as the main victory pile runs out. Shared decision handling selects useful cards, protects a minimum purchasing economy when trashing, orders draws, handles optional reactions and respects the engine's current option constraints.
+All profiles switch toward points as the main victory pile runs out. Shared decision handling selects useful cards, keeps a minimum purchasing economy of five known treasure coins when Chapel or Sentry trashes Copper, buys Copper to restore that minimum after attacks or trashing take treasure away, orders draws, handles optional reactions and respects the engine's current option constraints.
 
 `STRATEGY_REGISTRY` maps names to strategies ranking legal gains. `choose(view, decision, BotState)` returns `BotChoice(command, state)` without modifying the view or old bot memory. A saved bot state contains its profile, strategy version, independent seed and decision count. Random tie breaks use that private stream; they never consume gameplay randomness. Strategies derive known ownership from initial cards and public gain/trash events.
 
@@ -22,4 +22,4 @@ Profiles cycle across seats when fewer are supplied than players. `--kingdom` ac
 
 The JSON result records each seed, supply, profiles, decisions, turns and completion status. Finished games include scores and winners; unfinished games preserve empty final results. The process exits 1 if any game exhausts `--max-decisions` (default 4000), and 0 when all finish. It does not invent a timeout winner or alter game rules. Invalid configuration exits 2.
 
-Preserve the seed, supply and profiles when reporting a failure. For behaviour comparisons, run the same configurations before and after the change; heuristic win rates are observations rather than correctness assertions.
+Preserve the seed, supply and profiles when reporting a failure. Once fixed, pin the failing configuration as a bounded-completion test in `tests/test_bots.py`. For behaviour comparisons, run the same configurations before and after the change; heuristic win rates are observations rather than correctness assertions.

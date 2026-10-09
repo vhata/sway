@@ -15,6 +15,9 @@ _VERSION = 1
 _MASK = (1 << 64) - 1
 _SUPPORT = frozenset({"k07", "k24"})
 _CANTRIPS = frozenset({"k04", "k09", "k10", "k12", "k13", "k18", "k20"})
+# Known treasure coins a deck keeps: trashing stops at this floor, and buying
+# Copper restores it after attacks or trashing leave too little to buy anything.
+_MINIMUM_ECONOMY = 5
 
 
 @dataclass(frozen=True)
@@ -55,7 +58,7 @@ class HeuristicStrategy:
         if card_id == "curse":
             return -200
         if card_id == "treasure1":
-            return -10
+            return 5 if _treasure_coins(owned) < _MINIMUM_ECONOMY else -10
         if card_id == "treasure3":
             return self.gold_weight
         if card_id == "treasure2":
@@ -162,6 +165,10 @@ def _owned(view: PlayerView) -> Counter[str]:
     return result
 
 
+def _treasure_coins(owned: Counter[str]) -> int:
+    return sum(CATALOG[key].coins * count for key, count in owned.items())
+
+
 def _action_value(view: PlayerView, card_id: str) -> float:
     actions_in_hand = sum("action" in CATALOG[card.definition].types for card in view.hand)
     if card_id in _SUPPORT:
@@ -205,16 +212,16 @@ def _keep_value(view: PlayerView, option: Option) -> float:
 def _trash_choices(
     view: PlayerView, options: tuple[Option, ...], owned: Counter[str]
 ) -> list[Option]:
-    coins = sum(CATALOG[key].coins * count for key, count in owned.items())
+    coins = _treasure_coins(owned)
     choices: list[Option] = []
-    # Trash curses/early estates before copper, preserving at least five coins
-    # of purchasing power instead of emptying the economy in one Chapel.
+    # Trash curses/early estates before copper, preserving the minimum
+    # purchasing power instead of emptying the economy in one Chapel.
     for option in sorted(options, key=lambda item: _keep_value(view, item)):
         if option.card_id == "curse" or (
             option.card_id == "victory1" and view.supply.get("victory3", 0) > 3
         ):
             choices.append(option)
-        elif option.card_id == "treasure1" and coins > 5:
+        elif option.card_id == "treasure1" and coins > _MINIMUM_ECONOMY:
             choices.append(option)
             coins -= 1
     return choices
@@ -262,11 +269,7 @@ def _selections(
     if prompt in {"chapel", "sentry_trash"}:
         selected = _trash_choices(view, tuple(options), owned)
     elif prompt == "moneylender":
-        selected = (
-            options[:1]
-            if sum(CATALOG[key].coins * count for key, count in owned.items()) > 3
-            else []
-        )
+        selected = options[:1] if _treasure_coins(owned) > 3 else []
     elif prompt == "mine":
         selected = [
             option
