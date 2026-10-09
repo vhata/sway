@@ -29,11 +29,6 @@ The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
   - Findings: `anonymous-sessions-never-purged`
 
-- [TOOLING] `privacy-and-csrf-regression-tests` — **Make privacy and CSRF tests fail on real regressions.** Making hidden draws public or removing CSRF checks from three local routes leaves the suite green.
-  - Starting point: Assert event audiences per kind (draw, Library keep, Sentry order, Artisan topdeck) and rendered history by card name; cover CSRF/Origin rejection on every local mutating route; replace the instance-ID HTML assertion. Demonstrate each new test against the corresponding mutation.
-  - Source: review/2026-10-08-0723-full.md, 2026-10-08
-  - Findings: `private-event-audience-untested`, `local-mutation-csrf-untested`, `html-privacy-assertion-vacuous`
-
 - [UI] `refresh-preserves-local-ui-state` — **Preserve open panels, unsaved lobby setup and focus across automatic refreshes.** Bot-turn and lobby refreshes collapse disclosure panels, discard the host's setup edits and move keyboard focus.
   - Starting point: Extend `app.js` swap handling to restore `details` state and focus for controls without IDs, and avoid replacing an in-progress lobby setup form. Add Chromium tests for both refresh paths.
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
