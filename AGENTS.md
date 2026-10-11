@@ -3,9 +3,10 @@
 Sway is a local deck-building game with deterministic Python rules and interchangeable original themes.
 
 <!-- docket:begin -->
+
 ## Docket
 
-This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) before any work; it is the authoritative workflow, and this section records only this project's settings. The installer keeps this section current: the text above the list is rewritten on every run, the list keeps the values this project has set.
+This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) before any work; it is the authoritative workflow, and this section records only this project's settings. The installer keeps this section current: the text above the list is rewritten on every run, the list keeps the values this project has set, and the section may sit anywhere in this file.
 
 - Queue areas: `[UI]`, `[GAMEPLAY]`, `[AUDIO]`, `[BACKEND]`, `[PLATFORM]`, `[TOOLING]`, `[DOCS]`.
 - Concurrency cap: none recorded. Each worktree has its own `.venv`, `.runtime/` saves and dev-server port, but the browser suite has timed out while another pytest process was running (`e2e-scoring-revision-wait-flake` in `TODO.md`), so stagger `scripts/e2e.sh` and `scripts/cloudflare-check.sh --browser` runs across worktrees.
@@ -16,8 +17,7 @@ This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) b
 - Authorization: work the user has authorized needs no repeated permission; within an authorized task the coordinator resolves overlapping assignments itself and asks only when ownership is unclear.
 - Scope records: [SPEC.md](SPEC.md) is the accepted scope and [ACCEPTANCE.md](ACCEPTANCE.md) the executed evidence; documentation distinguishes accepted plans from implemented features.
 - Commits: capitalized imperative subjects. No generated-with footers in commits, PR bodies or anything else that reaches git history or a review thread; the repository credits tooling once, in README or the repository description. The repository's git identity (personal email) is already set.
-- Queue routing: ordinary discoveries go to `TODO.md` even when they are bugs; only findings promoted from a codebase review go to `review/BACKLOG.md`.
-- Landing and cleanup: after a PR lands, run `bash docket/scripts/cleanup-landed.sh` and then `--apply` to remove its worktree and branch; never remove dirty worktrees or unmerged work without permission.
+
 <!-- docket:end -->
 
 ## Read when relevant
