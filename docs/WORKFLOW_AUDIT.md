@@ -22,8 +22,8 @@ Audit of `main` at `3358143292fa0ac9f1048bce33789e8e3f22476e`, after PRs #27, #2
 ### Findings and dispositions
 
 1. **Main validation runs cancel each other.** Confirmed with the two merges on 2026-10-09. Repair: `cancel-in-progress: ${{ github.event_name == 'pull_request' }}`, proposed in the stacked CI pull request because CI changes need explicit authorization.
-2. **Workflow validators were absent from the repository.** Repaired here: the seven repo-workflow scripts are installed in the repository (since vendored under `docket/scripts/`), documented in [QUALITY.md](QUALITY.md#workflow-checks), and referenced from the contract and guides. Running them in CI is the remaining part of `workflow-gate-automation`.
-3. **`.worktrees/` was ignored only through the local exclude file.** Repaired here in `.gitignore`, together with the unattended-run record paths the skill used at the time (since replaced by `.docket/`).
+2. **Workflow validators were absent from the repository.** Repaired here: the seven repo-workflow scripts are installed under `scripts/workflow/`, documented in [QUALITY.md](QUALITY.md#workflow-checks), and referenced from the contract and guides. Running them in CI is the remaining part of `workflow-gate-automation`.
+3. **`.worktrees/` was ignored only through the local exclude file.** Repaired here in `.gitignore`, together with `.feral/` and `AUDIT.md`, which the repo-workflow skill uses for unattended runs.
 4. **No red-main policy and no review cadence check.** Proposed in the CI pull request: same-day revert or P1 entry with the run link, recovery meaning a green run on `main`, and `review-due.sh` in the daily quality lane.
 5. **A landed worktree and two orphan branches.** The landed one was removed with `cleanup-landed.sh --apply --discard-ignored` after confirming its saved PR body was superseded by PR #27. The `codex/*` branches are reported, not touched: open a draft PR claiming `hosted-live-operational-acceptance` for each that is still wanted, or delete them.
 6. **Ready semantics for `postgresql-shared-game-storage`.** Still the user's decision; the entry is unchanged.

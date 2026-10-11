@@ -9,7 +9,7 @@ Read when changing code or preparing a PR. [README](../README.md#development) li
 - Serializable effects and deterministic replay: every accepted decision is a serializable event; saved, resumed and replayed games match the uninterrupted game, including pending effects and random streams.
 - Duplicate commands and recovery: a repeated or stale command changes nothing, and a restart, reconnect, rollback or restore recovers the table without losing accepted decisions.
 - Accessible decision workflows: cards and choices are keyboard-operable with visible focus, clear constraints and accessible names (see [SPEC.md](../SPEC.md)), and automatic refreshes keep the player's place.
-- Deliberately manual: judgement about card art and themed presentation, and the live production recovery rehearsal and capacity limits recorded as `hosted-live-operational-acceptance` in [TODO.md](../TODO.md).
+- Deliberately manual: the live production recovery rehearsal and capacity limits recorded as `hosted-live-operational-acceptance` in [TODO.md](../TODO.md).
 
 ## Toolchain and gates
 
@@ -32,7 +32,7 @@ The queue, link, PR-marker, claim, worktree and review-drift tools are vendored 
 | `docket/scripts/ci.sh` | `check-queues.sh --strict`, `check-links.sh` and, on pull requests, `check-pr-markers.sh` against the PR body (reads `PR`, `BASE`, `HEAD_BRANCH` and `GH_TOKEN` from the environment) | yes | yes | |
 | `docket/scripts/review-due.sh --paths 'src tests'` | drift since the newest reviewed commit; a report, never a gate | | | yes |
 
-The Quality workflow's `Queue and PR hygiene` job is one call to `docket/scripts/ci.sh`. No hook calls the vendored validators: run `bash docket/scripts/check-queues.sh --strict` and `bash docket/scripts/check-links.sh` before committing queue or documentation edits, and `bash docket/scripts/check-pr-markers.sh --body <file>` on a PR body before marking it ready. `claim-check.sh`, `start-work.sh` and `cleanup-landed.sh` are the agent-side tools described in [docket/CONTRACT.md](../docket/CONTRACT.md) and [docket/TODO_GUIDE.md](../docket/TODO_GUIDE.md). The daily quality lane keeps the `review-due.sh` report with the lane's evidence.
+The Quality workflow's `Queue and PR hygiene` job is one call to `docket/scripts/ci.sh`. No hook calls the vendored validators: run `bash docket/scripts/check-queues.sh --strict` and `bash docket/scripts/check-links.sh` before committing queue or documentation edits, and `bash docket/scripts/check-pr-markers.sh --body <file>` on a PR body before marking it ready. `claim-check.sh` and `start-work.sh` are the agent-side tools described in [docket/CONTRACT.md](../docket/CONTRACT.md) and [docket/TODO_GUIDE.md](../docket/TODO_GUIDE.md); `cleanup-landed.sh` is described in [docket/README.md](../docket/README.md) and the Docket section of `AGENTS.md` says when to run it. The daily quality lane keeps the `review-due.sh` report with the lane's evidence.
 
 ## Red main
 
