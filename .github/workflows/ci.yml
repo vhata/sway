@@ -1,6 +1,9 @@
 name: Quality
 on:
   pull_request:
+    # edited: the hygiene job reads the PR body from the event payload, and a
+    # re-run reuses the original payload, so a changed body needs a new run.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 permissions:
