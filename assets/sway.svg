@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+<title id="title">Sway</title>
+<desc id="desc">Three blue, green and purple playing cards, with a flame-like strategy emblem on the front card, on a rounded ink background.</desc>
+<rect x="0" y="0" width="256" height="256" rx="56" fill="#101820" stroke="none" stroke-opacity="0" stroke-width="1"/>
+<polygon points="21.4,86.567 103.191,59.991 144.6,187.433 62.809,214.009" fill="#1c2838" stroke="#839aca" stroke-opacity="1" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="34.31,93.938 97.08,73.543 123.964,156.285 61.195,176.68" fill="#2d3446" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="70.639,98.958 100.476,126.064 87.944,152.217 62.434,138.425" fill="#839aca" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="69.943,190.661 125.104,172.738" fill="none" stroke="#839aca" stroke-opacity="1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="152.809,59.991 234.6,86.567 193.191,214.009 111.4,187.433" fill="#1c2838" stroke="#b4cca4" stroke-opacity="1" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="158.92,73.543 221.69,93.938 194.805,176.68 132.036,156.285" fill="#2d3446" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="185.361,98.958 193.566,138.425 168.056,152.217 155.524,126.064" fill="#b4cca4" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="130.896,172.738 186.057,190.661" fill="none" stroke="#b4cca4" stroke-opacity="1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="85.0,47.0 171.0,47.0 171.0,181.0 85.0,181.0" fill="#1c2838" stroke="#c0a5e5" stroke-opacity="1" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="95.0,58.0 161.0,58.0 161.0,145.0 95.0,145.0" fill="#2d3446" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="104.0,130.0 124.0,74.0 136.0,105.0 153.0,92.0 145.0,131.0" fill="#c0a5e5" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="99.0,161.0 157.0,161.0" fill="none" stroke="#c0a5e5" stroke-opacity="1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
