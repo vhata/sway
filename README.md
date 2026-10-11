@@ -1,3 +1,5 @@
+<img src="assets/sway.svg" alt="Sway playing card icon" width="80" height="80">
+
 # Sway
 
 [![Daily verification](https://github.com/vhata/sway/actions/workflows/daily.yml/badge.svg?branch=main&event=schedule)](https://github.com/vhata/sway/actions/workflows/daily.yml?query=event%3Aschedule+branch%3Amain)
