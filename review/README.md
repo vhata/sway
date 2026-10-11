@@ -1,6 +1,6 @@
 # Review index
 
-Historical codebase reviews are immutable snapshots; the latest review is the current finding inventory. Implementation PRs supply evidence and later incremental reviews verify closure. See [CODE_REVIEW_GUIDE.md](../docs/CODE_REVIEW_GUIDE.md).
+Historical codebase reviews are immutable snapshots; the latest review is the current finding inventory. Implementation PRs supply evidence and later incremental reviews verify closure. See [docket/CODE_REVIEW_GUIDE.md](../docket/CODE_REVIEW_GUIDE.md).
 
 | Review (UTC, newest first) | Type | Reviewed commit | Open findings |
 | --- | --- | --- | --- |

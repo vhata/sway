@@ -12,7 +12,7 @@ on:
       - 'tests/test_daily_*'
       - 'tests/test_cloudflare_recovery_check.py'
       - 'tests/test_engine_rules.py'
-      - 'scripts/workflow/review-due.sh'
+      - 'docket/scripts/review-due.sh'
 permissions:
   contents: read
 concurrency:
@@ -49,7 +49,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           mkdir -p daily-evidence
-          bash scripts/workflow/review-due.sh --paths 'src tests' | tee daily-evidence/review-due.txt
+          bash docket/scripts/review-due.sh --paths 'src tests' | tee daily-evidence/review-due.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

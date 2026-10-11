@@ -32,7 +32,7 @@ Keep the rules engine independent of web, themes, bots and storage. Humans and b
 5. Full set: remaining cards in coherent batches with interaction tests.
 6. Release review: full codebase review; separate fixes; incremental verification and release evidence.
 
-The coordinating agent integrates independent branches after shared interfaces are established. Follow the [review policy](AGENTS.md#workflow) for PRs and direct-change exceptions; the user merges implementation PRs by default.
+The coordinating agent integrates independent branches after shared interfaces are established. Follow the [workflow contract](docket/CONTRACT.md#workflow) and the Docket section of [AGENTS.md](AGENTS.md#docket) for PRs and direct-change exceptions; the user merges implementation PRs by default.
 
 ## Release acceptance
 

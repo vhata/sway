@@ -2,25 +2,28 @@
 
 Sway is a local deck-building game with deterministic Python rules and interchangeable original themes.
 
-## Workflow
+<!-- docket:begin -->
+## Docket
 
-- Use focused branches and PRs for substantive code and documentation changes that need review. Two things go straight to `main` without a branch or PR: documentation that records work to be done (adding or triaging `TODO.md` entries, and plans; a plan is planning for work, not work, and everything it describes still goes through branches, PRs and review), and housekeeping metadata files such as `.git-blame-ignore-revs` or recovery of already reviewed changes, only when the user says so for that case. Extrapolate with common sense and say so in the commit; everything else, including all code and documentation that describes behaviour, goes through a PR. The user merges implementation PRs unless explicitly delegated. Preserve linear history; rebase dependent branches after prerequisites land.
-- Use sub-agents for bounded implementation and independent review. Give each implementation agent a separate branch and worktree, with a PR when the review policy requires one. The coordinating agent owns shared interfaces and integration. Land or explicitly stack shared contracts before dependent work.
-- Run `bash scripts/workflow/claim-check.sh <slug>` before starting (open and merged PRs, branches, worktrees), then create the branch and worktree with `bash scripts/workflow/start-work.sh <queue> <slug>`; any branch name containing the exact slug is an equivalent claim. Serialize queue bookkeeping and assign one owner to dependency changes. Preserve unrelated user changes. After a PR lands, `bash scripts/workflow/cleanup-landed.sh --apply` removes its worktree and branch.
-- Use Python 3.12 through uv and the worktree's own `.venv`; use `uv run --locked`, not the user's shared interpreter or another worktree's environment. Commit dependency changes and `uv.lock` together.
-- Use the executable `scripts/` entrypoints listed in README; `scripts/workflow/` holds the queue, link, PR-marker and review-drift validators described in the [quality policy](docs/QUALITY.md#workflow-checks). Complete relevant checks and independent review before presenting implementation PRs. Describe actual outcomes, evidence and remaining limitations.
-- When a PR is required, open a draft after the first meaningful commit. Explain the need and resulting behaviour, then validation. Do not merge implementation PRs or tag a release without explicit authorization.
-- Keep the current task focused. Capture separately shippable discoveries in the appropriate queue. User-authorized work does not need repeated permission.
-- Keep rules in one authoritative home. Update documentation when behaviour changes; distinguish accepted plans from implemented features.
-- Commit messages and PR bodies carry no AI attribution trailers or footers; the repository credits tooling once, in README or the repository description.
+This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) before any work; it is the authoritative workflow, and this section records only this project's settings. The installer keeps this section current: the text above the list is rewritten on every run, the list keeps the values this project has set.
+
+- Queue areas: `[UI]`, `[GAMEPLAY]`, `[AUDIO]`, `[BACKEND]`, `[PLATFORM]`, `[TOOLING]`, `[DOCS]`.
+- Concurrency cap: none recorded. Each worktree has its own `.venv`, `.runtime/` saves and dev-server port, but the browser suite has timed out while another pytest process was running (`e2e-scoring-revision-wait-flake` in `TODO.md`), so stagger `scripts/e2e.sh` and `scripts/cloudflare-check.sh --browser` runs across worktrees.
+- Merging and releases: the user merges implementation PRs unless they delegate it in that turn; there is no standing delegation. Release tags, deployments and anything that publishes a hosted installation need the user's explicit authorization, as do changes to CI, hook policy and branch protection.
+- Optional pieces in force: all of them, including the review ledger, stacked PRs and the daily validation of `main` (`.github/workflows/daily.yml`). There is no roadmap queue; the accepted release scope and sequence are in [SPEC.md](SPEC.md).
+- Environment: Python 3.12 through uv with the worktree's own `.venv` (`scripts/setup.sh`, then `uv run --locked`), never the user's shared interpreter or another worktree's environment. `pyproject.toml` and `uv.lock` change in the same commit, with one owner for dependency changes in a fan-out. Each worktree's dev server takes its own port (`scripts/dev.sh --port`). Preserve unrelated user changes in any worktree.
+- Direct to main: in addition to the exceptions in the contract, recovery of already reviewed changes, only when the user says so for that case.
+- Authorization: work the user has authorized needs no repeated permission; within an authorized task the coordinator resolves overlapping assignments itself and asks only when ownership is unclear.
+- Scope records: [SPEC.md](SPEC.md) is the accepted scope and [ACCEPTANCE.md](ACCEPTANCE.md) the executed evidence; documentation distinguishes accepted plans from implemented features.
+- Commits: capitalized imperative subjects in the style of the existing log; no AI attribution trailers or generated-with footers in commits, PR bodies or anything else that reaches git history or a review thread. The repository credits tooling once, in README or the repository description. The repository's git identity (personal email) is already set.
+<!-- docket:end -->
 
 ## Read when relevant
 
 - Code or validation: [quality policy](docs/QUALITY.md).
-- Deferred work: [TODO and backlog workflow](docs/TODO_GUIDE.md).
-- Reviews and review-derived fixes: [code review guide](docs/CODE_REVIEW_GUIDE.md).
+- Deferred work: [queue guide](docket/TODO_GUIDE.md).
+- Reviews and review-derived fixes: [code review guide](docket/CODE_REVIEW_GUIDE.md).
 - Rules, decisions, privacy, themes or persistence: [architecture](ARCHITECTURE.md).
 - Product scope and release gates: [accepted specification](SPEC.md).
 - Card naming and rules provenance: [terminology](docs/TERMINOLOGY.md).
-
-Keep this entrypoint short. Add detail to the relevant guide only when it prevents a concrete mistake.
+- Non-obvious choices and their trade-offs: [decisions](docs/DECISIONS.md).
