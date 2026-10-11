@@ -10,7 +10,7 @@ List checks actually run and their results; include a human-runnable scenario fo
 
 ## Work tracking
 
-Add the applicable Claims/Resolves TODO, review backlog, and review finding markers.
+Add the applicable Claims/Resolves TODO, review backlog and review finding markers, one per line at the start of the line with no bullet or backticks; the vocabulary is in [docket/TODO_GUIDE.md](../docket/TODO_GUIDE.md#markers). Delete this section if none apply.
 
 ## Review
 

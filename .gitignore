@@ -32,5 +32,4 @@ coverage.json
 
 # Agent workflow: per-task worktrees and unattended-run records.
 .worktrees/
-.feral/
-AUDIT.md
+.docket/

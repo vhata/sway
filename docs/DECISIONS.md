@@ -52,3 +52,9 @@ The recovery policy and frozen seats deliberately limit takeover and substitutio
 | Queue, link and PR-marker validation run in CI as a separate, non-required job. | The checks are cheap and make malformed queue entries and markers visible on the PR. Making the job required is a protection change left to the owner. |
 | A failed run on `main` is answered the same day by a revert or a P1 queue entry, and stays open until `main` is green again. | The 2026-10-05 and 2026-10-06 daily failures had no queue record for a day. The policy costs a same-day look at the run; it does not add retries or weaken any gate. |
 | Review drift is reported by the daily quality lane and never fails it. | A due review is a request to the user, not a broken build, and the daily lane already keeps evidence. |
+
+## 2026-10-11: vendored workflow
+
+| Decision | Reason and tradeoff |
+| --- | --- |
+| The generic workflow (contract, queue and review guides, validators) is vendored under `docket/` by the docket skill's `install.sh` and never edited here; `AGENTS.md` keeps only this project's settings in its marked Docket section, and the review focus areas, baseline commands and drift checks live in `docs/QUALITY.md`. | One command installs or resyncs the whole directory and `--check` reports drift, so a validator fix reaches this project without a hand merge; the hand-copied scripts had already fallen behind the skill (anchor checking, claim rechecks that ignore the worker's own branch, forge queries that do not depend on search indexing). A project-specific rule can no longer be written into a guide; it goes in the Docket section or the quality doc, which the guides point to. The vendored queue guide defines Ready as understood and unblocked, which the 2026-10-07 audit left open; `postgresql-shared-game-storage` carries only a `Related` line, so the validator accepts it and its stage remains the user's decision. |

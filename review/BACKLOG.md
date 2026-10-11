@@ -1,6 +1,6 @@
 # Review backlog
 
-Only work promoted from whole-codebase reviews belongs here. Entries are ready for separate work and grouped by priority, without TODO workflow stages. Follow [review guidance](../docs/CODE_REVIEW_GUIDE.md) and [claim/resolution rules](../docs/TODO_GUIDE.md).
+Only work promoted from whole-codebase reviews belongs here. Entries are ready for separate work and grouped by priority, without TODO workflow stages. Follow [review guidance](../docket/CODE_REVIEW_GUIDE.md) and [claim/resolution rules](../docket/TODO_GUIDE.md).
 
 The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below. Its remaining findings are retained as inventory in that snapshot.
 
