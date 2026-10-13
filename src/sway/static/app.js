@@ -4,6 +4,96 @@
   let selectionBeforeSwap = null;
   let decisionBeforeSwap = null;
   let positionBeforeSwap = null;
+  let panelsBeforeSwap = null;
+  let editsBeforeSwap = [];
+  const focusable = "a[href], button, input, select, textarea, summary";
+  // Refreshes replace the whole board or table. A control without an ID is
+  // matched by its nearest keyed or identified container and by attributes
+  // that stay the same between renders, never by its visible text.
+  function focusKey(element) {
+    const scope = element.parentElement?.closest("[data-key], [id]");
+    if (!scope) return null;
+    return [
+      scope.dataset.key ?? `#${scope.id}`,
+      element.tagName,
+      element.getAttribute("type"),
+      element.getAttribute("name"),
+      ["checkbox", "radio"].includes(element.type) ? element.value : null,
+      element.dataset.move,
+      element.closest("[data-option]")?.dataset.option,
+      element.getAttribute("href"),
+    ].join("|");
+  }
+  function sameKey(key) {
+    return [...document.querySelectorAll(focusable)].filter((control) => focusKey(control) === key);
+  }
+  function describeFocus() {
+    const element = document.activeElement;
+    if (!element || element === document.body) return null;
+    if (element.id) return { element, id: element.id };
+    const key = focusKey(element);
+    return key ? { element, key, index: sameKey(key).indexOf(element) } : { element };
+  }
+  function findFocus(previous) {
+    if (!previous) return null;
+    // Focus outside the replaced region is unaffected by the swap.
+    if (previous.element.isConnected) return previous.element;
+    if (previous.id) return document.getElementById(previous.id);
+    if (!previous.key) return null;
+    const matches = sameKey(previous.key);
+    return matches[previous.index] ?? matches[0] ?? null;
+  }
+  // A keyed form keeps the fields its user changed. Unchanged fields, hidden
+  // revisions and CSRF tokens come from the refresh, so saving applies only
+  // those changes to the latest server state. A checkbox or radio group is one
+  // field: any change keeps the user's whole selection. The form whose
+  // submission succeeded shows the server's result instead; a rejected or
+  // conflicting submission keeps the edits for another attempt.
+  function unsavedEdits(saved) {
+    const edits = [];
+    for (const form of document.querySelectorAll("form[data-key]")) {
+      if (saved && form.dataset.key === saved) continue;
+      const groups = new Map();
+      for (const control of form.querySelectorAll("input[name], select[name], textarea[name]")) {
+        if (["hidden", "submit", "button", "reset", "file"].includes(control.type)) continue;
+        const edit = { form: form.dataset.key, name: control.name };
+        if (["checkbox", "radio"].includes(control.type)) {
+          const group = groups.get(control.name) ?? { ...edit, checked: [], changed: false };
+          if (control.checked) group.checked.push(control.value);
+          group.changed ||= control.checked !== control.defaultChecked;
+          groups.set(control.name, group);
+        } else if (control.tagName === "SELECT") {
+          const initial = Math.max(
+            0,
+            [...control.options].findIndex((option) => option.defaultSelected),
+          );
+          if (control.selectedIndex !== initial) edits.push({ ...edit, value: control.value });
+        } else if (control.value !== control.defaultValue) {
+          edits.push({ ...edit, value: control.value });
+        }
+      }
+      edits.push(...[...groups.values()].filter((group) => group.changed));
+    }
+    return edits;
+  }
+  function restoreEdits(edits) {
+    for (const edit of edits) {
+      const form = document.querySelector(`form[data-key="${CSS.escape(edit.form)}"]`);
+      const controls = [...(form?.elements ?? [])].filter((element) => element.name === edit.name);
+      if (edit.checked) {
+        for (const control of controls) control.checked = edit.checked.includes(control.value);
+        continue;
+      }
+      const control = controls[0];
+      if (
+        control &&
+        (control.tagName !== "SELECT" ||
+          [...control.options].some((option) => option.value === edit.value))
+      ) {
+        control.value = edit.value;
+      }
+    }
+  }
   function decisionIdentity() {
     return (
       document.querySelector("#decision-form")?.dataset.decision ??
@@ -80,8 +170,15 @@
       }
     }
     selectionBeforeSwap = null;
+    for (const panel of document.querySelectorAll("details[data-key]")) {
+      const open = panelsBeforeSwap?.get(panel.dataset.key);
+      if (open !== undefined) panel.open = open;
+    }
+    panelsBeforeSwap = null;
+    restoreEdits(editsBeforeSwap);
+    editsBeforeSwap = [];
     setup(document);
-    const previous = focusedBeforeSwap ? document.getElementById(focusedBeforeSwap) : null;
+    const previous = findFocus(focusedBeforeSwap);
     const changed = decisionBeforeSwap !== decisionIdentity();
     const heading = document.querySelector("#decision-heading, #result-heading, #opponent-heading");
     const target = changed ? heading : previous && !previous.disabled ? previous : heading;
@@ -100,7 +197,16 @@
   document.addEventListener("htmx:afterSwap", afterSwap);
   document.addEventListener("sway:afterSwap", afterSwap);
   function beforeSwap(event) {
-    focusedBeforeSwap = document.activeElement?.id;
+    focusedBeforeSwap = describeFocus();
+    panelsBeforeSwap = new Map(
+      [...document.querySelectorAll("details[data-key]")].map((panel) => [
+        panel.dataset.key,
+        panel.open,
+      ]),
+    );
+    const source = event.detail.requestConfig?.elt ?? event.detail.source;
+    const status = event.detail.xhr?.status ?? event.detail.status;
+    editsBeforeSwap = unsavedEdits(status >= 200 && status < 300 ? source?.dataset?.key : null);
     decisionBeforeSwap = decisionIdentity();
     positionBeforeSwap = { left: window.scrollX, top: window.scrollY };
     const form = document.querySelector("#decision-form");

@@ -34,11 +34,6 @@ The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below
   - Source: review/2026-10-08-0723-full.md, 2026-10-08
   - Findings: `private-event-audience-untested`, `local-mutation-csrf-untested`, `html-privacy-assertion-vacuous`
 
-- [UI] `refresh-preserves-local-ui-state` — **Preserve open panels, unsaved lobby setup and focus across automatic refreshes.** Bot-turn and lobby refreshes collapse disclosure panels, discard the host's setup edits and move keyboard focus.
-  - Starting point: Extend `app.js` swap handling to restore `details` state and focus for controls without IDs, and avoid replacing an in-progress lobby setup form. Add Chromium tests for both refresh paths.
-  - Source: review/2026-10-08-0723-full.md, 2026-10-08
-  - Findings: `lobby-refresh-discards-setup-edits`, `local-refresh-collapses-panels-and-focus`
-
 - [TOOLING] `daily-and-ci-evidence-fidelity` — **Make daily seeds, PR triggers and failure evidence behave as documented.** The daily Hypothesis seed is ignored on Actions, recovery-worker changes skip the daily PR run, and Quality may omit evidence on timeout.
   - Starting point: Disable Hypothesis derandomization for the daily lane or correct QUALITY.md, add `deployment/cloudflare/recovery/**` to the daily PR paths, and upload Quality evidence on any non-success. Obtain explicit authorization for CI changes first.
   - Source: review/2026-10-08-0723-full.md, 2026-10-08

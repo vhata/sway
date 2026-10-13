@@ -20,8 +20,9 @@ def hosted_page(title: str, content: h.Node) -> h.Element:
     )
 
 
-def form(path: str, csrf: str, label: str, *fields: h.Node) -> h.Element:
-    return h.form(action=path, method="post")[
+def form(path: str, csrf: str, label: str, *fields: h.Node, key: str | None = None) -> h.Element:
+    # A stable key lets the browser keep focus and unsaved edits across table refreshes.
+    return h.form(action=path, method="post", data_key=key)[
         csrf_input(csrf), fields, h.button(type="submit", class_="secondary")[label]
     ]
 
@@ -260,6 +261,7 @@ def table_content(
                             csrf,
                             f"Invite seat {seat.seat + 1}",
                             hidden("seat", seat.seat),
+                            key=f"invite-{seat.seat}",
                         )
                         if table.host and seat.controller == "human" and not seat.occupied
                         else None,
@@ -268,6 +270,7 @@ def table_content(
                             csrf,
                             "Revoke invitation",
                             hidden("seat", seat.seat),
+                            key=f"revoke-invite-{seat.seat}",
                         )
                         if table.host and seat.controller == "human" and not seat.occupied
                         else None,
@@ -277,6 +280,7 @@ def table_content(
                             "Remove player",
                             hidden("seat", seat.seat),
                             revision,
+                            key=f"remove-{seat.seat}",
                         )
                         if table.host
                         and seat.controller == "human"
@@ -293,19 +297,27 @@ def table_content(
                 "Not ready" if table.seats[table.seat].ready else "I'm ready",
                 revision,
                 hidden("ready", "false" if table.seats[table.seat].ready else "true"),
+                key="ready",
             ),
-            form(f"{path}/start", csrf, "Start game", revision) if table.host else None,
-            h.details[
+            form(f"{path}/start", csrf, "Start game", revision, key="start")
+            if table.host
+            else None,
+            h.details(data_key="table-setup")[
                 h.summary["Change table setup"],
                 form(
-                    f"{path}/configure", csrf, "Save setup", revision, setup_fields(themes, table)
+                    f"{path}/configure",
+                    csrf,
+                    "Save setup",
+                    revision,
+                    setup_fields(themes, table),
+                    key="setup",
                 ),
             ]
             if table.host
             else None,
         ],
-        h.details(class_="home")[
-            h.summary["Table controls"], form(f"{path}/cancel", csrf, "Cancel table")
+        h.details(class_="home", data_key="table-controls")[
+            h.summary["Table controls"], form(f"{path}/cancel", csrf, "Cancel table", key="cancel")
         ]
         if table.host and table.status not in {"finished", "cancelled"}
         else None,
