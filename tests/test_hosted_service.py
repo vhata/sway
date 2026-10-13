@@ -574,3 +574,88 @@ def test_validation_and_cancelled_bot_work(tmp_path: Path) -> None:
     assert service.step_bots(table.game_id) is False
     with pytest.raises(StorageConflict):
         service.retry_bots(token, table.game_id)
+
+
+def room_row(service: HostedService, game_id: str) -> sqlite3.Row:
+    with cast(HostedStore, service.store).transaction() as conn:
+        row = conn.execute("SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,)).fetchone()
+        assert row is not None
+        return cast(sqlite3.Row, row)
+
+
+def make_unloadable(service: HostedService, game_id: str) -> str:
+    """Simulate a save written by a version this code no longer loads."""
+    payload = json.loads(cast(str, room_row(service, game_id)["snapshot"]))
+    payload["schema"] = 99
+    snapshot = json.dumps(payload)
+    with cast(HostedStore, service.store).transaction(write=True) as conn:
+        conn.execute("UPDATE hosted_rooms SET snapshot=? WHERE game_id=?", (snapshot, game_id))
+    return snapshot
+
+
+def two_bot_turns(tmp_path: Path) -> tuple[HostedService, str, str, str]:
+    service, users, healthy = setup(tmp_path, ("human", "engine"))
+    host = users[0].session.token
+    healthy = start(service, users, healthy)
+    broken = start(service, users, service.create(host, ("human", "engine")))
+    for table in (healthy, broken):
+        bot_turn(service, host, table.game_id)
+    return service, host, healthy.game_id, broken.game_id
+
+
+def test_unloadable_room_does_not_stop_dispatcher_scheduling(tmp_path: Path) -> None:
+    service, host, healthy, broken = two_bot_turns(tmp_path)
+    snapshot = make_unloadable(service, broken)
+    before = service.view(host, healthy).revision
+    dispatcher = BotDispatcher(service, scan_seconds=0.02)
+    dispatcher.start()
+    try:
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline and (
+            service.view(host, healthy).pending_player != 0
+            or room_row(service, broken)["bot_paused"] is None
+        ):
+            time.sleep(0.02)
+    finally:
+        dispatcher.stop()
+    table = service.view(host, healthy)
+    assert table.revision > before and table.pending_player == 0
+    paused = room_row(service, broken)
+    assert paused["bot_paused"] == "snapshot_unreadable"
+    assert paused["snapshot"] == snapshot
+    assert service.pending_bot_games() == ()
+
+
+def test_unloadable_room_is_paused_once_and_reported_without_identifiers(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    service, _, healthy, broken = two_bot_turns(tmp_path)
+    snapshot = make_unloadable(service, broken)
+    revision = room_row(service, broken)["revision"]
+    with caplog.at_level("WARNING", logger="sway.hosting.service"):
+        assert service.step_bots(broken) is False
+        assert service.step_bots(broken) is False
+    paused = room_row(service, broken)
+    assert paused["bot_paused"] == "snapshot_unreadable"
+    assert (paused["snapshot"], paused["revision"], paused["status"]) == (
+        snapshot,
+        revision,
+        "active",
+    )
+    warnings = [record for record in caplog.records if record.levelname == "WARNING"]
+    assert len(warnings) == 1 and "SaveFormatError" in warnings[0].getMessage()
+    assert broken not in caplog.text and snapshot not in caplog.text
+    # The paused room is not offered again; the healthy room still is.
+    assert service.pending_bot_games() == (healthy,)
+
+
+def test_stale_bot_marker_is_cleared_instead_of_rescheduled(tmp_path: Path) -> None:
+    service, users, table = setup(tmp_path, ("human", "engine"))
+    table = start(service, users, table)
+    assert table.pending_player == 0
+    with cast(HostedStore, service.store).transaction(write=True) as conn:
+        conn.execute("UPDATE hosted_rooms SET bot_pending=1 WHERE game_id=?", (table.game_id,))
+    assert service.step_bots(table.game_id) is False
+    assert room_row(service, table.game_id)["bot_pending"] == 0
+    assert room_row(service, table.game_id)["revision"] == table.revision
+    assert service.pending_bot_games() == ()

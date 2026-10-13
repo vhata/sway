@@ -61,10 +61,14 @@ checks. The test-only `wrangler.test.jsonc` is never a deployment configuration.
 
 Every application operation runs in an outer Durable Object transaction; each
 shared SQL callback also uses `transactionSync` for exception rollback. Pending
-bot work and its alarm commit atomically. Alarms process at most four tables per
-invocation, with the service's existing per-table decision/time limits. They
-reschedule only while pending work exists. Repeated delivery is safe through
-revision checks; storage/compute failures throw so Cloudflare can retry.
+bot work and its alarm commit atomically. Whether bot work is pending is decided
+from the SQL marker alone, without loading game snapshots, so one table that the
+running code cannot load does not fail other requests. Alarms process at most four
+tables per invocation, with the service's existing per-table decision/time limits.
+They reschedule only while pending work exists. Repeated delivery is safe through
+revision checks; storage/compute failures throw so Cloudflare can retry. A table
+whose snapshot cannot be loaded is paused instead, as described in the
+[hosting guide](../../docs/HOSTING.md#deployment-acceptance).
 
 Request limits persist through object eviction. Peer identity comes from
 Cloudflare's `CF-Connecting-IP`, forwarded internally after overwriting the

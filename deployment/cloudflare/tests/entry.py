@@ -1,6 +1,7 @@
 """Local-only real-runtime contracts. Never use this configuration for deployment."""
 
 import asyncio
+import json
 import time
 
 from cloudflare_runtime import Installation, Runtime
@@ -19,6 +20,14 @@ class Contracts(DurableObject):
     async def fetch(self, request):
         if request.url.endswith("/bot/start"):
             return await self.start_bot()
+        if request.url.endswith("/bot/unreadable"):
+            return await self.unreadable_bot()
+        if request.url.endswith("/bot/unreadable/status"):
+            game = self.ctx.storage.kv.get("unreadable_game")
+            paused = self.ctx.storage.sql.exec(
+                "SELECT bot_paused FROM hosted_rooms WHERE game_id=?", game
+            ).one()["bot_paused"]
+            return Response.json({"paused": paused})
         if request.url.endswith("/bot/status"):
             game = self.ctx.storage.kv.get("bot_game")
             revision = self.ctx.storage.kv.get("bot_revision")
@@ -89,6 +98,36 @@ class Contracts(DurableObject):
             )
             table = result.table
         raise AssertionError("Failed to reach bot turn")
+
+    async def unreadable_bot(self):
+        identity, service = self.runtime.identity, self.runtime.service
+        anonymous = await self.runtime.execute(identity.anonymous_session)
+        user = await self.runtime.execute(identity.create_principal, anonymous.token, "Unreadable")
+        token = user.session.token
+        table = await self.runtime.execute(service.create, token, ("human", "economy"))
+        table = await self.runtime.execute(
+            service.ready, token, table.game_id, table.lobby_revision
+        )
+        table = await self.runtime.execute(
+            service.start, token, table.game_id, table.lobby_revision
+        )
+        # Simulate a bot turn saved by a version this code no longer loads.
+        sql = self.ctx.storage.sql
+        row = sql.exec("SELECT snapshot FROM hosted_rooms WHERE game_id=?", table.game_id).one()
+        snapshot = json.loads(row["snapshot"])
+        snapshot["schema"] = 99
+        sql.exec(
+            "UPDATE hosted_rooms SET snapshot=?,bot_pending=1 WHERE game_id=?",
+            json.dumps(snapshot),
+            table.game_id,
+        )
+        self.ctx.storage.kv.put("unreadable_game", table.game_id)
+        # Unrelated operations still commit and arm the bot wake-up themselves.
+        await self.ctx.storage.deleteAlarm()
+        await self.runtime.execute(identity.anonymous_session)
+        await self.runtime.execute(identity.authenticate, token)
+        assert await self.ctx.storage.getAlarm() is not None
+        return Response.json({"isolated": True})
 
     async def alarm(self):
         self.ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS alarm_contract (value INTEGER)")

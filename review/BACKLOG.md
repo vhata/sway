@@ -14,11 +14,6 @@ The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below
 
 ## Unprioritized
 
-- [BACKEND] `hosted-bot-scan-resilience` — **Keep one undecodable room from stopping hosted bots or the Cloudflare installation.** The pending-bot scan deserializes every candidate room, so one unloadable snapshot halts self-hosted bot scheduling and fails every Cloudflare request.
-  - Starting point: Isolate decode failures per room in `HostedService.pending_bot_games` and `_step_bot` (pause and report that room), and arm the Cloudflare alarm from a cheap SQL existence check. Reproduce with a room whose snapshot has an unsupported version.
-  - Source: review/2026-10-08-0723-full.md, 2026-10-08
-  - Findings: `pending-bot-scan-undecodable-room`
-
 - [BACKEND] `request-error-responses` — **Map invalid hosted and local form input to clear 4xx responses.** Several reachable inputs return 500 or misreport an invalid recovery code as an ended session.
   - Starting point: Handle `StorageConflict` on `POST /join`, separate invalid recovery codes and expired anonymous sessions from the session-ended handler while keeping the invitation recoverable, bound integer form fields, and treat malformed local CSRF values as expired forms.
   - Source: review/2026-10-08-0723-full.md, 2026-10-08

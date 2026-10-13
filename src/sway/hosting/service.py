@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import secrets
 import time
@@ -16,7 +17,11 @@ from sway.engine import Command, GameConfig, InvalidCommand, PlayerView, advance
 from sway.hosting.identity import IdentityCredentials, IdentityService
 from sway.hosting.state import SqlRow, SqlSession, SqlValue, StateStore
 from sway.service import GameRecord, deserialize_game, serialize_game
-from sway.storage import GameNotFound, StorageConflict, StoredGame
+from sway.storage import GameNotFound, SaveFormatError, StorageConflict, StoredGame
+
+_LOG = logging.getLogger(__name__)
+# bot_paused reason for a table whose snapshot this code cannot load.
+_UNREADABLE = "snapshot_unreadable"
 
 
 @dataclass(frozen=True)
@@ -682,22 +687,23 @@ class HostedService:
         return self.view(token, game_id)
 
     def pending_bot_games(self, limit: int = 100) -> tuple[str, ...]:
+        """Tables marked for bot work, from SQL alone.
+
+        Snapshots are not loaded here, so one unreadable table cannot stop the
+        scan; ``step_bots`` pauses such a table and clears stale markers.
+        """
         if not 1 <= limit <= 1000:
             raise ValueError("Invalid scan limit.")
 
         def _read(conn: SqlSession) -> tuple[str, ...]:
             rooms = _rows(
                 conn,
-                "SELECT * FROM hosted_rooms WHERE status='active' AND bot_paused IS NULL AND bot_pending=1 ORDER BY updated_at LIMIT ?",
+                "SELECT game_id FROM hosted_rooms WHERE status='active' AND bot_paused IS NULL AND bot_pending=1 ORDER BY updated_at LIMIT ?",
                 (limit,),
             )
-            return tuple(_text(room, "game_id") for room in rooms if self._bot_pending(room))
+            return tuple(_text(room, "game_id") for room in rooms)
 
         return self.store.read(_read)
-
-    def _bot_pending(self, room: SqlRow) -> bool:
-        record = self._record(room)
-        return bool(record.state.pending and record.state.pending.player not in record.human_seats)
 
     def step_bots(self, game_id: str, max_steps: int = 8, budget_seconds: float = 0.1) -> bool:
         if not 1 <= max_steps <= 8 or not 0 < budget_seconds <= 0.1:
@@ -715,28 +721,60 @@ class HostedService:
             return (
                 room["status"] == "active"
                 and room["bot_paused"] is None
-                and self._bot_pending(room)
+                and room["bot_pending"] == 1
             )
 
         return self.store.read(read_pending)
 
-    def _step_bot(self, game_id: str) -> bool | None:
-        def load_state(conn: SqlSession) -> GameRecord | None:
-            room = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
-            if (
-                room["status"] != "active"
-                or room["bot_paused"] is not None
-                or not self._bot_pending(room)
-            ):
-                return None
-            record = self._record(room)
-            return record
+    def _settle_bot_room(
+        self, game_id: str, revision: int, failure: SaveFormatError | None
+    ) -> None:
+        """Pause an unreadable table, or clear a marker its snapshot contradicts.
 
-        record = self.store.read(load_state)
-        if record is None:
+        The revision guard leaves a table alone if a newer commit replaced the
+        snapshot that was inspected.
+        """
+
+        def _write(conn: SqlSession) -> int:
+            if failure is None:
+                return conn.execute(
+                    "UPDATE hosted_rooms SET bot_pending=0 WHERE game_id=? AND status='active' AND revision=? AND bot_pending=1",
+                    (game_id, revision),
+                ).rows_written
+            return conn.execute(
+                "UPDATE hosted_rooms SET bot_paused=?,lobby_revision=lobby_revision+1 WHERE game_id=? AND status='active' AND revision=? AND bot_paused IS NULL",
+                (_UNREADABLE, game_id, revision),
+            ).rows_written
+
+        if self.store.write(_write) and failure is not None:
+            # Operators find the table by its pause reason; never log identifiers
+            # or snapshot contents.
+            _LOG.warning(
+                "Paused bots for a table whose snapshot cannot be loaded (%s).",
+                type(failure).__name__,
+            )
+
+    def _step_bot(self, game_id: str) -> bool | None:
+        def load_state(conn: SqlSession) -> tuple[int, GameRecord | SaveFormatError] | None:
+            room = _row(conn, "SELECT * FROM hosted_rooms WHERE game_id=?", (game_id,))
+            if room["status"] != "active" or room["bot_paused"] is not None:
+                return None
+            try:
+                return _int(room, "revision"), self._record(room)
+            except SaveFormatError as exc:
+                return _int(room, "revision"), exc
+
+        loaded = self.store.read(load_state)
+        if loaded is None:
+            return False
+        revision, record = loaded
+        if isinstance(record, SaveFormatError):
+            self._settle_bot_room(game_id, revision, record)
             return False
         decision = record.state.pending
-        assert decision is not None
+        if decision is None or decision.player in record.human_seats:
+            self._settle_bot_room(game_id, revision, None)
+            return False
         index = record.bot_seats.index(decision.player)
         try:
             choice = choose(view_for(record.state, decision.player), decision, record.bots[index])

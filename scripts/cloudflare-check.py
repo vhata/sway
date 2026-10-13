@@ -131,8 +131,14 @@ def main() -> None:
             assert request("/alarm").get("fired") is True
             # Alarm resumes the bot after restart; polling is strictly read-only.
             eventually(lambda: request("/bot/status").get("progressed") is True)
+            # An unreadable table must not fail requests; its alarm pauses it.
+            assert request("/bot/unreadable").get("isolated") is True
+            eventually(
+                lambda: request("/bot/unreadable/status").get("paused") == "snapshot_unreadable"
+            )
         print(
-            "Workers: alarm delivery, background bot progress, persisted state after restart passed"
+            "Workers: alarm delivery, background bot progress, persisted state after restart, "
+            "unreadable-table isolation passed"
         )
         if "--browser" in sys.argv[1:]:
             app_directory = directory / "application"
