@@ -2,7 +2,7 @@
 
 Only work promoted from whole-codebase reviews belongs here. Entries are ready for separate work and grouped by priority, without TODO workflow stages. Follow [review guidance](../docket/CODE_REVIEW_GUIDE.md) and [claim/resolution rules](../docket/TODO_GUIDE.md).
 
-The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below. Its remaining findings are retained as inventory in that snapshot.
+The [2026-10-24 full review](2026-10-24-0250-full.md) retains the seven entries promoted by the [2026-10-08 review](2026-10-08-0723-full.md) and adds a small documentation batch. Its mapping table also links two findings to existing TODO entries and records the remaining inventory decisions.
 
 ## P0 Critical
 
@@ -13,6 +13,11 @@ The [2026-10-08 full review](2026-10-08-0723-full.md) promoted the entries below
 ## P3 Low
 
 ## Unprioritized
+
+- [DOCS] `review-documentation-accuracy` — **Correct the vendor license, HTMX usage and multiplayer scope descriptions.** Three small factual statements disagree with the bundled license or implemented behavior.
+  - Starting point: In src/sway/static/vendor/README.md, name the bundled Zero-Clause BSD license and include theme changes among HTMX uses. In docs/TERMINOLOGY.md, qualify one-human play as local mode and link the separate implemented hosted multiplayer scope. Verify against HTMX-LICENSE, the theme form and docs/MULTIPLAYER.md.
+  - Source: review/2026-10-24-0250-full.md, 2026-10-24
+  - Findings: `vendor-readme-htmx-scope`, `vendor-license-label`, `terminology-multiplayer-deferred`
 
 - [BACKEND] `hosted-bot-scan-resilience` — **Keep one undecodable room from stopping hosted bots or the Cloudflare installation.** The pending-bot scan deserializes every candidate room, so one unloadable snapshot halts self-hosted bot scheduling and fails every Cloudflare request.
   - Starting point: Isolate decode failures per room in `HostedService.pending_bot_games` and `_step_bot` (pause and report that room), and arm the Cloudflare alarm from a cheap SQL existence check. Reproduce with a room whose snapshot has an unsupported version.
