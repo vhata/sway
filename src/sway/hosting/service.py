@@ -155,6 +155,12 @@ class HostedService:
             raise StorageConflict("The lobby changed. Reload before continuing.")
 
     @staticmethod
+    def _seat(seat: int) -> None:
+        # Bound before SQL binds: an arbitrary integer can overflow SQLite's INTEGER.
+        if not 0 <= seat < 4:
+            raise ValueError("Choose an available seat.")
+
+    @staticmethod
     def _bump(conn: SqlSession, game_id: str) -> None:
         conn.execute(
             "UPDATE hosted_rooms SET lobby_revision=lobby_revision+1 WHERE game_id=?", (game_id,)
@@ -290,6 +296,7 @@ class HostedService:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, _int(room, "lobby_revision"))
+            self._seat(seat)
             target = _row(
                 conn, "SELECT * FROM hosted_seats WHERE game_id=? AND seat=?", (game_id, seat)
             )
@@ -318,6 +325,7 @@ class HostedService:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, _int(room, "lobby_revision"))
+            self._seat(seat)
             conn.execute(
                 "UPDATE hosted_invitations SET revoked=1 WHERE game_id=? AND seat=?",
                 (game_id, seat),
@@ -445,6 +453,7 @@ class HostedService:
             principal, room, _ = self._member(conn, token, game_id)
             self._host(principal, room)
             self._lobby(room, expected_lobby_revision)
+            self._seat(seat)
             if seat == 0:
                 raise ValueError("The host cannot leave their seat.")
             target = _row(
