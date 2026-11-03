@@ -66,14 +66,16 @@
     }
   }
 
-  function apply(html) {
+  // The submitting form and response status let app.js decide whether that
+  // form shows the server's result or keeps its unsaved edits.
+  function apply(html, pending = null, status = null) {
     const parsed = new DOMParser().parseFromString(html, "text/html");
     const next = parsed.querySelector("#table");
     const current = document.querySelector("#table");
     if (!next || !current) return false;
     const keys = ["revision", "lobbyRevision", "preferenceVersion"];
     if (keys.some((key) => Number(next.dataset[key]) < Number(current.dataset[key]))) return true;
-    const detail = {};
+    const detail = { source: pending?.form, status };
     document.dispatchEvent(new CustomEvent("sway:beforeSwap", { detail }));
     current.replaceWith(next);
     disabledControls.clear();
@@ -128,7 +130,7 @@
       if (response.ok || [409, 422].includes(response.status)) {
         const html = await response.text();
         if (pending) uncertain = null;
-        if (!apply(html)) {
+        if (!apply(html, pending, response.status)) {
           throw new Error("No table in response");
         }
         failures = 0;
@@ -182,7 +184,7 @@
     const body = new URLSearchParams();
     for (const [key, value] of new FormData(form)) body.append(key, value);
     if (form.id === "decision-form") body.set("request_id", crypto.randomUUID());
-    const pending = { url: form.action, body, retryable: form.id === "decision-form" };
+    const pending = { url: form.action, body, retryable: form.id === "decision-form", form };
     if (busy) {
       queuedMutation = pending;
       disableChoices(true);

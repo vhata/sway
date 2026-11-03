@@ -559,6 +559,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                 hx_target="#board",
                 hx_swap="outerHTML",
                 class_="theme-control",
+                data_key="theme",
             )[
                 csrf_input(ctx.csrf),
                 h.input(
@@ -607,7 +608,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                             )
                         ],
                     ],
-                    h.details[
+                    h.details(data_key=f"public-cards-{index}")[
                         h.summary["Public cards"],
                         h.h3["In play"],
                         card_row(
@@ -662,7 +663,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                     else f"Waiting for {ctx.waiting_for or 'the next player'}"
                 ],
                 h.p["Your place is saved. This table updates automatically."],
-                h.form(action=f"/games/{ctx.game_id}/retry", method="post")[
+                h.form(action=f"/games/{ctx.game_id}/retry", method="post", data_key="retry")[
                     csrf_input(ctx.csrf),
                     h.button(type="submit")["Retry opponent"],
                 ]
@@ -727,7 +728,7 @@ def board(view: PlayerView, ctx: BoardContext) -> h.Element:
                 h.ol[
                     [h.li[event_text(event, view, theme)] for event in reversed(view.events[-80:])]
                 ],
-                h.details[
+                h.details(data_key="trash")[
                     h.summary[f"Scrapped cards ({len(view.trash)})"],
                     card_row(view.trash, theme, developer_terminology=ctx.developer_terminology),
                 ],
