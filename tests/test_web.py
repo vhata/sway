@@ -75,12 +75,12 @@ def test_setup_resume_and_theme_change_preserve_state(client: Client, tmp_path: 
 def test_csrf_origin_and_host_checks(client: Client) -> None:
     token = csrf(client)
     assert client.post("/games", data={"players": "2"}).status_code == 403
-    assert (
-        client.post(
-            "/games", data={"csrf": token}, headers={"Origin": "https://untrusted.invalid"}
-        ).status_code
-        == 403
-    )
+    # The test server is http://testserver: reject a foreign scheme and a foreign host.
+    for origin in ("https://untrusted.invalid", "http://untrusted.invalid"):
+        assert (
+            client.post("/games", data={"csrf": token}, headers={"Origin": origin}).status_code
+            == 403
+        )
     assert (
         client.post(
             "/games", data={"csrf": token}, headers={"Sec-Fetch-Site": "cross-site"}
@@ -88,6 +88,67 @@ def test_csrf_origin_and_host_checks(client: Client) -> None:
         == 403
     )
     assert client.get("/", headers={"Host": "untrusted.invalid"}).status_code == 400
+
+
+# Each forgery names the form token it submits and any cross-site request headers.
+FORGERIES: dict[str, tuple[str, dict[str, str]]] = {
+    "missing-token": ("omitted", {}),
+    "wrong-token": ("forged", {}),
+    "foreign-origin": ("valid", {"Origin": "https://untrusted.invalid"}),
+    "same-scheme-foreign-origin": ("valid", {"Origin": "http://untrusted.invalid"}),
+    "cross-site-fetch": ("valid", {"Sec-Fetch-Site": "cross-site"}),
+}
+
+
+@pytest.mark.parametrize("forgery", FORGERIES)
+@pytest.mark.parametrize("route", ["create", "decisions", "advance", "theme"])
+def test_every_local_mutation_rejects_forged_requests_without_changes(
+    client: Client, tmp_path: Path, route: str, forgery: str
+) -> None:
+    token = csrf(client)
+    service = GameService(SQLiteStore(tmp_path / "games.sqlite3"))
+    # Seed 13 opens on the human's decision; seed 5 opens on the opponent's.
+    identifier = create_game(client, token, seed="5" if route == "advance" else "13")
+    view = service.view(identifier)
+    if route == "decisions":
+        assert view.pending is not None
+        choice = next(
+            option.id for option in view.pending.options if option.id in {"end-actions", "end-turn"}
+        )
+        path = f"/games/{identifier}/decisions"
+        form = {"revision": str(view.revision), "decision": view.pending.id, "choices": choice}
+    elif route == "advance":
+        assert view.pending is None and view.decision_owner == 1
+        path = f"/games/{identifier}/advance"
+        form = {"revision": str(view.revision)}
+    elif route == "theme":
+        path = f"/games/{identifier}/theme"
+        form = {"theme": "orbital"}
+    else:
+        path = "/games"
+        form = {"players": "2", "seed": "7", "strategy1": "economy", "supply": "starter"}
+    before = (service.store.load(identifier), service.store.history(identifier))
+    games = len(service.list_games())
+
+    supplied, headers = FORGERIES[forgery]
+    forged = form if supplied == "omitted" else {**form, "csrf": token}
+    if supplied == "forged":
+        forged["csrf"] = "forged-token"
+    rejected = client.post(path, data=forged, headers=headers, follow_redirects=False)
+    assert rejected.status_code == 403, rejected.text
+    assert "Please reload your table." in rejected.text
+    assert (service.store.load(identifier), service.store.history(identifier)) == before
+    assert len(service.list_games()) == games
+
+    # The same form with a valid token from this site is accepted and changes the table.
+    accepted = client.post(path, data={**form, "csrf": token}, follow_redirects=False)
+    assert accepted.status_code == (303 if route == "create" else 200), accepted.text
+    if route == "create":
+        assert len(service.list_games()) == games + 1
+    elif route == "theme":
+        assert service.store.load(identifier).theme_id == "orbital"
+    else:
+        assert service.store.load(identifier).revision > before[0].revision
 
 
 def test_invalid_setup_and_missing_game(client: Client) -> None:

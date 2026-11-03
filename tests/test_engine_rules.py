@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import asdict, replace
 
 import pytest
@@ -558,7 +559,8 @@ def test_views_hide_deck_order_counts_discard_contents_and_other_decisions() -> 
         assert repr(card.id) not in serialized_view
     state = play(state, "k20")
     assert not view_for(state, 1).looked
-    assert all(event.audience in {None, 1} for event in view_for(state, 1).events)
+    looked = set(state.players[0].looked)
+    assert looked and not looked & {card for event in state.events for card in event.cards}
     with pytest.raises(ValueError):
         view_for(state, -1)
 
@@ -571,6 +573,107 @@ def test_private_multi_discard_shows_only_top_card_to_opponents() -> None:
     assert all(discarded[0] not in event.cards for event in visible.events)
     top = next(event for event in visible.events if event.kind == "discard_top")
     assert top.cards == (discarded[1],) and top.amount == 2
+
+
+def assert_cards_private_to(state: GameState, owner: int, kind: str, hidden: list[Card]) -> None:
+    """Hidden cards travel only in ``kind`` events addressed to their owner.
+
+    The check reads authoritative history, not an already filtered view, then
+    confirms every other seat's view omits the cards while the owner's keeps them.
+    """
+    assert hidden
+    carrying = [event for event in state.events if set(hidden) & set(event.cards)]
+    assert carrying, f"No {kind} event carried the hidden cards"
+    for event in carrying:
+        assert (event.kind, event.player, event.audience) == (kind, owner, owner), event
+    for seat in range(len(state.players)):
+        visible = {card for event in view_for(state, seat).events for card in event.cards}
+        if seat == owner:
+            assert set(hidden) <= visible
+        else:
+            assert not set(hidden) & visible, f"Seat {seat} can see {kind} cards"
+
+
+def test_opening_hands_are_drawn_privately_for_every_seat() -> None:
+    state = new_game(GameConfig(player_count=4), 21)
+    for seat, player in enumerate(state.players):
+        assert_cards_private_to(state, seat, "draw", list(player.hand))
+
+
+def _smithy_draw() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k21", deck=("k24", "k26", "k19", "treasure1"))
+    drawn = state.players[0].deck[-3:]
+    return play(state, "k21"), 0, drawn
+
+
+def _council_room_opponent_draw() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k06", deck=("treasure1",) * 4)
+    state.players[1].deck = cards(state, "k22")
+    drawn = list(state.players[1].deck)
+    return play(state, "k06"), 1, drawn
+
+
+def _cellar_redraw() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k04", "curse", deck=("k22",))
+    drawn = list(state.players[0].deck)
+    state = select_definitions(play(state, "k04"), "curse")
+    return state, 0, drawn
+
+
+def _library_draw_and_keep() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k11", deck=("treasure3", "k21"))
+    drawn = list(state.players[0].deck)
+    state = choose(play(state, "k11"), "yes")
+    assert definitions(state.players[0].hand) == ["treasure3", "k21"]
+    return state, 0, drawn
+
+
+def _library_keep_only() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k11", deck=("k21",))
+    kept = list(state.players[0].deck)
+    state = choose(play(state, "k11"), "yes")
+    assert state.players[0].hand == kept
+    return state, 0, kept
+
+
+def _artisan_topdeck() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k01", "victory1")
+    returned = [state.players[0].hand[1]]
+    state = select_definitions(choose(play(state, "k01"), "k25"), "victory1")
+    assert state.players[0].deck[-1:] == returned
+    return state, 0, returned
+
+
+def _sentry_order() -> tuple[GameState, int, list[Card]]:
+    state = scenario("k20", deck=("treasure1", "treasure2", "treasure3"))
+    ordered = state.players[0].deck[:2]
+    state = select_definitions(choose(choose(play(state, "k20"))), "treasure3", "treasure2")
+    assert sorted(state.players[0].deck, key=lambda card: card.id) == sorted(
+        ordered, key=lambda card: card.id
+    )
+    assert definitions(state.players[0].deck) == ["treasure2", "treasure3"]
+    return state, 0, ordered
+
+
+@pytest.mark.parametrize(
+    "kind,build",
+    [
+        pytest.param("draw", _smithy_draw, id="smithy-draw"),
+        pytest.param("draw", _council_room_opponent_draw, id="council-room-opponent-draw"),
+        pytest.param("draw", _cellar_redraw, id="cellar-redraw"),
+        pytest.param("draw", _library_draw_and_keep, id="library-draw-and-keep"),
+        pytest.param("draw", _library_keep_only, id="library-keep"),
+        pytest.param("topdeck", _artisan_topdeck, id="artisan-topdeck"),
+        pytest.param("topdeck", _sentry_order, id="sentry-order"),
+    ],
+)
+def test_hidden_card_movements_are_addressed_only_to_their_owner(
+    kind: str, build: Callable[[], tuple[GameState, int, list[Card]]]
+) -> None:
+    state, owner, hidden = build()
+    assert_cards_private_to(state, owner, kind, hidden)
+    restored = state_from_json(state_to_json(state))
+    assert_cards_private_to(restored, owner, kind, hidden)
 
 
 def test_invalid_stale_and_duplicate_commands_do_not_mutate_input() -> None:
