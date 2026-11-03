@@ -314,3 +314,125 @@ def test_public_assets_do_not_consume_private_page_rate_budget(config: HostedCon
         client.get("/account")
     assert client.get("/account").status_code == 429
     assert client.get("/static/hosted.js").status_code == 200
+
+
+def invitation_link(host: Client, path: str, seat: int = 1) -> tuple[str, str]:
+    invited = post(host, f"{path}/invite", {"seat": str(seat)})
+    link = re.search(r'id="invitation-link"[^>]*value="([^"]+)"', invited.text)
+    assert link is not None, invited.text
+    join_url, secret = link[1].split("#")
+    return join_url, secret
+
+
+def test_seated_player_opening_another_invitation_sees_conflict(config: HostedConfig) -> None:
+    app = create_app(config)
+    host: Client = make_client(app)
+    guest: Client = make_client(app)
+    player(host, "Alice")
+    path = post(host, "/games", {"players": "2"}).url.path
+    join_url, secret = invitation_link(host, path)
+    preview = host.get(join_url)
+    result = post(host, join_url, {"secret": secret}, source=preview)
+    assert result.status_code == 409, result.text
+    assert "You already occupy a seat at this table." in result.text
+    assert 'id="join-form"' not in result.text
+    preview = guest.get(join_url)
+    joined = post(guest, join_url, {"secret": secret, "display_name": "Bea"}, source=preview)
+    assert joined.status_code == 200, joined.text
+
+
+def test_mistyped_recovery_code_keeps_session_and_allows_retry(config: HostedConfig) -> None:
+    app = create_app(config)
+    code = player(make_client(app), "Alice")
+    client: Client = make_client(app)
+    page = client.get("/account")
+    bearer = client.cookies[COOKIE]
+    typo = post(client, "/recover", {"recovery_code": "typo"}, source=page)
+    assert typo.status_code == 401, typo.text
+    assert "That recovery code is not valid." in typo.text
+    assert "Your session has ended" not in typo.text
+    assert "set-cookie" not in typo.headers
+    assert client.cookies[COOKIE] == bearer
+    retried = post(client, "/recover", {"recovery_code": code}, source=typo)
+    assert retried.status_code == 200, retried.text
+    assert "Continue to your tables" in retried.text
+
+
+@pytest.mark.parametrize("lapse", ("expired", "purged"))
+def test_invitee_whose_visit_lapsed_can_still_join(config: HostedConfig, lapse: str) -> None:
+    app = create_app(config)
+    host: Client = make_client(app)
+    guest: Client = make_client(app)
+    player(host, "Alice")
+    path = post(host, "/games", {"players": "2"}).url.path
+    join_url, secret = invitation_link(host, path)
+    preview = guest.get(join_url)
+    stale = guest.cookies[COOKIE]
+    # A browser keeps a cookie without a lifetime past the 30-minute anonymous session.
+    issued = preview.headers["set-cookie"].lower()
+    assert "max-age" not in issued and "expires" not in issued
+    with HostedStore(config.database_path).transaction(write=True) as conn:
+        if lapse == "expired":
+            conn.execute("UPDATE sessions SET expires_at=0 WHERE principal_id IS NULL")
+        else:
+            conn.execute("DELETE FROM sessions WHERE principal_id IS NULL")
+    joined = post(guest, join_url, {"secret": secret, "display_name": "Bea"}, source=preview)
+    assert joined.status_code == 200, joined.text
+    assert "recovery-code" in joined.text
+    assert "max-age=" in joined.headers["set-cookie"].lower()
+    assert guest.cookies[COOKIE] != stale
+    table = HostedService(HostedStore(config.database_path)).view(
+        guest.cookies[COOKIE], path.split("/")[-1]
+    )
+    assert table.seats[1].occupied
+
+
+def test_lapsed_visit_without_matching_form_is_not_renewed(config: HostedConfig) -> None:
+    app = create_app(config)
+    host: Client = make_client(app)
+    guest: Client = make_client(app)
+    player(host, "Alice")
+    path = post(host, "/games", {"players": "2"}).url.path
+    join_url, secret = invitation_link(host, path)
+    guest.get(join_url)
+    with HostedStore(config.database_path).transaction(write=True) as conn:
+        conn.execute("UPDATE sessions SET expires_at=0 WHERE principal_id IS NULL")
+    forged = guest.post(
+        join_url,
+        data={"csrf": "forged", "secret": secret, "display_name": "Bea"},
+        headers={"Origin": ORIGIN},
+    )
+    assert forged.status_code == 401
+    with HostedStore(config.database_path).transaction() as conn:
+        assert conn.execute("SELECT count(*) FROM principals").fetchone()[0] == 1
+
+
+def test_oversized_and_malformed_integer_fields_are_rejected(config: HostedConfig) -> None:
+    client: Client = make_client(create_app(config))
+    player(client, "Alice")
+    path = post(client, "/games", {"players": "2"}).url.path
+    service = HostedService(HostedStore(config.database_path))
+    game_id = path.split("/")[-1]
+    huge = "9" * 30
+    lobby = str(service.view(client.cookies[COOKIE], game_id).lobby_revision)
+    for action, fields in (
+        ("invite", {"seat": huge}),
+        ("revoke-invite", {"seat": huge}),
+        ("remove", {"seat": huge, "lobby_revision": lobby}),
+        ("remove", {"seat": "1", "lobby_revision": huge}),
+        ("invite", {"seat": "7"}),
+        ("revoke-invite", {"seat": "-1"}),
+        ("ready", {"lobby_revision": "1_0", "ready": "true"}),
+    ):
+        result = post(client, f"{path}/{action}", fields)
+        assert result.status_code == 422, (action, fields, result.text)
+        assert 'id="table"' in result.text
+    bearer = client.cookies[COOKIE]
+    for operation in (
+        lambda: service.invite(bearer, game_id, 10**30),
+        lambda: service.revoke_invite(bearer, game_id, -(10**30)),
+        lambda: service.remove(bearer, game_id, 10**30, int(lobby)),
+    ):
+        with pytest.raises(ValueError, match="Choose an available seat"):
+            operation()
+    assert service.view(bearer, game_id).lobby_revision == int(lobby)

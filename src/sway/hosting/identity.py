@@ -19,6 +19,10 @@ class AuthenticationError(Exception):
     """A credential is invalid, expired or revoked."""
 
 
+class InvalidRecoveryCode(AuthenticationError):
+    """The entered recovery code is wrong; the browser's own session is unaffected."""
+
+
 @dataclass(frozen=True)
 class Session:
     session_id: str
@@ -46,6 +50,18 @@ def hash_secret(secret: str) -> str:
 
 def _csrf(token: str) -> str:
     return hmac.new(token.encode("utf-8"), b"sway-session-csrf-v1", hashlib.sha256).hexdigest()
+
+
+def issued_csrf(token: str, csrf: str) -> bool:
+    """Whether a form was issued for this session token, even if the session has since lapsed.
+
+    This proves only that the form came from a page served to this browser's cookie. It
+    grants no access: callers may use it to start a fresh anonymous session, never to act
+    as the lapsed session.
+    """
+    if not token or len(token) > 128:
+        return False
+    return hmac.compare_digest(_csrf(token).encode("utf-8"), csrf.encode("utf-8"))
 
 
 class IdentityService:
@@ -117,13 +133,13 @@ class IdentityService:
         def _write(connection: SqlSession) -> IdentityCredentials:
             anonymous = self._anonymous(connection, anonymous_token)
             if not recovery_code or len(recovery_code) > 128:
-                raise AuthenticationError("Recovery code is invalid.")
+                raise InvalidRecoveryCode("Recovery code is invalid.")
             row = connection.execute(
                 "SELECT principal_id FROM recovery_credentials WHERE code_hash = ?",
                 (hash_secret(recovery_code),),
             ).one()
             if row is None:
-                raise AuthenticationError("Recovery code is invalid.")
+                raise InvalidRecoveryCode("Recovery code is invalid.")
             principal_id = cast(str, row["principal_id"])
             connection.execute("DELETE FROM sessions WHERE principal_id = ?", (principal_id,))
             connection.execute("DELETE FROM sessions WHERE session_id = ?", (anonymous.session_id,))
