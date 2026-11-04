@@ -10,6 +10,18 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
 
 ### P2 Normal
 
+- [TOOLING] `nested-worktree-sdist-exclusions` — **Exclude local state from nested-worktree source packages.**
+  Hatchling drops VCS exclusion patterns when the absolute project path
+  matches `.worktrees/`, so the documented worktree location causes
+  `scripts/check.sh` to package `.cache/` and fail extracting an absolute
+  Python symlink.
+  - Starting point: Reproduce in `.worktrees/` with the pinned Hatchling;
+    inspect `load_vcs_exclusion_patterns`. Define explicit source-package
+    boundaries and verify caches, browser evidence and private local state
+    are absent. An external worktree avoids the path-matching trigger.
+  - Source: `codex/hosted-playthrough-capacity` validation, 2026-11-03;
+    `tarfile.AbsoluteLinkError` for `.cache/uv/builds-v0/*/bin/python`
+
 ### P3 Low
 
 - [PLATFORM] `portable-hosted-data-transfer` — **Move an existing hosted installation between SQLite and Cloudflare.** Selecting a runtime does not transfer its players, credentials or games. Low priority; current work focuses on hosted verification and recovery.

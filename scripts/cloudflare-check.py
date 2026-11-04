@@ -147,7 +147,12 @@ def main() -> None:
                 environment = dict(os.environ)
                 environment["SWAY_E2E_HOSTED_URL"] = f"https://localhost:{PORT + 2}"
                 subprocess.run(
-                    ["scripts/e2e.sh", "-k", "independent_players"],
+                    [
+                        "scripts/e2e.sh",
+                        "-s",
+                        "-k",
+                        "independent_players or complete_hosted_game",
+                    ],
                     cwd=ROOT,
                     env=environment,
                     check=True,

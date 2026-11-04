@@ -17,12 +17,21 @@ from pathlib import Path
 from threading import Event, Thread, Timer
 from typing import cast
 from urllib.error import URLError
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 from uuid import uuid4
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page, Request, Route, expect
+from playwright.sync_api import (
+    Browser,
+    BrowserContext,
+    Error,
+    Page,
+    Request,
+    Route,
+    ViewportSize,
+    expect,
+)
 
 from sway.hosting.identity import IdentityCredentials
 from sway.hosting.service import HostedService, TableView
@@ -41,6 +50,10 @@ class HostedServer:
     @property
     def service(self) -> HostedService:
         return HostedService(HostedStore(self.directory / "hosted.sqlite3"))
+
+    @property
+    def loopback(self) -> bool:
+        return urlsplit(self.url).hostname in {"localhost", "127.0.0.1"}
 
 
 @contextmanager
@@ -153,12 +166,20 @@ def close_context(context: BrowserContext) -> None:
     context.close()
 
 
+def player_context(
+    browser: Browser, server: HostedServer, viewport: ViewportSize | None = None
+) -> BrowserContext:
+    # Only the isolated local test servers use self-signed certificates.
+    context = browser.new_context(ignore_https_errors=server.loopback, viewport=viewport)
+    context.tracing.start(screenshots=True, snapshots=True)
+    return context
+
+
 @contextmanager
 def player_browser(
     browser: Browser, server: HostedServer, credentials: IdentityCredentials | None = None
 ) -> Generator[tuple[BrowserContext, Page]]:
-    context = browser.new_context(ignore_https_errors=True)
-    context.tracing.start(screenshots=True, snapshots=True)
+    context = player_context(browser, server)
     try:
         if credentials:
             context.add_cookies(
@@ -289,11 +310,11 @@ def test_independent_players_join_fragment_links_ready_and_start(
     pages: list[Page] = []
     try:
         for _ in range(players):
-            context = browser.new_context(
-                ignore_https_errors=True,
-                viewport={"width": 320 if players == 2 else 390, "height": 900},
+            context = player_context(
+                browser,
+                hosted_server,
+                {"width": 320 if players == 2 else 390, "height": 900},
             )
-            context.tracing.start(screenshots=True, snapshots=True)
             contexts.append(context)
             pages.append(context.new_page())
         host = pages[0]
@@ -869,3 +890,183 @@ def test_save_queued_behind_a_lobby_refresh_keeps_edits_after_conflict(
         expect(page.get_by_text("Seat 3:", exact=False)).to_be_visible()
         saved = service.view(host.session.token, table.game_id)
         assert [seat.controller for seat in saved.seats] == ["human", "human", "economy"]
+
+
+def cancel_hosted_table(page: Page, table_url: str, pause: float = 0) -> None:
+    page.goto(table_url)
+    cancelled = page.get_by_role("heading", name="This table was cancelled", exact=True)
+    if page.locator(".finished").count() or cancelled.count():
+        return
+    controls = page.locator('details[data-key="table-controls"]')
+    if controls.get_attribute("open") is None:
+        controls.locator("summary").click()
+    # Role queries exclude buttons inside closed details.
+    cancel = controls.get_by_role("button", name="Cancel table", exact=True)
+    page.wait_for_timeout(pause * 1000)
+    cancel.click()
+    expect(cancelled).to_be_visible()
+
+
+@contextmanager
+def hosted_playthrough_table(page: Page, server: HostedServer) -> Generator[str]:
+    create_player(page, server, f"Acceptance {uuid4().hex[:8]}")
+    page.locator('select[name="controller1"]').select_option("economy")
+    page.locator('select[name="supply"]').select_option("starter")
+    page.get_by_role("button", name="Create table", exact=True).click()
+    table_url = page.url
+    try:
+        yield table_url
+    except BaseException as error:
+        # Cancel only this run's unfinished table. A finished table remains as
+        # inert evidence because the application has no table-deletion API.
+        try:
+            cancel_hosted_table(page, table_url, 0 if server.loopback else 1.5)
+        except Exception as cleanup_error:
+            error.add_note(f"Synthetic table cleanup also failed: {cleanup_error}")
+        raise
+
+
+def finish_hosted_playthrough(page: Page, pause: float = 0) -> tuple[int, int]:
+    initial_revision = int(page.locator("#table").get_attribute("data-revision") or "0")
+    decisions = 0
+    page.get_by_role("button", name="I'm ready", exact=True).click()
+    page.get_by_role("button", name="Start game", exact=True).click()
+    for _ in range(400):
+        page.wait_for_selector("#decision-form, .finished", timeout=30000)
+        if page.locator(".finished").count():
+            break
+        form = page.locator("#decision-form")
+        choices = form.locator('input[name="choices"]')
+        values = [choice.input_value() for choice in choices.all()]
+        # Buy only money and victory cards; handle bot attacks with the
+        # minimum legal selection. Read no database or opponent state.
+        priority = (
+            "end-actions",
+            "play-treasures",
+            "victory3",
+            "treasure3",
+            "treasure2",
+            "end-turn",
+        )
+        selected = next((value for value in priority if value in values), None)
+        minimum = int(form.get_attribute("data-minimum") or "0")
+        selections = [selected] if selected else values[:minimum]
+        for value in selections:
+            control = form.locator(f'input[name="choices"][value="{value}"]')
+            if control.get_attribute("type") != "hidden":
+                control.check()
+        revision = int(page.locator("#table").get_attribute("data-revision") or "0")
+        page.wait_for_timeout(pause * 1000)
+        page.get_by_role("button", name="Confirm choice").click()
+        expect(page.locator("#table")).not_to_have_attribute(
+            "data-revision", str(revision), timeout=15000
+        )
+        assert int(page.locator("#table").get_attribute("data-revision") or "0") > revision
+        decisions += 1
+    else:
+        pytest.fail("Hosted game did not finish within 400 human decisions")
+    assert decisions > 0, "Hosted playthrough reached scoring without any human decisions"
+    revision = int(page.locator("#table").get_attribute("data-revision") or "0")
+    assert revision > initial_revision
+    expect(page.locator("#decision-form")).to_have_count(0)
+    result = page.locator(".finished")
+    expect(result).to_contain_text("points")
+    scores = result.inner_text()
+    page.reload()
+    expect(result).to_have_text(scores, use_inner_text=True)
+    expect(page.locator("#table")).to_have_attribute("data-revision", str(revision))
+    expect(page.locator("#decision-form")).to_have_count(0)
+    return decisions, revision
+
+
+def test_complete_hosted_game_reaches_scoring_and_saved_result(
+    browser: Browser, portable_ui_server: HostedServer
+) -> None:
+    """Finish through public UI only, including on a certificate-verified live host."""
+    server = portable_ui_server
+    # Keep live mutations below the unchanged 60/minute installation limit.
+    pause = 0 if server.loopback else 1.5
+    started = time.monotonic()
+    with player_browser(browser, server) as (_, page), hosted_playthrough_table(page, server):
+        decisions, revision = finish_hosted_playthrough(page, pause)
+        print(
+            f"Hosted full game: {decisions} human decisions, revision {revision}, "
+            f"{time.monotonic() - started:.2f}s; scoring survives reload"
+        )
+
+
+def test_failed_hosted_playthrough_cancels_its_table(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    with player_browser(browser, hosted_server) as (_, page):
+        with pytest.raises(AssertionError, match="injected playthrough failure"):
+            with hosted_playthrough_table(page, hosted_server):
+                page.get_by_role("button", name="I'm ready", exact=True).click()
+                page.get_by_role("button", name="Start game", exact=True).click()
+                expect(page.locator("#board")).to_be_visible()
+                raise AssertionError("injected playthrough failure")
+        expect(page.get_by_role("heading", name="This table was cancelled")).to_be_visible()
+
+
+def test_failed_hosted_cleanup_preserves_playthrough_error(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    with player_browser(browser, hosted_server) as (_, page):
+        original = AssertionError("injected playthrough failure")
+        table_url = ""
+        try:
+            with pytest.raises(AssertionError) as failure:
+                with hosted_playthrough_table(page, hosted_server) as table_url:
+                    page.route("**/games/*", lambda route: route.abort())
+                    raise original
+            assert failure.value is original
+            assert any("cleanup also failed" in note for note in failure.value.__notes__)
+        finally:
+            page.unroute("**/games/*")
+            if table_url:
+                cancel_hosted_table(page, table_url)
+
+
+def test_hosted_playthrough_rejects_scoring_without_decisions(
+    browser: Browser, hosted_server: HostedServer
+) -> None:
+    fake_scores = (
+        '<div id="table" data-revision="123"><div class="finished">'
+        "Acceptance: 0 points; Bot: 0 points</div></div>"
+    )
+    with player_browser(browser, hosted_server) as (_, page):
+        with hosted_playthrough_table(page, hosted_server) as table_url:
+            page.route(
+                "**/games/*/start",
+                lambda route: route.fulfill(status=200, content_type="text/html", body=fake_scores),
+            )
+            try:
+                with pytest.raises(AssertionError, match="without any human decisions"):
+                    finish_hosted_playthrough(page)
+            finally:
+                page.unroute("**/games/*/start")
+                cancel_hosted_table(page, table_url)
+
+
+@pytest.mark.parametrize(
+    ("origin", "self_signed_allowed"),
+    [
+        ("https://127.0.0.1", True),
+        ("https://localhost", True),
+        ("https://tables.example", False),
+        ("https://localhost.example", False),
+        ("https://127.0.0.1.example", False),
+    ],
+)
+def test_hosted_browser_certificate_policy(
+    browser: Browser, hosted_server: HostedServer, origin: str, self_signed_allowed: bool
+) -> None:
+    # Apply each endpoint's policy while connecting only to the local fixture.
+    server = HostedServer(origin, hosted_server.directory)
+    with player_browser(browser, server) as (_, page):
+        if self_signed_allowed:
+            response = page.goto(hosted_server.url)
+            assert response is not None and response.status == 200
+        else:
+            with pytest.raises(Error, match="ERR_CERT_AUTHORITY_INVALID"):
+                page.goto(hosted_server.url)

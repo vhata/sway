@@ -78,8 +78,9 @@ Seven independent jobs collect results even if another job fails:
   property runs 300 examples instead of the normal 30; the Actions run ID seeds
   Hypothesis so a rerun reproduces the corpus.
 - The complete native Chromium suite, including hosted browser acceptance.
-- Real local Workers contracts, pending-alarm restart and 2/3/4-player browser
-  checks, then package build/install with the generated Workers tree present.
+- Real local Workers contracts, pending-alarm restart, 2/3/4-player
+  browser setup and a complete hosted game through scoring and reload,
+  then package build/install with the generated Workers tree present.
 - Private local recovery RPC against synthetic state, including identity,
   game/receipt changes and credential revocation. The ordinary unit suite also
   checks maintenance gating and the operator controller's lost-response recovery.
