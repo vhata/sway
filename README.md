@@ -35,7 +35,6 @@ Developer mode also links to `/developer/cards`, a read-only catalogue of all 33
 | `scripts/hosted.sh` | Configured private multiplayer server behind a TLS proxy |
 | `scripts/cloudflare.sh` | Cloudflare runtime tooling; defaults to local development ([guide](deployment/cloudflare/README.md)) |
 | `scripts/cloudflare-check.sh --browser` | Shared contracts, pending-alarm restart, multiplayer setup and a complete game on real local workerd |
-| `scripts/cloudflare-check.sh --capacity` | Bounded synthetic private-read, rendered-poll and theme-write measurements on isolated local workerd |
 | `scripts/format.sh` | Format Python, JavaScript, CSS and JSON |
 | `scripts/fmt-check.sh` | Check formatting without rewriting |
 | `scripts/lint.sh` | Ruff and Biome lint |

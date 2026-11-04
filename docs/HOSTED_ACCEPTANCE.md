@@ -1,76 +1,62 @@
 # Invite-only multiplayer acceptance evidence
 
-## Complete game and bounded local workloads — 2026-09-30
+## Hosted playthrough verification
 
-Verification tooling at `4829fc4` adds a complete hosted browser game using only
-the public interface: create a synthetic player, start against an economy bot,
-submit legal choices, reach scoring, and reload to verify identical scores and
-revision. The same scenario runs against native hosting, local workerd, or an
-explicitly selected HTTPS deployment. This is automated acceptance evidence;
-manual playtesting remains separate.
+The complete hosted browser scenario creates one synthetic player and a
+two-seat starter table against an economy bot. It submits legal choices
+through the public interface, requires human decisions and advancing
+revisions, reaches scoring, then reloads to verify identical scores and
+revision. It reads no database or opponent state. The scenario runs
+against native hosting in `scripts/e2e.sh` and real local workerd in
+`scripts/cloudflare-check.sh --browser`.
 
-The existing pilot at `https://sway-private-tables.vhata.workers.dev` completed
-the scenario with certificate verification enabled: **60 human decisions,
-revision 130, scoring preserved after reload, 167.25 seconds** (pytest: one
-passed in 167.76 seconds). This used one new synthetic player and table, with
-human decisions paced 1.5 seconds apart. The game finished, leaving no active
-bot work for that table. No deployment, request-limit change, production load
-test or modification of existing players' tables was performed.
-
-`scripts/cloudflare-check.sh --browser --capacity` passed the eleven shared
-storage contracts, durable alarms and pending-bot restart checks, all three
-multiplayer setup scenarios, and the complete game on real local workerd. The
-complete game made 58 human decisions and reached revision 121 in 56.24 seconds;
-the four browser scenarios passed in 61.37 seconds.
-
-The optional capacity probe creates eight synthetic two-seat tables with economy
-bots in the wrapper's temporary installation. It runs three synchronized rounds
-at concurrency 1, 4 and 8 for each workload: full private page reads, polls with
-a stale revision that render the current board, and viewer-theme mutations.
-It reports response latency, batch throughput and status codes, then cancels all
-eight tables and logs out. It accepts only HTTPS loopback origins; the wrapper
-owns and removes its local state. Local mutation/credential limits are 1000 per
-minute, as for the existing browser checks; the private-read limit remains 300.
-
-Executed on macOS 26.6.2 arm64, using the pinned workerd runtime:
-
-| Workload | Concurrent requests | Requests | Median / p95 latency | Batch requests/second |
-| --- | ---: | ---: | ---: | ---: |
-| Private page | 1 | 3 | 12.56 / 14.31 ms | 67.39 |
-| Rendered poll | 1 | 3 | 12.77 / 19.00 ms | 60.75 |
-| Theme mutation | 1 | 3 | 14.58 / 15.03 ms | 60.37 |
-| Private page | 4 | 12 | 49.00 / 53.40 ms | 73.15 |
-| Rendered poll | 4 | 12 | 46.17 / 51.16 ms | 76.48 |
-| Theme mutation | 4 | 12 | 56.94 / 59.90 ms | 63.81 |
-| Private page | 8 | 24 | 96.28 / 104.34 ms | 74.91 |
-| Rendered poll | 8 | 24 | 93.22 / 100.37 ms | 77.19 |
-| Theme mutation | 8 | 24 | 122.00 / 131.96 ms | 60.49 |
-
-All 117 measured requests returned 200. These are short local bursts, with
-synthetic small game histories and no injected failures. They do not measure
-sustained turn/bot throughput, cold starts, production network/compute limits,
-or a supported number of simultaneous players. The small samples make p95 close
-to the observed maximum. No load test or configuration change was made against
-the shared pilot; production capacity remains unestablished.
-
-The old pilot browser-created tables cannot be safely cancelled through their
-normal host sessions: the retained browser logs contain no saved session state,
-and the old probe retained its credentials only in memory. No other players'
-tables were modified, and no privileged deletion was attempted.
-
-To repeat a single live full-game check, explicitly select its endpoint:
+For an authorized single live full-game check, explicitly select its
+endpoint:
 
 ```sh
 SWAY_E2E_HOSTED_URL=https://your-private-installation.example \
   scripts/e2e.sh -q -s -k complete_hosted_game
 ```
 
-The test verifies remote certificates and spaces human decisions by 1.5 seconds
-to stay within unchanged request limits. It creates a new synthetic identity and
-one table. A failed unfinished run attempts cancellation of only that table;
-a successful finished table remains as inert scoring evidence because the
-application has no table-deletion API. Retain failure traces privately: they may
-contain the synthetic player's session or recovery credentials.
+The hosted browser helpers verify certificates except on the isolated
+`localhost` and `127.0.0.1` fixtures. Live human decisions are spaced
+1.5 seconds apart to stay within unchanged request limits. Local
+regression tests cover premature scoring, cancellation after failure,
+cleanup errors and certificate policy; they always use local fixtures.
+
+A failed unfinished run opens the table controls, cancels only its own
+table, and verifies cancellation. If cleanup also fails, the original
+failure is retained with a cleanup note. A successful finished table
+remains as inert scoring evidence because the application has no
+table-deletion API. Retain failure traces privately: they may contain
+the synthetic player's session or recovery credentials.
+
+This is automated acceptance coverage. Manual playtesting, production
+capacity and recovery of the deployed installation remain separate
+operator work in [TODO](../TODO.md).
+
+## Historical complete-game evidence — 2026-09-30
+
+An earlier version of the playthrough tooling at `4829fc4` recorded a
+complete game on `https://sway-private-tables.vhata.workers.dev` with
+certificate verification enabled: **60 human decisions, revision 130,
+scoring preserved after reload, 167.25 seconds** (pytest: one passed in
+167.76 seconds). This used one new synthetic player and table, with
+human decisions paced 1.5 seconds apart. The game finished, leaving no
+active bot work for that table. No deployment, request-limit change,
+production load test or modification of existing players' tables was
+performed.
+
+That version also recorded a complete game on real local workerd with
+58 human decisions and revision 121 in 56.24 seconds; its three setup
+scenarios and full game passed in 61.37 seconds. These dated results
+describe that version and do not validate current code or current live
+deployment state.
+
+Old pilot browser-created tables could not be cancelled through their
+normal host sessions because the retained logs contained no saved
+session state. No other players' tables were modified, and no
+privileged deletion was attempted.
 
 ## Cloudflare pilot and isolated recovery — 2026-09-26
 
