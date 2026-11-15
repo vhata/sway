@@ -1034,15 +1034,21 @@ def test_hosted_playthrough_rejects_scoring_without_decisions(
         '<div id="table" data-revision="123"><div class="finished">'
         "Acceptance: 0 points; Bot: 0 points</div></div>"
     )
+    intercepted: list[str] = []
+
+    def inject_scores(route: Route) -> None:
+        intercepted.append(route.request.method)
+        route.fulfill(status=200, content_type="text/html", body=fake_scores)
+
     with player_browser(browser, hosted_server) as (_, page):
+        # Enable interception before navigation so it is active throughout
+        # table creation, before the new document issues any start request.
+        page.route("**/games/*/start", inject_scores)
         with hosted_playthrough_table(page, hosted_server) as table_url:
-            page.route(
-                "**/games/*/start",
-                lambda route: route.fulfill(status=200, content_type="text/html", body=fake_scores),
-            )
             try:
                 with pytest.raises(AssertionError, match="without any human decisions"):
                     finish_hosted_playthrough(page)
+                assert intercepted == ["POST"], "The fake scoring response must be exercised"
             finally:
                 page.unroute("**/games/*/start")
                 cancel_hosted_table(page, table_url)
