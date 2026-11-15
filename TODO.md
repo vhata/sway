@@ -55,6 +55,16 @@ Ordinary follow-ups live here; whole-codebase review-derived work lives in [revi
 
 ### P1 High
 
+- [TOOLING] `daily-browser-scoring-injection` — **Restore green daily browser verification on main.**
+  The scoring-without-decisions regression installed its request route during
+  table navigation, missed the start request, and played a real game instead
+  of exercising the injected scoring response.
+  - Starting point: Install interception before navigation and verify the
+    callback runs. Keep this entry until the next daily run on `main` passes;
+    a passing fix branch alone does not establish recovery.
+  - Source: [Daily verification failure](https://github.com/vhata/sway/actions/runs/43743482112),
+    2026-11-15; [browser trace artifact](https://github.com/vhata/sway/actions/runs/43743482112/artifacts/14172932966)
+
 ### P2 Normal
 
 ### P3 Low
